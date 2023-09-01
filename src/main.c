@@ -16,7 +16,11 @@ uint8_t* ob = outBuffer;
 unsigned long bytesRead, pcmSize;
 unsigned long  samplerate = 0;
 uint8_t channels = 0;
-const char* aacFileName = "pcradio_PS.aac";
+//const char* aacFileName = "sample1.aac";  // stereo 44100Hz
+//const char* aacFileName = "sample2.aac";  // stereo 48000Hz
+//const char* aacFileName = "sample3.aac";  // stereo 44100Hz, SBR
+const char* aacFileName = "sample4.aac";  // stereo 44100Hz, SBR + PS
+
 const char* wavFileName = "out.wav";
 
 int main() {
