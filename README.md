@@ -1,6 +1,7 @@
 
 
-Install: (VS Code)
+Install: (VS Code) <br>
+Test environment: an aac file is converted into a wav file
 - Clone Git Repository
 - compile **`g++ -g ./src/*.c src/*/*.c -o a.out`**
 - execute **`./a.out`**
