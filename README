@@ -1,8 +1,8 @@
 
 Install: (VS Code)
 - Clone Git Repository
-- compile `g++ -g ./src/*.c src/*/*.c -o a.out`
-- execute `./a.out`
+- compile ``g++ -g ./src/*.c src/*/*.c -o a.out``
+- execute ``./a.out``
 
 
 Freeware Advanced Audio (AAC) Decoder including SBR decoding
