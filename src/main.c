@@ -13,9 +13,12 @@ NeAACDecConfigurationPtr conf;
 uint8_t inBuffer[4096];
 uint8_t outBuffer[4096 * 2];
 uint8_t* ob = outBuffer;
-unsigned long bytesRead, pcmSize;
+unsigned long  bytesRead, pcmSize;
 unsigned long  samplerate = 0;
-uint8_t channels = 0;
+unsigned long  byterate = 0;
+unsigned char  channels = 0;
+unsigned long  sumSamples = 0;
+
 //const char* aacFileName = "sample1.aac";  // stereo 44100Hz
 //const char* aacFileName = "sample2.aac";  // stereo 48000Hz
 //const char* aacFileName = "sample3.aac";  // stereo 44100Hz, SBR
@@ -51,30 +54,21 @@ int main() {
     printf("samplerate = %li\n", samplerate);
     printf("channels = %i\n", channels);
 
-    const char* sr;
-    if(samplerate == 44100) sr = "\x44\xAC\x00\x00";
-    else if(samplerate == 48000) sr = "\x80\xBB\x00\x00";
-    else if(samplerate == 22050) sr = "\x80\xBB\x00\x00";
-    else {printf("wrong samplerate\n"); return 0;}
-
-    const char* ch;
-    if(channels == 1) ch = "\x01\x00";
-    else if(channels == 2) ch = "\x02\x00";
-    else {printf("wrong channels\n"); return 0;}
+    byterate = samplerate * channels * 16  / 8;
 
     // Write the WAV header
-    fwrite("RIFF", 4, 1, wavFile);              // Chunk ID
+    fwrite("RIFF",             4, 1, wavFile);  // Chunk ID
     fwrite("\x00\x00\x00\x00", 4, 1, wavFile);  // Chunk Size (will be filled later)
-    fwrite("WAVE", 4, 1, wavFile);              // Format
-    fwrite("fmt ", 4, 1, wavFile);              // Subchunk 1 ID
+    fwrite("WAVE",             4, 1, wavFile);  // Format
+    fwrite("fmt ",             4, 1, wavFile);  // Subchunk 1 ID
     fwrite("\x10\x00\x00\x00", 4, 1, wavFile);  // Subchunk 1 Size
-    fwrite("\x01\x00", 2, 1, wavFile);          // AudioFormat
-    fwrite(ch        , 2, 1, wavFile);          // NumChannels
-    fwrite(sr        , 4, 1, wavFile);          // Sample Rate
-    fwrite(sr        , 4, 1, wavFile);          // Byte Rate
-    fwrite("\x02\x00", 2, 1, wavFile);          // Block Align
-    fwrite("\x10\x00", 2, 1, wavFile);          // Bits Per Sample
-    fwrite("data", 4, 1, wavFile);              // Subchunk 2 ID
+    fwrite("\x01\x00",         2, 1, wavFile);  // AudioFormat
+    fwrite(&channels,          2, 1, wavFile);  // NumChannels
+    fwrite(&samplerate,        4, 1, wavFile);  // Sample Rate
+    fwrite(&byterate,          4, 1, wavFile);  // Byte Rate
+    fwrite("\x02\x00",         2, 1, wavFile);  // Block Align
+    fwrite("\x10\x00",         2, 1, wavFile);  // Bits Per Sample
+    fwrite("data",             4, 1, wavFile);  // Subchunk 2 ID
     fwrite("\x00\x00\x00\x00", 4, 1, wavFile);  // Subchunk 2 Size (will be filled later)
 
 
@@ -101,10 +95,17 @@ int main() {
         }
         if(frameInfo.error) printf("err %s\n", NeAACDecGetErrorMessage(frameInfo.error));
         loopidx++;
+        sumSamples += frameInfo.samples * frameInfo.channels;
     }
 
     printf("ready\n");
     NeAACDecClose(hAac);
+    printf("%ld bytes written\n", sumSamples);
+    fseek(wavFile, 40, SEEK_SET);
+    fwrite(&sumSamples, 4, 1, wavFile);  // Subchunk 2 Size
+    sumSamples += 34;
+    fseek(wavFile, 4, SEEK_SET);
+    fwrite(&sumSamples, 4, 1, wavFile);  // Subchunk 1 Size
     fclose(aacFile);
     fclose(wavFile);
     return 0;
