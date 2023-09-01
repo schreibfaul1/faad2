@@ -1,3 +1,4 @@
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,14 +6,13 @@
 #include "libfaad/neaacdec.h"
 
 
-
 // Declaration of the required global variables
 NeAACDecHandle hAac;
 NeAACDecFrameInfo frameInfo;
 NeAACDecConfigurationPtr conf;
 uint8_t inBuffer[4096];
-uint8_t outBuffer[4096 * 2];
-uint8_t* ob = outBuffer;
+int16_t outBuffer[2048 * 2 * sizeof(int16_t)];
+uint8_t* ob = (uint8_t*)outBuffer;
 unsigned long  bytesRead, pcmSize;
 unsigned long  samplerate = 0;
 unsigned long  byterate = 0;
