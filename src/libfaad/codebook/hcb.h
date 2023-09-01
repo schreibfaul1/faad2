@@ -68,6 +68,7 @@ extern "C" {
  *
  */
 
+
 #define ZERO_HCB       0
 #define FIRST_PAIR_HCB 5
 #define ESC_HCB        11
@@ -83,10 +84,6 @@ typedef struct
     uint8_t offset;
     uint8_t extra_bits;
 } hcb;
-
-
-
-
 
 /* 2nd step table with quadruple data */
 typedef struct
@@ -118,7 +115,15 @@ typedef struct
     int8_t data[2];
 } hcb_bin_pair;
 
-
+// hcb *hcb_table[];
+// hcb_2_quad *hcb_2_quad_table[];
+// hcb_2_pair *hcb_2_pair_table[];
+// hcb_bin_pair *hcb_bin_table[];
+// uint8_t hcbN[];
+// uint8_t unsigned_cb[];
+// int hcb_2_quad_table_size[];
+// int hcb_2_pair_table_size[];
+// int hcb_bin_table_size[];
 
 #include "hcb_1.h"
 #include "hcb_2.h"
@@ -132,20 +137,6 @@ typedef struct
 #include "hcb_10.h"
 #include "hcb_11.h"
 #include "hcb_sf.h"
-
-hcb *hcb_table[] = { 0, hcb1_1, hcb2_1, 0, hcb4_1, 0, hcb6_1, 0, hcb8_1, 0, hcb10_1, hcb11_1};
-hcb_2_quad *hcb_2_quad_table[] = {0, hcb1_2, hcb2_2, 0, hcb4_2, 0, 0, 0, 0, 0, 0, 0};
-hcb_2_pair *hcb_2_pair_table[] = { 0, 0, 0, 0, 0, 0, hcb6_2, 0, hcb8_2, 0, hcb10_2, hcb11_2};
-hcb_bin_pair *hcb_bin_table[] = { 0, 0, 0, 0, 0, hcb5, 0, hcb7, 0, hcb9, 0, 0};
-uint8_t hcbN[]= { 0, 5, 5, 0, 5, 0, 5, 0, 5, 0, 6, 5 };
-uint8_t unsigned_cb[] = { 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-int hcb_2_quad_table_size[] = { 0, 114, 86, 0, 185, 0, 0, 0, 0, 0, 0, 0 };
-int hcb_2_pair_table_size[]= { 0, 0, 0, 0, 0, 0, 126, 0, 83, 0, 210, 373 };
-int hcb_bin_table_size[] = { 0, 0, 0, 161, 0, 161, 0, 127, 0, 337, 0, 0 };
-
-
-
-
 
 
 #ifdef __cplusplus

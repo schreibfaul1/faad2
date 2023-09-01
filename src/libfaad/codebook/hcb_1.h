@@ -36,8 +36,6 @@
  *
  * Used to find offset into 2nd step table and number of extra bits to get
  */
-
-
 static hcb hcb1_1[] = {
     { /* 00000 */ 0, 0 },
     { /*       */ 0, 0 },
