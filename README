@@ -1,11 +1,12 @@
 
+
 Install: (VS Code)
 - Clone Git Repository
-- compile ``g++ -g ./src/*.c src/*/*.c -o a.out``
-- execute ``./a.out``
+- compile **`g++ -g ./src/*.c src/*/*.c -o a.out`**
+- execute **`./a.out`**
 
 
-Freeware Advanced Audio (AAC) Decoder including SBR decoding
+**Freeware Advanced Audio (AAC) Decoder including SBR decoding**
 
 FAAD2 is a HE, LC, MAIN and LTP profile, MPEG2 and MPEG-4 AAC decoder.
 FAAD2 includes code for SBR (HE AAC) decoding.
