@@ -30,18 +30,11 @@
 
 #include "common.h"
 #include "structs.h"
-#include <memory.h>
+
 #include <stdlib.h>
 
 #include "mp4.h"
 #include "syntax.h"
-
-#ifndef max
-#define max(a, b) (((a) > (b)) ? (a) : (b))
-#endif
-#ifndef min
-#define min(a, b) (((a) < (b)) ? (a) : (b))
-#endif
 
 /* defines if an object type can be decoded by this library or not */
 static uint8_t ObjectTypesTable[32] = {
@@ -240,7 +233,7 @@ int8_t AudioSpecificConfigFromBitfile(bitfile *ld,
     if(short_form)
         bits_to_decode = 0;
     else
-		bits_to_decode = (int8_t)(buffer_size*8 + faad_get_processed_bits(ld) - startpos);
+		bits_to_decode = (int8_t)(buffer_size*8 - (startpos-faad_get_processed_bits(ld)));
 
     if ((mp4ASC->objectTypeIndex != 5 && mp4ASC->objectTypeIndex != 29) && (bits_to_decode >= 16))
     {
@@ -312,8 +305,7 @@ int8_t AudioSpecificConfig2(uint8_t *pBuffer,
     uint8_t ret = 0;
     bitfile ld;
     faad_initbits(&ld, pBuffer, buffer_size);
-    if (ld.error != 0)
-        return -7;
+    faad_byte_align(&ld);
     ret = AudioSpecificConfigFromBitfile(&ld, mp4ASC, pce, buffer_size, short_form);
     faad_endbits(&ld);
     return ret;

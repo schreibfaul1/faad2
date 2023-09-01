@@ -33,13 +33,6 @@
 #include "syntax.h"
 #include "pulse.h"
 
-#ifndef max
-#define max(a, b) (((a) > (b)) ? (a) : (b))
-#endif
-#ifndef min
-#define min(a, b) (((a) < (b)) ? (a) : (b))
-#endif
-
 uint8_t pulse_decode(ic_stream *ics, int16_t *spec_data, uint16_t framelen)
 {
     uint8_t i;

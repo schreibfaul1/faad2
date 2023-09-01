@@ -31,6 +31,11 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+#define STDC_HEADERS 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -40,7 +45,6 @@ extern "C" {
 #endif
 
 #include "neaacdec.h"
-#include <stdint.h>
 
 #if 1
 #define INLINE __inline
@@ -54,19 +58,13 @@ extern "C" {
 #define ALIGN
 #endif
 
-#ifndef max
-#define max(a, b) (((a) > (b)) ? (a) : (b))
-#endif
-#ifndef min
-#define min(a, b) (((a) < (b)) ? (a) : (b))
-#endif
 
 /* COMPILE TIME DEFINITIONS */
 
 /* use double precision */
 /* #define USE_DOUBLE_PRECISION */
 /* use fixed point reals */
-//#define FIXED_POINT
+#define FIXED_POINT
 //#define BIG_IQ_TABLE
 
 /* Use if target platform has address generators with autoincrement */
@@ -150,13 +148,11 @@ extern "C" {
 
 
 #ifdef FIXED_POINT
-#define DIV_R(A, B) (((int64_t)A * REAL_PRECISION)/B)
-#define DIV_C(A, B) (((int64_t)A * COEF_PRECISION)/B)
-#define DIV_F(A, B) (((int64_t)A * FRAC_PRECISION)/B)
+#define DIV_R(A, B) (((int64_t)A << REAL_BITS)/B)
+#define DIV_C(A, B) (((int64_t)A << COEF_BITS)/B)
 #else
 #define DIV_R(A, B) ((A)/(B))
 #define DIV_C(A, B) ((A)/(B))
-#define DIV_F(A, B) ((A)/(B))
 #endif
 
 #ifndef SBR_LOW_POWER
@@ -175,20 +171,19 @@ extern "C" {
 #if defined(_WIN32) && !defined(__MINGW32__)
 
 #include <stdlib.h>
-#include <string.h>
 
-// typedef unsigned __int64 uint64_t;
-// typedef unsigned __int32 uint32_t;
-// typedef unsigned __int16 uint16_t;
-// typedef unsigned __int8 uint8_t;
-// typedef signed __int64 int64_t;
-// typedef signed __int32 int32_t;
-// typedef signed __int16 int16_t;
-// typedef signed __int8  int8_t;
-// typedef float float32_t;
+typedef unsigned __int64 uint64_t;
+typedef unsigned __int32 uint32_t;
+typedef unsigned __int16 uint16_t;
+typedef unsigned __int8 uint8_t;
+typedef signed __int64 int64_t;
+typedef signed __int32 int32_t;
+typedef signed __int16 int16_t;
+typedef signed __int8  int8_t;
+typedef float float32_t;
 
 
-#else  /* WIN */
+#else
 
 #include <stdio.h>
 #if HAVE_SYS_TYPES_H
@@ -222,18 +217,18 @@ extern "C" {
 # else
 /* we need these... */
 #ifndef __TCS__
-// typedef unsigned long long uint64_t;
-// typedef signed long long int64_t;
+typedef unsigned long long uint64_t;
+typedef signed long long int64_t;
 #else
 typedef unsigned long uint64_t;
 typedef signed long int64_t;
 #endif
-// typedef unsigned long uint32_t;
-// typedef unsigned short uint16_t;
-// typedef unsigned char uint8_t;
-// typedef signed long int32_t;
-// typedef signed short int16_t;
-// typedef signed char int8_t;
+typedef unsigned long uint32_t;
+typedef unsigned short uint16_t;
+typedef unsigned char uint8_t;
+typedef signed long int32_t;
+typedef signed short int16_t;
+typedef signed char int8_t;
 # endif
 #endif
 #if HAVE_UNISTD_H
@@ -251,14 +246,18 @@ typedef float float32_t;
 #  define strchr index
 #  define strrchr rindex
 # endif
-// char *strchr(), *strrchr();
+char *strchr(), *strrchr();
 # if !HAVE_MEMCPY
-//#  define memcpy(d, s, n) bcopy((s), (d), (n))
-//#  define memmove(d, s, n) bcopy((s), (d), (n))
+#  define memcpy(d, s, n) bcopy((s), (d), (n))
+#  define memmove(d, s, n) bcopy((s), (d), (n))
 # endif
 #endif
 
-#endif  /* WIN */
+#endif
+
+#ifdef WORDS_BIGENDIAN
+#define ARCH_IS_BIG_ENDIAN
+#endif
 
 /* FIXED_POINT doesn't work with MAIN and SSR yet */
 #ifdef FIXED_POINT
@@ -405,18 +404,19 @@ typedef float float32_t;
 #endif
 
 typedef real_t complex_t[2];
-#define RE(A) (A)[0]
-#define IM(A) (A)[1]
+#define RE(A) A[0]
+#define IM(A) A[1]
 
 
 /* common functions */
 uint8_t cpu_has_sse(void);
 uint32_t ne_rng(uint32_t *__r1, uint32_t *__r2);
-#ifdef FIXED_POINT
 uint32_t wl_min_lzc(uint32_t x);
+#ifdef FIXED_POINT
 #define LOG2_MIN_INF REAL_CONST(-10000)
-int32_t log2_int(uint64_t val);
-uint64_t pow2_int(real_t val);
+int32_t log2_int(uint32_t val);
+int32_t log2_fix(uint32_t val);
+int32_t pow2_int(real_t val);
 real_t pow2_fix(real_t val);
 #endif
 uint8_t get_sr_index(const uint32_t samplerate);
@@ -451,4 +451,14 @@ static int64_t faad_get_ts()
 #ifdef __cplusplus
 }
 #endif
+
+#ifndef max
+#define max(a, b) (((a) > (b)) ? (a) : (b))
+#endif
+#ifndef min
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+
+
+
 #endif
