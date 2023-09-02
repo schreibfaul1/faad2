@@ -132,7 +132,6 @@ void lt_prediction(ic_stream *ics, ltp_info *ltp, real_t *spec,
     }
 }
 
-#ifdef FIXED_POINT
 static inline int16_t real_to_int16(real_t sig_in)
 {
     if (sig_in >= 0)
@@ -148,27 +147,7 @@ static inline int16_t real_to_int16(real_t sig_in)
 
     return (sig_in >> REAL_BITS);
 }
-#else
-static inline int16_t real_to_int16(real_t sig_in)
-{
-    if (sig_in >= 0)
-    {
-#ifndef HAS_LRINTF
-        sig_in += 0.5f;
-#endif
-        if (sig_in >= 32768.0f)
-            return 32767;
-    } else {
-#ifndef HAS_LRINTF
-        sig_in += -0.5f;
-#endif
-        if (sig_in <= -32768.0f)
-            return -32768;
-    }
 
-    return lrintf(sig_in);
-}
-#endif
 
 void lt_update_state(int16_t *lt_pred_stat, real_t *time, real_t *overlap,
                      uint16_t frame_len, uint8_t object_type)
