@@ -18,9 +18,9 @@ unsigned char  channels = 0;
 unsigned long  sumSamples = 0;
 
 //const char* aacFileName = "sample1.aac";  // stereo 44100Hz
-const char* aacFileName = "sample2.aac";  // stereo 48000Hz
+//const char* aacFileName = "sample2.aac";  // stereo 48000Hz
 //const char* aacFileName = "sample3.aac";  // stereo 44100Hz, SBR
-//const char* aacFileName = "sample4.aac";  // stereo 44100Hz, SBR + PS
+const char* aacFileName = "sample4.aac";  // stereo 44100Hz, SBR + PS
 const char* wavFileName = "out.wav";
 uint16_t    validSamples = 0;
 
