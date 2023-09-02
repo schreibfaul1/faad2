@@ -135,11 +135,8 @@ int8_t can_decode_ot(const uint8_t object_type)
         return -1;
 #endif
     case SSR:
-#ifdef SSR_DEC
-        return 0;
-#else
         return -1;
-#endif
+
     case LTP:
 #ifdef LTP_DEC
         return 0;

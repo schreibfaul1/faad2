@@ -45,9 +45,7 @@
 #include "sbr_dec.h"
 #include "sbr_syntax.h"
 #endif
-#ifdef SSR_DEC
-#include "ssr.h"
-#endif
+
 
 
 
@@ -155,10 +153,7 @@ NeAACDecHandle NeAACDecOpen(void)
         hDecoder->window_shape_prev[i] = 0;
         hDecoder->time_out[i] = NULL;
         hDecoder->fb_intermed[i] = NULL;
-#ifdef SSR_DEC
-        hDecoder->ssr_overlap[i] = NULL;
-        hDecoder->prev_fmd[i] = NULL;
-#endif
+
 #ifdef MAIN_DEC
         hDecoder->pred_stat[i] = NULL;
 #endif
@@ -369,11 +364,7 @@ long NeAACDecInit(NeAACDecHandle hpDecoder,
 #endif
 
     /* must be done before frameLength is divided by 2 for LD */
-#ifdef SSR_DEC
-    if (hDecoder->object_type == SSR)
-        hDecoder->fb = ssr_filter_bank_init(hDecoder->frameLength/SSR_BANDS);
-    else
-#endif
+
         hDecoder->fb = filter_bank_init(hDecoder->frameLength);
 
 #ifdef LD_DEC
@@ -466,11 +457,7 @@ char NeAACDecInit2(NeAACDecHandle hpDecoder,
 #endif
 
     /* must be done before frameLength is divided by 2 for LD */
-#ifdef SSR_DEC
-    if (hDecoder->object_type == SSR)
-        hDecoder->fb = ssr_filter_bank_init(hDecoder->frameLength/SSR_BANDS);
-    else
-#endif
+
         hDecoder->fb = filter_bank_init(hDecoder->frameLength);
 
 #ifdef LD_DEC
@@ -503,10 +490,7 @@ void NeAACDecClose(NeAACDecHandle hpDecoder)
     {
         if (hDecoder->time_out[i]) faad_free(hDecoder->time_out[i]);
         if (hDecoder->fb_intermed[i]) faad_free(hDecoder->fb_intermed[i]);
-#ifdef SSR_DEC
-        if (hDecoder->ssr_overlap[i]) faad_free(hDecoder->ssr_overlap[i]);
-        if (hDecoder->prev_fmd[i]) faad_free(hDecoder->prev_fmd[i]);
-#endif
+
 #ifdef MAIN_DEC
         if (hDecoder->pred_stat[i]) faad_free(hDecoder->pred_stat[i]);
 #endif
@@ -515,11 +499,7 @@ void NeAACDecClose(NeAACDecHandle hpDecoder)
 #endif
     }
 
-#ifdef SSR_DEC
-    if (hDecoder->object_type == SSR)
-        ssr_filter_bank_end(hDecoder->fb);
-    else
-#endif
+
         filter_bank_end(hDecoder->fb);
 
     drc_end(hDecoder->drc);

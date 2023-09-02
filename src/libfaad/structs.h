@@ -226,16 +226,7 @@ typedef struct
     uint8_t coef[8][4][32];
 } tns_info;
 
-#ifdef SSR_DEC
-typedef struct
-{
-    uint8_t max_band;
 
-    uint8_t adjust_num[4][8];
-    uint8_t alevcode[4][8][8];
-    uint8_t aloccode[4][8][8];
-} ssr_info;
-#endif
 
 typedef struct
 {
@@ -281,9 +272,7 @@ typedef struct
     ltp_info ltp;
     ltp_info ltp2;
 #endif
-#ifdef SSR_DEC
-    ssr_info ssr;
-#endif
+
 
 #ifdef ERROR_RESILIENCE
     /* ER HCR data */
@@ -396,11 +385,7 @@ typedef struct
     uint8_t ps_used_global;
 #endif
 
-#ifdef SSR_DEC
-    int32_t *ssr_overlap[MAX_CHANNELS];
-    int32_t *prev_fmd[MAX_CHANNELS];
-    int32_t ipqf_buffer[MAX_CHANNELS][4][96/4];
-#endif
+
 
 #ifdef MAIN_DEC
     pred_state *pred_stat[MAX_CHANNELS];

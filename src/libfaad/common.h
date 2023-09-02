@@ -57,7 +57,6 @@ extern "C" {
 #define PREFER_POINTERS
 #define ERROR_RESILIENCE
 #define MAIN_DEC  /* Allow decoding of MAIN profile AAC */
-#define SSR_DEC   /* Allow decoding of SSR profile AAC */
 #define LTP_DEC   /* Allow decoding of LTP profile AAC */
 #define LD_DEC    /* Allow decoding of LD profile AAC */
 #define SBR_DEC
@@ -85,8 +84,6 @@ extern "C" {
   #undef LD_DEC
   #undef LTP_DEC
   #undef MAIN_DEC
-  #undef SSR_DEC
-
   #undef ALLOW_SMALL_FRAMELENGTH
   #undef ERROR_RESILIENCE
 #endif
@@ -135,7 +132,6 @@ typedef float float32_t;
 /* FIXED_POINT doesn't work with MAIN and SSR yet */
 #ifdef FIXED_POINT
   #undef MAIN_DEC
-  #undef SSR_DEC
 #endif
 
 #include "fixed.h"

@@ -51,10 +51,7 @@
 #include "drc.h"
 #include "lt_predict.h"
 #include "ic_predict.h"
-#ifdef SSR_DEC
-#include "ssr.h"
-#include "ssr_fb.h"
-#endif
+
 
 
 /* static function declarations */
@@ -760,23 +757,7 @@ static uint8_t allocate_single_channel(NeAACDecStruct *hDecoder, uint8_t channel
     hDecoder->fb_intermed[channel] = (int32_t*)faad_malloc(hDecoder->frameLength*sizeof(int32_t));
     memset(hDecoder->fb_intermed[channel], 0, hDecoder->frameLength*sizeof(int32_t));
 
-#ifdef SSR_DEC
-    if (hDecoder->object_type == SSR)
-    {
-        if (hDecoder->ssr_overlap[channel] == NULL)
-        {
-            hDecoder->ssr_overlap[channel] = (int32_t*)faad_malloc(2*hDecoder->frameLength*sizeof(int32_t));
-            memset(hDecoder->ssr_overlap[channel], 0, 2*hDecoder->frameLength*sizeof(int32_t));
-        }
-        if (hDecoder->prev_fmd[channel] == NULL)
-        {
-            uint16_t k;
-            hDecoder->prev_fmd[channel] = (int32_t*)faad_malloc(2*hDecoder->frameLength*sizeof(int32_t));
-            for (k = 0; k < 2*hDecoder->frameLength; k++)
-                hDecoder->prev_fmd[channel][k] = REAL_CONST(-1);
-        }
-    }
-#endif
+
 
     return 0;
 }
@@ -853,35 +834,7 @@ static uint8_t allocate_channel_pair(NeAACDecStruct *hDecoder,
         memset(hDecoder->fb_intermed[paired_channel], 0, hDecoder->frameLength*sizeof(int32_t));
     }
 
-#ifdef SSR_DEC
-    if (hDecoder->object_type == SSR)
-    {
-        if (hDecoder->ssr_overlap[cpe->channel] == NULL)
-        {
-            hDecoder->ssr_overlap[cpe->channel] = (int32_t*)faad_malloc(2*hDecoder->frameLength*sizeof(int32_t));
-            memset(hDecoder->ssr_overlap[cpe->channel], 0, 2*hDecoder->frameLength*sizeof(int32_t));
-        }
-        if (hDecoder->ssr_overlap[cpe->paired_channel] == NULL)
-        {
-            hDecoder->ssr_overlap[cpe->paired_channel] = (int32_t*)faad_malloc(2*hDecoder->frameLength*sizeof(int32_t));
-            memset(hDecoder->ssr_overlap[cpe->paired_channel], 0, 2*hDecoder->frameLength*sizeof(int32_t));
-        }
-        if (hDecoder->prev_fmd[cpe->channel] == NULL)
-        {
-            uint16_t k;
-            hDecoder->prev_fmd[cpe->channel] = (int32_t*)faad_malloc(2*hDecoder->frameLength*sizeof(int32_t));
-            for (k = 0; k < 2*hDecoder->frameLength; k++)
-                hDecoder->prev_fmd[cpe->channel][k] = REAL_CONST(-1);
-        }
-        if (hDecoder->prev_fmd[cpe->paired_channel] == NULL)
-        {
-            uint16_t k;
-            hDecoder->prev_fmd[cpe->paired_channel] = (int32_t*)faad_malloc(2*hDecoder->frameLength*sizeof(int32_t));
-            for (k = 0; k < 2*hDecoder->frameLength; k++)
-                hDecoder->prev_fmd[cpe->paired_channel][k] = REAL_CONST(-1);
-        }
-    }
-#endif
+
 
     return 0;
 }
@@ -1011,22 +964,12 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
     }
 #endif
     /* filter bank */
-#ifdef SSR_DEC
-    if (hDecoder->object_type != SSR)
-    {
-#endif
+
         ifilter_bank(hDecoder->fb, ics->window_sequence, ics->window_shape,
             hDecoder->window_shape_prev[sce->channel], spec_coef,
             hDecoder->time_out[sce->channel], hDecoder->fb_intermed[sce->channel],
             hDecoder->object_type, hDecoder->frameLength);
-#ifdef SSR_DEC
-    } else {
-        ssr_decode(&(ics->ssr), hDecoder->fb, ics->window_sequence, ics->window_shape,
-            hDecoder->window_shape_prev[sce->channel], spec_coef, hDecoder->time_out[sce->channel],
-            hDecoder->ssr_overlap[sce->channel], hDecoder->ipqf_buffer[sce->channel], hDecoder->prev_fmd[sce->channel],
-            hDecoder->frameLength);
-    }
-#endif
+
 
     /* save window shape for next frame */
     hDecoder->window_shape_prev[sce->channel] = ics->window_shape;
@@ -1258,10 +1201,7 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_s
     }
 #endif
     /* filter bank */
-#ifdef SSR_DEC
-    if (hDecoder->object_type != SSR)
-    {
-#endif
+
         ifilter_bank(hDecoder->fb, ics1->window_sequence, ics1->window_shape,
             hDecoder->window_shape_prev[cpe->channel], spec_coef1,
             hDecoder->time_out[cpe->channel], hDecoder->fb_intermed[cpe->channel],
@@ -1270,18 +1210,7 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_s
             hDecoder->window_shape_prev[cpe->paired_channel], spec_coef2,
             hDecoder->time_out[cpe->paired_channel], hDecoder->fb_intermed[cpe->paired_channel],
             hDecoder->object_type, hDecoder->frameLength);
-#ifdef SSR_DEC
-    } else {
-        ssr_decode(&(ics1->ssr), hDecoder->fb, ics1->window_sequence, ics1->window_shape,
-            hDecoder->window_shape_prev[cpe->channel], spec_coef1, hDecoder->time_out[cpe->channel],
-            hDecoder->ssr_overlap[cpe->channel], hDecoder->ipqf_buffer[cpe->channel],
-            hDecoder->prev_fmd[cpe->channel], hDecoder->frameLength);
-        ssr_decode(&(ics2->ssr), hDecoder->fb, ics2->window_sequence, ics2->window_shape,
-            hDecoder->window_shape_prev[cpe->paired_channel], spec_coef2, hDecoder->time_out[cpe->paired_channel],
-            hDecoder->ssr_overlap[cpe->paired_channel], hDecoder->ipqf_buffer[cpe->paired_channel],
-            hDecoder->prev_fmd[cpe->paired_channel], hDecoder->frameLength);
-    }
-#endif
+
 
     /* save window shape for next frame */
     hDecoder->window_shape_prev[cpe->channel] = ics1->window_shape;

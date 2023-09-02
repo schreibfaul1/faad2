@@ -193,10 +193,10 @@ uint8_t* faad_getbitbuffer(bitfile* ld, uint32_t bits) {
 
     uint8_t* buffer = (uint8_t*)faad_malloc((bytes + 1) * sizeof(uint8_t));
 
-    for(i = 0; i < bytes; i++) { buffer[i] = (uint8_t)faad_getbits(ld, 8 DEBUGVAR(print, var, dbg)); }
+    for(i = 0; i < bytes; i++) { buffer[i] = (uint8_t)faad_getbits(ld, 8); }
 
     if(remainder) {
-        temp = faad_getbits(ld, remainder DEBUGVAR(print, var, dbg)) << (8 - remainder);
+        temp = faad_getbits(ld, remainder ) << (8 - remainder);
 
         buffer[bytes] = (uint8_t)temp;
     }

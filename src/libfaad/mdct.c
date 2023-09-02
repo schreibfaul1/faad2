@@ -87,10 +87,7 @@ mdct_info *faad_mdct_init(uint16_t N)
     case 960:  mdct->sincos = (complex_t*)mdct_tab_960;  break;
 #endif
 #endif
-#ifdef SSR_DEC
-    case 512:  mdct->sincos = (complex_t*)mdct_tab_512;  break;
-    case 64:   mdct->sincos = (complex_t*)mdct_tab_64;   break;
-#endif
+
     }
 
     /* initialise fft */

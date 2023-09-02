@@ -81,9 +81,7 @@ static uint8_t ics_info(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld,
                         uint8_t common_window);
 static uint8_t section_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld);
 static uint8_t scale_factor_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld);
-#ifdef SSR_DEC
-static void gain_control_data(bitfile *ld, ic_stream *ics);
-#endif
+
 static uint8_t spectral_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld,
                              int16_t *spectral_data);
 static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count);
@@ -110,21 +108,21 @@ int8_t GASpecificConfig(bitfile *ld, mp4AudioSpecificConfig *mp4ASC,
 
     /* 1024 or 960 */
     mp4ASC->frameLengthFlag = faad_get1bit(ld
-        DEBUGVAR(1,138,"GASpecificConfig(): FrameLengthFlag"));
+     );
 #ifndef ALLOW_SMALL_FRAMELENGTH
     if (mp4ASC->frameLengthFlag == 1)
         return -3;
 #endif
 
     mp4ASC->dependsOnCoreCoder = faad_get1bit(ld
-        DEBUGVAR(1,139,"GASpecificConfig(): DependsOnCoreCoder"));
+   );
     if (mp4ASC->dependsOnCoreCoder == 1)
     {
         mp4ASC->coreCoderDelay = (uint16_t)faad_getbits(ld, 14
-            DEBUGVAR(1,140,"GASpecificConfig(): CoreCoderDelay"));
+            );
     }
 
-    mp4ASC->extensionFlag = faad_get1bit(ld DEBUGVAR(1,141,"GASpecificConfig(): ExtensionFlag"));
+    mp4ASC->extensionFlag = faad_get1bit(ld );
     if (mp4ASC->channelsConfiguration == 0)
     {
         if (program_config_element(&pce, ld))
@@ -147,11 +145,11 @@ int8_t GASpecificConfig(bitfile *ld, mp4AudioSpecificConfig *mp4ASC,
         if (mp4ASC->objectTypeIndex >= ER_OBJECT_START)
         {
             mp4ASC->aacSectionDataResilienceFlag = faad_get1bit(ld
-                DEBUGVAR(1,144,"GASpecificConfig(): aacSectionDataResilienceFlag"));
+            );
             mp4ASC->aacScalefactorDataResilienceFlag = faad_get1bit(ld
-                DEBUGVAR(1,145,"GASpecificConfig(): aacScalefactorDataResilienceFlag"));
+             );
             mp4ASC->aacSpectralDataResilienceFlag = faad_get1bit(ld
-                DEBUGVAR(1,146,"GASpecificConfig(): aacSpectralDataResilienceFlag"));
+             );
         }
         /* 1 bit: extensionFlag3 */
         faad_getbits(ld, 1);
@@ -177,57 +175,57 @@ static uint8_t program_config_element(program_config *pce, bitfile *ld)
     pce->channels = 0;
 
     pce->element_instance_tag = (uint8_t)faad_getbits(ld, 4
-        DEBUGVAR(1,10,"program_config_element(): element_instance_tag"));
+      );
 
     pce->object_type = (uint8_t)faad_getbits(ld, 2
-        DEBUGVAR(1,11,"program_config_element(): object_type"));
+    );
     pce->sf_index = (uint8_t)faad_getbits(ld, 4
-        DEBUGVAR(1,12,"program_config_element(): sf_index"));
+      );
     pce->num_front_channel_elements = (uint8_t)faad_getbits(ld, 4
-        DEBUGVAR(1,13,"program_config_element(): num_front_channel_elements"));
+       );
     pce->num_side_channel_elements = (uint8_t)faad_getbits(ld, 4
-        DEBUGVAR(1,14,"program_config_element(): num_side_channel_elements"));
+        );
     pce->num_back_channel_elements = (uint8_t)faad_getbits(ld, 4
-        DEBUGVAR(1,15,"program_config_element(): num_back_channel_elements"));
+       );
     pce->num_lfe_channel_elements = (uint8_t)faad_getbits(ld, 2
-        DEBUGVAR(1,16,"program_config_element(): num_lfe_channel_elements"));
+    );
     pce->num_assoc_data_elements = (uint8_t)faad_getbits(ld, 3
-        DEBUGVAR(1,17,"program_config_element(): num_assoc_data_elements"));
+     );
     pce->num_valid_cc_elements = (uint8_t)faad_getbits(ld, 4
-        DEBUGVAR(1,18,"program_config_element(): num_valid_cc_elements"));
+        );
 
     pce->mono_mixdown_present = faad_get1bit(ld
-        DEBUGVAR(1,19,"program_config_element(): mono_mixdown_present"));
+      );
     if (pce->mono_mixdown_present == 1)
     {
         pce->mono_mixdown_element_number = (uint8_t)faad_getbits(ld, 4
-            DEBUGVAR(1,20,"program_config_element(): mono_mixdown_element_number"));
+        );
     }
 
     pce->stereo_mixdown_present = faad_get1bit(ld
-        DEBUGVAR(1,21,"program_config_element(): stereo_mixdown_present"));
+       );
     if (pce->stereo_mixdown_present == 1)
     {
         pce->stereo_mixdown_element_number = (uint8_t)faad_getbits(ld, 4
-            DEBUGVAR(1,22,"program_config_element(): stereo_mixdown_element_number"));
+         );
     }
 
     pce->matrix_mixdown_idx_present = faad_get1bit(ld
-        DEBUGVAR(1,23,"program_config_element(): matrix_mixdown_idx_present"));
+    );
     if (pce->matrix_mixdown_idx_present == 1)
     {
         pce->matrix_mixdown_idx = (uint8_t)faad_getbits(ld, 2
-            DEBUGVAR(1,24,"program_config_element(): matrix_mixdown_idx"));
+        );
         pce->pseudo_surround_enable = faad_get1bit(ld
-            DEBUGVAR(1,25,"program_config_element(): pseudo_surround_enable"));
+         );
     }
 
     for (i = 0; i < pce->num_front_channel_elements; i++)
     {
         pce->front_element_is_cpe[i] = faad_get1bit(ld
-            DEBUGVAR(1,26,"program_config_element(): front_element_is_cpe"));
+    );
         pce->front_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
-            DEBUGVAR(1,27,"program_config_element(): front_element_tag_select"));
+         ) ;
 
         if (pce->front_element_is_cpe[i] & 1)
         {
@@ -244,9 +242,9 @@ static uint8_t program_config_element(program_config *pce, bitfile *ld)
     for (i = 0; i < pce->num_side_channel_elements; i++)
     {
         pce->side_element_is_cpe[i] = faad_get1bit(ld
-            DEBUGVAR(1,28,"program_config_element(): side_element_is_cpe"));
+            );
         pce->side_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
-            DEBUGVAR(1,29,"program_config_element(): side_element_tag_select"));
+         );
 
         if (pce->side_element_is_cpe[i] & 1)
         {
@@ -263,9 +261,9 @@ static uint8_t program_config_element(program_config *pce, bitfile *ld)
     for (i = 0; i < pce->num_back_channel_elements; i++)
     {
         pce->back_element_is_cpe[i] = faad_get1bit(ld
-            DEBUGVAR(1,30,"program_config_element(): back_element_is_cpe"));
+            );
         pce->back_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
-            DEBUGVAR(1,31,"program_config_element(): back_element_tag_select"));
+     );
 
         if (pce->back_element_is_cpe[i] & 1)
         {
@@ -282,7 +280,7 @@ static uint8_t program_config_element(program_config *pce, bitfile *ld)
     for (i = 0; i < pce->num_lfe_channel_elements; i++)
     {
         pce->lfe_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
-            DEBUGVAR(1,32,"program_config_element(): lfe_element_tag_select"));
+           );
 
         pce->sce_channel[pce->lfe_element_tag_select[i]] = pce->channels;
         pce->num_lfe_channels++;
@@ -291,25 +289,25 @@ static uint8_t program_config_element(program_config *pce, bitfile *ld)
 
     for (i = 0; i < pce->num_assoc_data_elements; i++)
         pce->assoc_data_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
-        DEBUGVAR(1,33,"program_config_element(): assoc_data_element_tag_select"));
+       );
 
     for (i = 0; i < pce->num_valid_cc_elements; i++)
     {
         pce->cc_element_is_ind_sw[i] = faad_get1bit(ld
-            DEBUGVAR(1,34,"program_config_element(): cc_element_is_ind_sw"));
+          );
         pce->valid_cc_element_tag_select[i] = (uint8_t)faad_getbits(ld, 4
-            DEBUGVAR(1,35,"program_config_element(): valid_cc_element_tag_select"));
+            );
     }
 
     faad_byte_align(ld);
 
     pce->comment_field_bytes = (uint8_t)faad_getbits(ld, 8
-        DEBUGVAR(1,36,"program_config_element(): comment_field_bytes"));
+       );
 
     for (i = 0; i < pce->comment_field_bytes; i++)
     {
         pce->comment_field_data[i] = (uint8_t)faad_getbits(ld, 8
-            DEBUGVAR(1,37,"program_config_element(): comment_field_data"));
+           );
     }
     pce->comment_field_data[i] = 0;
 
@@ -445,7 +443,7 @@ void raw_data_block(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *hInfo,
 #endif
         /* Table 4.4.3: raw_data_block() */
         while ((id_syn_ele = (uint8_t)faad_getbits(ld, LEN_SE_ID
-            DEBUGVAR(1,4,"NeAACDecDecode(): id_syn_ele"))) != ID_END)
+          )) != ID_END)
         {
             switch (id_syn_ele) {
             case ID_SCE:
@@ -625,7 +623,7 @@ static uint8_t single_lfe_channel_element(NeAACDecStruct *hDecoder, bitfile *ld,
      int16_t spec_data[1024] = {0};
 
     sce.element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG
-        DEBUGVAR(1,38,"single_lfe_channel_element(): element_instance_tag"));
+        );
 
     *tag = sce.element_instance_tag;
     sce.channel = channel;
@@ -1149,111 +1147,13 @@ static uint8_t fill_element(NeAACDecStruct *hDecoder, bitfile *ld, drc_info *drc
     return 0;
 }
 
-/* Table 4.4.12 */
-#ifdef SSR_DEC
-static void gain_control_data(bitfile *ld, ic_stream *ics)
-{
-    uint8_t bd, wd, ad;
-    ssr_info *ssr = &(ics->ssr);
-
-    ssr->max_band = (uint8_t)faad_getbits(ld, 2
-        DEBUGVAR(1,1000,"gain_control_data(): max_band"));
-
-    if (ics->window_sequence == ONLY_LONG_SEQUENCE)
-    {
-        for (bd = 1; bd <= ssr->max_band; bd++)
-        {
-            for (wd = 0; wd < 1; wd++)
-            {
-                ssr->adjust_num[bd][wd] = (uint8_t)faad_getbits(ld, 3
-                    DEBUGVAR(1,1001,"gain_control_data(): adjust_num"));
-
-                for (ad = 0; ad < ssr->adjust_num[bd][wd]; ad++)
-                {
-                    ssr->alevcode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
-                        DEBUGVAR(1,1002,"gain_control_data(): alevcode"));
-                    ssr->aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 5
-                        DEBUGVAR(1,1003,"gain_control_data(): aloccode"));
-                }
-            }
-        }
-    } else if (ics->window_sequence == LONG_START_SEQUENCE) {
-        for (bd = 1; bd <= ssr->max_band; bd++)
-        {
-            for (wd = 0; wd < 2; wd++)
-            {
-                ssr->adjust_num[bd][wd] = (uint8_t)faad_getbits(ld, 3
-                    DEBUGVAR(1,1001,"gain_control_data(): adjust_num"));
-
-                for (ad = 0; ad < ssr->adjust_num[bd][wd]; ad++)
-                {
-                    ssr->alevcode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
-                        DEBUGVAR(1,1002,"gain_control_data(): alevcode"));
-                    if (wd == 0)
-                    {
-                        ssr->aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
-                            DEBUGVAR(1,1003,"gain_control_data(): aloccode"));
-                    } else {
-                        ssr->aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 2
-                            DEBUGVAR(1,1003,"gain_control_data(): aloccode"));
-                    }
-                }
-            }
-        }
-    } else if (ics->window_sequence == EIGHT_SHORT_SEQUENCE) {
-        for (bd = 1; bd <= ssr->max_band; bd++)
-        {
-            for (wd = 0; wd < 8; wd++)
-            {
-                ssr->adjust_num[bd][wd] = (uint8_t)faad_getbits(ld, 3
-                    DEBUGVAR(1,1001,"gain_control_data(): adjust_num"));
-
-                for (ad = 0; ad < ssr->adjust_num[bd][wd]; ad++)
-                {
-                    ssr->alevcode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
-                        DEBUGVAR(1,1002,"gain_control_data(): alevcode"));
-                    ssr->aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 2
-                        DEBUGVAR(1,1003,"gain_control_data(): aloccode"));
-                }
-            }
-        }
-    } else if (ics->window_sequence == LONG_STOP_SEQUENCE) {
-        for (bd = 1; bd <= ssr->max_band; bd++)
-        {
-            for (wd = 0; wd < 2; wd++)
-            {
-                ssr->adjust_num[bd][wd] = (uint8_t)faad_getbits(ld, 3
-                    DEBUGVAR(1,1001,"gain_control_data(): adjust_num"));
-
-                for (ad = 0; ad < ssr->adjust_num[bd][wd]; ad++)
-                {
-                    ssr->alevcode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
-                        DEBUGVAR(1,1002,"gain_control_data(): alevcode"));
-
-                    if (wd == 0)
-                    {
-                        ssr->aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 4
-                            DEBUGVAR(1,1003,"gain_control_data(): aloccode"));
-                    } else {
-                        ssr->aloccode[bd][wd][ad] = (uint8_t)faad_getbits(ld, 5
-                            DEBUGVAR(1,1003,"gain_control_data(): aloccode"));
-                    }
-                }
-            }
-        }
-    }
-}
-#endif
-
-
-
 static uint8_t side_info(NeAACDecStruct *hDecoder, element *ele,
                          bitfile *ld, ic_stream *ics, uint8_t scal_flag)
 {
     uint8_t result;
 
     ics->global_gain = (uint8_t)faad_getbits(ld, 8
-        DEBUGVAR(1,67,"individual_channel_stream(): global_gain"));
+    );
 
     if (!ele->common_window && !scal_flag)
     {
@@ -1276,7 +1176,7 @@ static uint8_t side_info(NeAACDecStruct *hDecoder, element *ele,
          **/
         /* get pulse data */
         if ((ics->pulse_data_present = faad_get1bit(ld
-            DEBUGVAR(1,68,"individual_channel_stream(): pulse_data_present"))) & 1)
+           )) & 1)
         {
             if ((result = pulse_data(ics, &(ics->pul), ld)) > 0)
                 return result;
@@ -1284,7 +1184,7 @@ static uint8_t side_info(NeAACDecStruct *hDecoder, element *ele,
 
         /* get tns data */
         if ((ics->tns_data_present = faad_get1bit(ld
-            DEBUGVAR(1,69,"individual_channel_stream(): tns_data_present"))) & 1)
+          )) & 1)
         {
 #ifdef ERROR_RESILIENCE
             if (hDecoder->object_type < ER_OBJECT_START)
@@ -1294,16 +1194,11 @@ static uint8_t side_info(NeAACDecStruct *hDecoder, element *ele,
 
         /* get gain control data */
         if ((ics->gain_control_data_present = faad_get1bit(ld
-            DEBUGVAR(1,70,"individual_channel_stream(): gain_control_data_present"))) & 1)
+            )) & 1)
         {
-#ifdef SSR_DEC
-            if (hDecoder->object_type != SSR)
-                return 1;
-            else
-                gain_control_data(ld, ics);
-#else
+
             return 1;
-#endif
+
         }
     }
 
@@ -1311,7 +1206,7 @@ static uint8_t side_info(NeAACDecStruct *hDecoder, element *ele,
     if (hDecoder->aacSpectralDataResilienceFlag)
     {
         ics->length_of_reordered_spectral_data = (uint16_t)faad_getbits(ld, 14
-            DEBUGVAR(1,147,"individual_channel_stream(): length_of_reordered_spectral_data"));
+            );
 
         if (hDecoder->channelConfiguration == 2)
         {
@@ -1323,7 +1218,7 @@ static uint8_t side_info(NeAACDecStruct *hDecoder, element *ele,
         }
 
         ics->length_of_longest_codeword = (uint8_t)faad_getbits(ld, 6
-            DEBUGVAR(1,148,"individual_channel_stream(): length_of_longest_codeword"));
+           );
         if (ics->length_of_longest_codeword >= 49)
             ics->length_of_longest_codeword = 49;
     }
@@ -1435,7 +1330,7 @@ static uint8_t section_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *l
 #endif
 
             ics->sect_cb[g][i] = (uint8_t)faad_getbits(ld, sect_cb_bits
-                DEBUGVAR(1,71,"section_data(): sect_cb"));
+              );
 
             if (ics->sect_cb[g][i] == 12)
                 return 32;
@@ -1466,7 +1361,7 @@ static uint8_t section_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *l
             } else {
 #endif
                 sect_len_incr = (uint8_t)faad_getbits(ld, sect_bits
-                    DEBUGVAR(1,72,"section_data(): sect_len_incr"));
+                    );
 #ifdef ERROR_RESILIENCE
             }
 #endif
@@ -1475,7 +1370,7 @@ static uint8_t section_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *l
             {
                 sect_len += sect_len_incr;
                 sect_len_incr = (uint8_t)faad_getbits(ld, sect_bits
-                    DEBUGVAR(1,72,"section_data(): sect_len_incr"));
+                  );
             }
 
             sect_len += sect_len_incr;
@@ -1595,7 +1490,7 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
                 {
                     noise_pcm_flag = 0;
                     t = (int16_t)faad_getbits(ld, 9
-                        DEBUGVAR(1,73,"scale_factor_data(): first noise")) - 256;
+                        ) - 256;
                 } else {
                     t = huffman_scale_factor(ld);
                     t -= 60;
@@ -1681,7 +1576,7 @@ static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
     for (w = 0; w < ics->num_windows; w++)
     {
         tns->n_filt[w] = (uint8_t)faad_getbits(ld, n_filt_bits
-            DEBUGVAR(1,74,"tns_data(): n_filt"));
+         );
 #if 0
         printf("%d\n", tns->n_filt[w]);
 #endif
@@ -1689,7 +1584,7 @@ static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
         if (tns->n_filt[w])
         {
             if ((tns->coef_res[w] = faad_get1bit(ld
-                DEBUGVAR(1,75,"tns_data(): coef_res"))) & 1)
+              )) & 1)
             {
                 start_coef_bits = 4;
             } else {
@@ -1703,24 +1598,24 @@ static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
         for (filt = 0; filt < tns->n_filt[w]; filt++)
         {
             tns->length[w][filt] = (uint8_t)faad_getbits(ld, length_bits
-                DEBUGVAR(1,76,"tns_data(): length"));
+         );
 #if 0
             printf("%d\n", tns->length[w][filt]);
 #endif
             tns->order[w][filt]  = (uint8_t)faad_getbits(ld, order_bits
-                DEBUGVAR(1,77,"tns_data(): order"));
+              );
 #if 0
             printf("%d\n", tns->order[w][filt]);
 #endif
             if (tns->order[w][filt])
             {
                 tns->direction[w][filt] = faad_get1bit(ld
-                    DEBUGVAR(1,78,"tns_data(): direction"));
+                  );
 #if 0
                 printf("%d\n", tns->direction[w][filt]);
 #endif
                 tns->coef_compress[w][filt] = faad_get1bit(ld
-                    DEBUGVAR(1,79,"tns_data(): coef_compress"));
+              );
 #if 0
                 printf("%d\n", tns->coef_compress[w][filt]);
 #endif
@@ -1729,7 +1624,7 @@ static void tns_data(ic_stream *ics, tns_info *tns, bitfile *ld)
                 for (i = 0; i < tns->order[w][filt]; i++)
                 {
                     tns->coef[w][filt][i] = (uint8_t)faad_getbits(ld, coef_bits
-                        DEBUGVAR(1,80,"tns_data(): coef"));
+                        );
 #if 0
                     printf("%d\n", tns->coef[w][filt][i]);
 #endif
@@ -1751,17 +1646,17 @@ static uint8_t ltp_data(NeAACDecStruct *hDecoder, ic_stream *ics, ltp_info *ltp,
     if (hDecoder->object_type == LD)
     {
         ltp->lag_update = (uint8_t)faad_getbits(ld, 1
-            DEBUGVAR(1,142,"ltp_data(): lag_update"));
+            );
 
         if (ltp->lag_update)
         {
             ltp->lag = (uint16_t)faad_getbits(ld, 10
-                DEBUGVAR(1,81,"ltp_data(): lag"));
+               );
         }
     } else {
 #endif
         ltp->lag = (uint16_t)faad_getbits(ld, 11
-            DEBUGVAR(1,81,"ltp_data(): lag"));
+           );
 #ifdef LD_DEC
     }
 #endif
@@ -1771,21 +1666,21 @@ static uint8_t ltp_data(NeAACDecStruct *hDecoder, ic_stream *ics, ltp_info *ltp,
         return 18;
 
     ltp->coef = (uint8_t)faad_getbits(ld, 3
-        DEBUGVAR(1,82,"ltp_data(): coef"));
+ );
 
     if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
     {
         for (w = 0; w < ics->num_windows; w++)
         {
             if ((ltp->short_used[w] = faad_get1bit(ld
-                DEBUGVAR(1,83,"ltp_data(): short_used"))) & 1)
+                )) & 1)
             {
                 ltp->short_lag_present[w] = faad_get1bit(ld
-                    DEBUGVAR(1,84,"ltp_data(): short_lag_present"));
+                   );
                 if (ltp->short_lag_present[w])
                 {
                     ltp->short_lag[w] = (uint8_t)faad_getbits(ld, 4
-                        DEBUGVAR(1,85,"ltp_data(): short_lag"));
+                       );
                 }
             }
         }
@@ -1795,7 +1690,7 @@ static uint8_t ltp_data(NeAACDecStruct *hDecoder, ic_stream *ics, ltp_info *ltp,
         for (sfb = 0; sfb < ltp->last_band; sfb++)
         {
             ltp->long_used[sfb] = faad_get1bit(ld
-                DEBUGVAR(1,86,"ltp_data(): long_used"));
+            );
         }
     }
 
@@ -1894,7 +1789,7 @@ static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count)
     uint8_t align = 4, data_element_version, loopCounter;
 
     uint8_t extension_type = (uint8_t)faad_getbits(ld, 4
-        DEBUGVAR(1,87,"extension_payload(): extension_type"));
+       );
 
     switch (extension_type)
     {
@@ -1904,16 +1799,16 @@ static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count)
         return n;
     case EXT_FILL_DATA:
         /* fill_nibble = */ faad_getbits(ld, 4
-            DEBUGVAR(1,136,"extension_payload(): fill_nibble")); /* must be '0000' */
+          ); /* must be '0000' */
         for (i = 0; i < count-1; i++)
         {
             /* fill_byte[i] = */ faad_getbits(ld, 8
-                DEBUGVAR(1,88,"extension_payload(): fill_byte")); /* must be '10100101' */
+             ); /* must be '10100101' */
         }
         return count;
     case EXT_DATA_ELEMENT:
         data_element_version = (uint8_t)faad_getbits(ld, 4
-            DEBUGVAR(1,400,"extension_payload(): data_element_version"));
+            );
         switch (data_element_version)
         {
         case ANC_DATA:
@@ -1921,7 +1816,7 @@ static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count)
             dataElementLength = 0;
             do {
                 dataElementLengthPart = (uint8_t)faad_getbits(ld, 8
-                    DEBUGVAR(1,401,"extension_payload(): dataElementLengthPart"));
+                  );
                 dataElementLength += dataElementLengthPart;
                 loopCounter++;
             } while (dataElementLengthPart == 255);
@@ -1929,7 +1824,7 @@ static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count)
             for (i = 0; i < dataElementLength; i++)
             {
                 /* data_element_byte[i] = */ faad_getbits(ld, 8
-                    DEBUGVAR(1,402,"extension_payload(): data_element_byte"));
+                   );
                 return (dataElementLength+loopCounter+1);
             }
         default:
@@ -1938,11 +1833,11 @@ static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count)
     case EXT_FIL:
     default:
         faad_getbits(ld, align
-            DEBUGVAR(1,88,"extension_payload(): fill_nibble"));
+          );
         for (i = 0; i < count-1; i++)
         {
             /* other_bits[i] = */ faad_getbits(ld, 8
-               DEBUGVAR(1,89,"extension_payload(): fill_bit"));
+            );
         }
         return count;
     }
@@ -1957,56 +1852,56 @@ static uint8_t dynamic_range_info(bitfile *ld, drc_info *drc)
     drc->num_bands = 1;
 
     if (faad_get1bit(ld
-        DEBUGVAR(1,90,"dynamic_range_info(): has instance_tag")) & 1)
+        ) & 1)
     {
         drc->pce_instance_tag = (uint8_t)faad_getbits(ld, 4
-            DEBUGVAR(1,91,"dynamic_range_info(): pce_instance_tag"));
+           );
         /* drc->drc_tag_reserved_bits = */ faad_getbits(ld, 4
-            DEBUGVAR(1,92,"dynamic_range_info(): drc_tag_reserved_bits"));
+          );
         n++;
     }
 
     drc->excluded_chns_present = faad_get1bit(ld
-        DEBUGVAR(1,93,"dynamic_range_info(): excluded_chns_present"));
+       );
     if (drc->excluded_chns_present == 1)
     {
         n += excluded_channels(ld, drc);
     }
 
     if (faad_get1bit(ld
-        DEBUGVAR(1,94,"dynamic_range_info(): has bands data")) & 1)
+       ) & 1)
     {
         band_incr = (uint8_t)faad_getbits(ld, 4
-            DEBUGVAR(1,95,"dynamic_range_info(): band_incr"));
+           );
         /* drc->drc_bands_reserved_bits = */ faad_getbits(ld, 4
-            DEBUGVAR(1,96,"dynamic_range_info(): drc_bands_reserved_bits"));
+        );
         n++;
         drc->num_bands += band_incr;
 
         for (i = 0; i < drc->num_bands; i++)
         {
             drc->band_top[i] = (uint8_t)faad_getbits(ld, 8
-                DEBUGVAR(1,97,"dynamic_range_info(): band_top"));
+               );
             n++;
         }
     }
 
     if (faad_get1bit(ld
-        DEBUGVAR(1,98,"dynamic_range_info(): has prog_ref_level")) & 1)
+    ) & 1)
     {
         drc->prog_ref_level = (uint8_t)faad_getbits(ld, 7
-            DEBUGVAR(1,99,"dynamic_range_info(): prog_ref_level"));
+         );
         /* drc->prog_ref_level_reserved_bits = */ faad_get1bit(ld
-            DEBUGVAR(1,100,"dynamic_range_info(): prog_ref_level_reserved_bits"));
+            );
         n++;
     }
 
     for (i = 0; i < drc->num_bands; i++)
     {
         drc->dyn_rng_sgn[i] = faad_get1bit(ld
-            DEBUGVAR(1,101,"dynamic_range_info(): dyn_rng_sgn"));
+          );
         drc->dyn_rng_ctl[i] = (uint8_t)faad_getbits(ld, 7
-            DEBUGVAR(1,102,"dynamic_range_info(): dyn_rng_ctl"));
+            );
         n++;
     }
 
@@ -2022,19 +1917,19 @@ static uint8_t excluded_channels(bitfile *ld, drc_info *drc)
     for (i = 0; i < 7; i++)
     {
         drc->exclude_mask[i] = faad_get1bit(ld
-            DEBUGVAR(1,103,"excluded_channels(): exclude_mask"));
+           );
     }
     n++;
 
     while ((drc->additional_excluded_chns[n-1] = faad_get1bit(ld
-        DEBUGVAR(1,104,"excluded_channels(): additional_excluded_chns"))) == 1)
+      )) == 1)
     {
         if (i >= MAX_CHANNELS - num_excl_chan - 7)
             return n;
         for (i = num_excl_chan; i < num_excl_chan+7; i++)
         {
             drc->exclude_mask[i] = faad_get1bit(ld
-                DEBUGVAR(1,105,"excluded_channels(): exclude_mask"));
+               );
         }
         n++;
         num_excl_chan += 7;
@@ -2051,41 +1946,41 @@ void get_adif_header(adif_header *adif, bitfile *ld)
     uint8_t i;
 
     /* adif_id[0] = */ faad_getbits(ld, 8
-        DEBUGVAR(1,106,"get_adif_header(): adif_id[0]"));
+       );
     /* adif_id[1] = */ faad_getbits(ld, 8
-        DEBUGVAR(1,107,"get_adif_header(): adif_id[1]"));
+       );
     /* adif_id[2] = */ faad_getbits(ld, 8
-        DEBUGVAR(1,108,"get_adif_header(): adif_id[2]"));
+        );
     /* adif_id[3] = */ faad_getbits(ld, 8
-        DEBUGVAR(1,109,"get_adif_header(): adif_id[3]"));
+       );
     adif->copyright_id_present = faad_get1bit(ld
-        DEBUGVAR(1,110,"get_adif_header(): copyright_id_present"));
+      );
     if(adif->copyright_id_present)
     {
         for (i = 0; i < 72/8; i++)
         {
             adif->copyright_id[i] = (int8_t)faad_getbits(ld, 8
-                DEBUGVAR(1,111,"get_adif_header(): copyright_id"));
+               );
         }
         adif->copyright_id[i] = 0;
     }
     adif->original_copy  = faad_get1bit(ld
-        DEBUGVAR(1,112,"get_adif_header(): original_copy"));
+      );
     adif->home = faad_get1bit(ld
-        DEBUGVAR(1,113,"get_adif_header(): home"));
+  );
     adif->bitstream_type = faad_get1bit(ld
-        DEBUGVAR(1,114,"get_adif_header(): bitstream_type"));
+       );
     adif->bitrate = faad_getbits(ld, 23
-        DEBUGVAR(1,115,"get_adif_header(): bitrate"));
+        );
     adif->num_program_config_elements = (uint8_t)faad_getbits(ld, 4
-        DEBUGVAR(1,116,"get_adif_header(): num_program_config_elements"));
+        );
 
     for (i = 0; i < adif->num_program_config_elements + 1; i++)
     {
         if(adif->bitstream_type == 0)
         {
             adif->adif_buffer_fullness = faad_getbits(ld, 20
-                DEBUGVAR(1,117,"get_adif_header(): adif_buffer_fullness"));
+               );
         } else {
             adif->adif_buffer_fullness = 0;
         }
@@ -2119,11 +2014,11 @@ static uint8_t adts_fixed_header(adts_header *adts, bitfile *ld)
         if (adts->syncword != 0xFFF)
         {
             faad_getbits(ld, 8
-                DEBUGVAR(0,0,""));
+                );
         } else {
             sync_err = 0;
             faad_getbits(ld, 12
-                DEBUGVAR(1,118,"adts_fixed_header(): syncword"));
+               );
             break;
         }
     }
@@ -2131,23 +2026,23 @@ static uint8_t adts_fixed_header(adts_header *adts, bitfile *ld)
         return 5;
 
     adts->id = faad_get1bit(ld
-        DEBUGVAR(1,119,"adts_fixed_header(): id"));
+      );
     adts->layer = (uint8_t)faad_getbits(ld, 2
-        DEBUGVAR(1,120,"adts_fixed_header(): layer"));
+        );
     adts->protection_absent = faad_get1bit(ld
-        DEBUGVAR(1,121,"adts_fixed_header(): protection_absent"));
+       );
     adts->profile = (uint8_t)faad_getbits(ld, 2
-        DEBUGVAR(1,122,"adts_fixed_header(): profile"));
+     );
     adts->sf_index = (uint8_t)faad_getbits(ld, 4
-        DEBUGVAR(1,123,"adts_fixed_header(): sf_index"));
+      );
     adts->private_bit = faad_get1bit(ld
-        DEBUGVAR(1,124,"adts_fixed_header(): private_bit"));
+   );
     adts->channel_configuration = (uint8_t)faad_getbits(ld, 3
-        DEBUGVAR(1,125,"adts_fixed_header(): channel_configuration"));
+        );
     adts->original = faad_get1bit(ld
-        DEBUGVAR(1,126,"adts_fixed_header(): original"));
+      );
     adts->home = faad_get1bit(ld
-        DEBUGVAR(1,127,"adts_fixed_header(): home"));
+      );
 
     if (adts->old_format == 1)
     {
@@ -2155,7 +2050,7 @@ static uint8_t adts_fixed_header(adts_header *adts, bitfile *ld)
         if (adts->id == 0)
         {
             adts->emphasis = (uint8_t)faad_getbits(ld, 2
-                DEBUGVAR(1,128,"adts_fixed_header(): emphasis"));
+              );
         }
     }
 
@@ -2166,15 +2061,15 @@ static uint8_t adts_fixed_header(adts_header *adts, bitfile *ld)
 static void adts_variable_header(adts_header *adts, bitfile *ld)
 {
     adts->copyright_identification_bit = faad_get1bit(ld
-        DEBUGVAR(1,129,"adts_variable_header(): copyright_identification_bit"));
+       );
     adts->copyright_identification_start = faad_get1bit(ld
-        DEBUGVAR(1,130,"adts_variable_header(): copyright_identification_start"));
+    );
     adts->aac_frame_length = (uint16_t)faad_getbits(ld, 13
-        DEBUGVAR(1,131,"adts_variable_header(): aac_frame_length"));
+        );
     adts->adts_buffer_fullness = (uint16_t)faad_getbits(ld, 11
-        DEBUGVAR(1,132,"adts_variable_header(): adts_buffer_fullness"));
+      );
     adts->no_raw_data_blocks_in_frame = (uint8_t)faad_getbits(ld, 2
-        DEBUGVAR(1,133,"adts_variable_header(): no_raw_data_blocks_in_frame"));
+      );
 }
 
 /* Table 1.A.8 */
@@ -2183,7 +2078,7 @@ static void adts_error_check(adts_header *adts, bitfile *ld)
     if (adts->protection_absent == 0)
     {
         adts->crc_check = (uint16_t)faad_getbits(ld, 16
-            DEBUGVAR(1,134,"adts_error_check(): crc_check"));
+           );
     }
 }
 
