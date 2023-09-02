@@ -63,7 +63,7 @@ uint32_t faad_get_processed_bits(bitfile* ld);
 void     faad_flushbits_ex(bitfile* ld, uint32_t bits);
 void     faad_rewindbits(bitfile* ld);
 void     faad_resetbits(bitfile* ld, int bits);
-uint8_t* faad_getbitbuffer(bitfile* ld, uint32_t bits DEBUGDEC);
+uint8_t* faad_getbitbuffer(bitfile* ld, uint32_t bits);
 
 /* circumvent memory alignment errors on ARM */
 static inline uint32_t getdword(void* mem) {
@@ -110,7 +110,7 @@ static inline void faad_flushbits(bitfile* ld, uint32_t bits) {
 }
 
 /* return next n bits (right adjusted) */
-static /*inline*/ uint32_t faad_getbits(bitfile* ld, uint32_t n DEBUGDEC) {
+static /*inline*/ uint32_t faad_getbits(bitfile* ld, uint32_t n) {
     uint32_t ret;
 
     if(n == 0) return 0;
@@ -121,9 +121,8 @@ static /*inline*/ uint32_t faad_getbits(bitfile* ld, uint32_t n DEBUGDEC) {
     return ret;
 }
 
-static inline uint8_t faad_get1bit(bitfile* ld DEBUGDEC) {
+static inline uint8_t faad_get1bit(bitfile* ld) {
     uint8_t r;
-
     if(ld->bits_left > 0) {
         ld->bits_left--;
         r = (uint8_t)((ld->bufa >> ld->bits_left) & 1);
@@ -182,7 +181,7 @@ static inline void faad_flushbits_rev(bitfile* ld, uint32_t bits) {
     }
 }
 
-static /*inline*/ uint32_t faad_getbits_rev(bitfile* ld, uint32_t n DEBUGDEC) {
+static /*inline*/ uint32_t faad_getbits_rev(bitfile* ld, uint32_t n) {
     uint32_t ret;
 
     if(n == 0) return 0;

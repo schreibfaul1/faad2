@@ -31,19 +31,15 @@
 #ifndef __TNS_H__
 #define __TNS_H__
 
+#include "structs.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
 #define TNS_MAX_ORDER 20
 
-
-void tns_decode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
-                      uint8_t object_type, int32_t *spec, uint16_t frame_len);
-void tns_encode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
-                      uint8_t object_type, int32_t *spec, uint16_t frame_len);
-
+void tns_decode_frame(ic_stream* ics, tns_info* tns, uint8_t sr_index, uint8_t object_type, int32_t* spec, uint16_t frame_len);
+void tns_encode_frame(ic_stream* ics, tns_info* tns, uint8_t sr_index, uint8_t object_type, int32_t* spec, uint16_t frame_len);
 
 #ifdef __cplusplus
 }

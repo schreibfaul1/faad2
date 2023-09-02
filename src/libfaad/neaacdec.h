@@ -35,26 +35,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-
-#if 1
-/* MACROS FOR BACKWARDS COMPATIBILITY */
-/* structs */
-#define faacDecHandle                  NeAACDecHandle
-#define faacDecConfiguration           NeAACDecConfiguration
-#define faacDecConfigurationPtr        NeAACDecConfigurationPtr
-#define faacDecFrameInfo               NeAACDecFrameInfo
-/* functions */
-#define faacDecGetErrorMessage         NeAACDecGetErrorMessage
-#define faacDecSetConfiguration        NeAACDecSetConfiguration
-#define faacDecGetCurrentConfiguration NeAACDecGetCurrentConfiguration
-#define faacDecInit                    NeAACDecInit
-#define faacDecInit2                   NeAACDecInit2
-#define faacDecPostSeekReset           NeAACDecPostSeekReset
-#define faacDecOpen                    NeAACDecOpen
-#define faacDecClose                   NeAACDecClose
-#define faacDecDecode                  NeAACDecDecode
-#define AudioSpecificConfig            NeAACDecAudioSpecificConfig
-#endif
+#include "new_aac_decoder.h"
 
 
 #ifdef _WIN32
