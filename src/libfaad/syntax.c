@@ -99,10 +99,7 @@ static uint8_t dynamic_range_info(bitfile *ld, drc_info *drc);
 static uint8_t excluded_channels(bitfile *ld, drc_info *drc);
 static uint8_t side_info(NeAACDecStruct *hDecoder, element *ele,
                          bitfile *ld, ic_stream *ics, uint8_t scal_flag);
-#ifdef DRM
-static int8_t DRM_aac_scalable_main_header(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_stream *ics2,
-                                           bitfile *ld, uint8_t this_layer_stereo);
-#endif
+
 
 
 /* Table 4.4.1 */
@@ -466,27 +463,23 @@ void raw_data_block(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *hInfo,
                     return;
                 break;
             case ID_LFE:
-#ifdef DRM
-                hInfo->error = 32;
-#else
+
                 ele_this_frame++;
                 hDecoder->has_lfe++;
                 decode_sce_lfe(hDecoder, hInfo, ld, id_syn_ele);
-#endif
+
                 if (hInfo->error > 0)
                     return;
                 break;
             case ID_CCE: /* not implemented yet, but skip the bits */
-#ifdef DRM
-                hInfo->error = 32;
-#else
+
                 ele_this_frame++;
 #ifdef COUPLING_DEC
                 hInfo->error = coupling_channel_element(hDecoder, ld);
 #else
                 hInfo->error = 6;
 #endif
-#endif
+
                 if (hInfo->error > 0)
                     return;
                 break;
@@ -613,13 +606,7 @@ void raw_data_block(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *hInfo,
 #endif
 
     /* new in corrigendum 14496-3:2002 */
-#ifdef DRM
-    if (hDecoder->object_type != DRM_ER_LC
-#if 0
-        && !hDecoder->latm_header_present
-#endif
-        )
-#endif
+
     {
         faad_byte_align(ld);
     }
@@ -1117,9 +1104,7 @@ static uint8_t fill_element(NeAACDecStruct *hDecoder, bitfile *ld, drc_info *drc
                 hDecoder->sbr[sbr_ele] = sbrDecodeInit(hDecoder->frameLength,
                     hDecoder->element_id[sbr_ele], 2*get_sample_rate(hDecoder->sf_index),
                     hDecoder->downSampledSBR
-#ifdef DRM
-                    , 0
-#endif
+
                     );
             }
             if (!hDecoder->sbr[sbr_ele])
@@ -1138,7 +1123,7 @@ static uint8_t fill_element(NeAACDecStruct *hDecoder, bitfile *ld, drc_info *drc
             }
 #endif
 
-#if (defined(PS_DEC) || defined(DRM_PS))
+#if (defined(PS_DEC))
             if (hDecoder->sbr[sbr_ele]->ps_used)
             {
                 hDecoder->ps_used[sbr_ele] = 1;
@@ -1149,14 +1134,13 @@ static uint8_t fill_element(NeAACDecStruct *hDecoder, bitfile *ld, drc_info *drc
 #endif
         } else {
 #endif
-#ifndef DRM
+
             while (count > 0)
             {
                 count -= extension_payload(ld, drc, count);
             }
-#else
-            return 30;
-#endif
+
+
 #ifdef SBR_DEC
         }
 #endif
@@ -1261,290 +1245,7 @@ static void gain_control_data(bitfile *ld, ic_stream *ics)
 }
 #endif
 
-#ifdef DRM
-/* Table 4.4.13 ASME */
-void DRM_aac_scalable_main_element(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *hInfo,
-                                   bitfile *ld, program_config *pce, drc_info *drc)
-{
-    uint8_t retval = 0;
-    uint8_t channels = hDecoder->fr_channels = 0;
-    uint8_t ch;
-    uint8_t this_layer_stereo = (hDecoder->channelConfiguration > 1) ? 1 : 0;
-    element cpe = {0};
-    ic_stream *ics1 = &(cpe.ics1);
-    ic_stream *ics2 = &(cpe.ics2);
-    int16_t *spec_data;
-    ALIGN int16_t spec_data1[1024] = {0};
-    ALIGN int16_t spec_data2[1024] = {0};
 
-    hDecoder->fr_ch_ele = 0;
-
-    hInfo->error = DRM_aac_scalable_main_header(hDecoder, ics1, ics2, ld, this_layer_stereo);
-    if (hInfo->error > 0)
-        return;
-
-    cpe.common_window = 1;
-    if (this_layer_stereo)
-    {
-        hDecoder->element_id[0] = ID_CPE;
-        if (hDecoder->element_output_channels[hDecoder->fr_ch_ele] == 0)
-            hDecoder->element_output_channels[hDecoder->fr_ch_ele] = 2;
-    } else {
-        hDecoder->element_id[0] = ID_SCE;
-    }
-
-    if (this_layer_stereo)
-    {
-        cpe.channel        = 0;
-        cpe.paired_channel = 1;
-    }
-
-
-    /* Stereo2 / Mono1 */
-    ics1->tns_data_present = faad_get1bit(ld);
-
-#if defined(LTP_DEC)
-    ics1->ltp.data_present = faad_get1bit(ld);
-#elif defined (DRM)
-    if(faad_get1bit(ld)) {
-         hInfo->error = 26;
-         return;
-    }
-#else
-    faad_get1bit(ld);
-#endif
-
-    hInfo->error = side_info(hDecoder, &cpe, ld, ics1, 1);
-    if (hInfo->error > 0)
-        return;
-    if (this_layer_stereo)
-    {
-        /* Stereo3 */
-        ics2->tns_data_present = faad_get1bit(ld);
-#ifdef LTP_DEC
-        ics1->ltp.data_present =
-#endif
-            faad_get1bit(ld);
-        hInfo->error = side_info(hDecoder, &cpe, ld, ics2, 1);
-        if (hInfo->error > 0)
-            return;
-    }
-    /* Stereo4 / Mono2 */
-    if (ics1->tns_data_present)
-        tns_data(ics1, &(ics1->tns), ld);
-    if (this_layer_stereo)
-    {
-        /* Stereo5 */
-        if (ics2->tns_data_present)
-            tns_data(ics2, &(ics2->tns), ld);
-    }
-
-#ifdef DRM
-    /* CRC check */
-    if (hDecoder->object_type == DRM_ER_LC)
-    {
-        if ((hInfo->error = (uint8_t)faad_check_CRC(ld, (uint16_t)faad_get_processed_bits(ld) - 8)) > 0)
-            return;
-    }
-#endif
-
-    /* Stereo6 / Mono3 */
-    /* error resilient spectral data decoding */
-    if ((hInfo->error = reordered_spectral_data(hDecoder, ics1, ld, spec_data1)) > 0)
-    {
-        return;
-    }
-    if (this_layer_stereo)
-    {
-        /* Stereo7 */
-        /* error resilient spectral data decoding */
-        if ((hInfo->error = reordered_spectral_data(hDecoder, ics2, ld, spec_data2)) > 0)
-        {
-            return;
-        }
-    }
-
-
-#ifdef DRM
-#ifdef SBR_DEC
-    /* In case of DRM we need to read the SBR info before channel reconstruction */
-    if ((hDecoder->sbr_present_flag == 1) && (hDecoder->object_type == DRM_ER_LC))
-    {
-        bitfile ld_sbr = {0};
-        uint32_t i;
-        uint16_t count = 0;
-        uint8_t *revbuffer;
-        uint8_t *prevbufstart;
-        uint8_t *pbufend;
-
-        /* all forward bitreading should be finished at this point */
-        uint32_t bitsconsumed = faad_get_processed_bits(ld);
-        uint32_t buffer_size = faad_origbitbuffer_size(ld);
-        uint8_t *buffer = (uint8_t*)faad_origbitbuffer(ld);
-
-        if (bitsconsumed + 8 > buffer_size*8)
-        {
-            hInfo->error = 14;
-            return;
-        }
-
-        if (!hDecoder->sbr[0])
-        {
-            hDecoder->sbr[0] = sbrDecodeInit(hDecoder->frameLength, hDecoder->element_id[0],
-                2*get_sample_rate(hDecoder->sf_index), 0 /* ds SBR */, 1);
-        }
-        if (!hDecoder->sbr[0])
-        {
-            hInfo->error = 19;
-            return;
-        }
-
-        /* Reverse bit reading of SBR data in DRM audio frame */
-        revbuffer = (uint8_t*)faad_malloc(buffer_size*sizeof(uint8_t));
-        prevbufstart = revbuffer;
-        pbufend = &buffer[buffer_size - 1];
-        for (i = 0; i < buffer_size; i++)
-            *prevbufstart++ = tabFlipbits[*pbufend--];
-
-        /* Set SBR data */
-        /* consider 8 bits from AAC-CRC */
-        /* SBR buffer size is original buffer size minus AAC buffer size */
-        count = (uint16_t)bit2byte(buffer_size*8 - bitsconsumed);
-        faad_initbits(&ld_sbr, revbuffer, count);
-
-        hDecoder->sbr[0]->sample_rate = get_sample_rate(hDecoder->sf_index);
-        hDecoder->sbr[0]->sample_rate *= 2;
-
-        faad_getbits(&ld_sbr, 8); /* Skip 8-bit CRC */
-
-        hDecoder->sbr[0]->ret = sbr_extension_data(&ld_sbr, hDecoder->sbr[0], count, hDecoder->postSeekResetFlag);
-#if (defined(PS_DEC) || defined(DRM_PS))
-        if (hDecoder->sbr[0]->ps_used)
-        {
-            hDecoder->ps_used[0] = 1;
-            hDecoder->ps_used_global = 1;
-        }
-#endif
-
-        if (ld_sbr.error)
-        {
-            hDecoder->sbr[0]->ret = 1;
-        }
-
-        /* check CRC */
-        /* no need to check it if there was already an error */
-        if (hDecoder->sbr[0]->ret == 0)
-            hDecoder->sbr[0]->ret = (uint8_t)faad_check_CRC(&ld_sbr, (uint16_t)faad_get_processed_bits(&ld_sbr) - 8);
-
-        /* SBR data was corrupted, disable it until the next header */
-        if (hDecoder->sbr[0]->ret != 0)
-        {
-            hDecoder->sbr[0]->header_count = 0;
-        }
-
-        faad_endbits(&ld_sbr);
-
-        if (revbuffer)
-            faad_free(revbuffer);
-    }
-#endif
-#endif
-
-    if (this_layer_stereo)
-    {
-        hInfo->error = reconstruct_channel_pair(hDecoder, ics1, ics2, &cpe, spec_data1, spec_data2);
-        if (hInfo->error > 0)
-            return;
-    } else {
-        hInfo->error = reconstruct_single_channel(hDecoder, ics1, &cpe, spec_data1);
-        if (hInfo->error > 0)
-            return;
-    }
-
-    /* map output channels position to internal data channels */
-    if (hDecoder->element_output_channels[hDecoder->fr_ch_ele] == 2)
-    {
-        /* this might be faulty when pce_set is true */
-        hDecoder->internal_channel[channels] = channels;
-        hDecoder->internal_channel[channels+1] = channels+1;
-    } else {
-        hDecoder->internal_channel[channels] = channels;
-    }
-
-    hDecoder->fr_channels += hDecoder->element_output_channels[hDecoder->fr_ch_ele];
-    hDecoder->fr_ch_ele++;
-
-    return;
-}
-
-/* Table 4.4.15 */
-static int8_t DRM_aac_scalable_main_header(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_stream *ics2,
-                                           bitfile *ld, uint8_t this_layer_stereo)
-{
-    uint8_t retval = 0;
-    uint8_t ch;
-    ic_stream *ics;
-    uint8_t ics_reserved_bit;
-
-    ics_reserved_bit = faad_get1bit(ld
-        DEBUGVAR(1,300,"aac_scalable_main_header(): ics_reserved_bits"));
-    if (ics_reserved_bit != 0)
-        return 32;
-    ics1->window_sequence = (uint8_t)faad_getbits(ld, 2
-        DEBUGVAR(1,301,"aac_scalable_main_header(): window_sequence"));
-    ics1->window_shape = faad_get1bit(ld
-        DEBUGVAR(1,302,"aac_scalable_main_header(): window_shape"));
-
-    if (ics1->window_sequence == EIGHT_SHORT_SEQUENCE)
-    {
-        ics1->max_sfb = (uint8_t)faad_getbits(ld, 4
-            DEBUGVAR(1,303,"aac_scalable_main_header(): max_sfb (short)"));
-        ics1->scale_factor_grouping = (uint8_t)faad_getbits(ld, 7
-            DEBUGVAR(1,304,"aac_scalable_main_header(): scale_factor_grouping"));
-    } else {
-        ics1->max_sfb = (uint8_t)faad_getbits(ld, 6
-            DEBUGVAR(1,305,"aac_scalable_main_header(): max_sfb (long)"));
-    }
-
-    /* get the grouping information */
-    if ((retval = window_grouping_info(hDecoder, ics1)) > 0)
-        return retval;
-
-    /* should be an error */
-    /* check the range of max_sfb */
-    if (ics1->max_sfb > ics1->num_swb)
-        return 16;
-
-    if (this_layer_stereo)
-    {
-        ics1->ms_mask_present = (uint8_t)faad_getbits(ld, 2
-            DEBUGVAR(1,306,"aac_scalable_main_header(): ms_mask_present"));
-        if (ics1->ms_mask_present == 3)
-        {
-            /* bitstream error */
-            return 32;
-        }
-        if (ics1->ms_mask_present == 1)
-        {
-            uint8_t g, sfb;
-            for (g = 0; g < ics1->num_window_groups; g++)
-            {
-                for (sfb = 0; sfb < ics1->max_sfb; sfb++)
-                {
-                    ics1->ms_used[g][sfb] = faad_get1bit(ld
-                        DEBUGVAR(1,307,"aac_scalable_main_header(): faad_get1bit"));
-                }
-            }
-        }
-
-        memcpy(ics2, ics1, sizeof(ic_stream));
-    } else {
-        ics1->ms_mask_present = 0;
-    }
-
-    return 0;
-}
-#endif
 
 static uint8_t side_info(NeAACDecStruct *hDecoder, element *ele,
                          bitfile *ld, ic_stream *ics, uint8_t scal_flag)
@@ -1655,14 +1356,7 @@ static uint8_t individual_channel_stream(NeAACDecStruct *hDecoder, element *ele,
             tns_data(ics, &(ics->tns), ld);
     }
 
-#ifdef DRM
-    /* CRC check */
-    if (hDecoder->object_type == DRM_ER_LC)
-    {
-        if ((result = (uint8_t)faad_check_CRC(ld, (uint16_t)faad_get_processed_bits(ld) - 8)) > 0)
-            return result;
-    }
-#endif
+
 
 #ifdef ERROR_RESILIENCE
     if (hDecoder->aacSpectralDataResilienceFlag)
@@ -1750,14 +1444,10 @@ static uint8_t section_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *l
             printf("%d\n", ics->sect_cb[g][i]);
 #endif
 
-#ifndef DRM
+
             if (ics->sect_cb[g][i] == NOISE_HCB)
                 ics->noise_used = 1;
-#else
-            /* PNS not allowed in DRM */
-            if (ics->sect_cb[g][i] == NOISE_HCB)
-                return 29;
-#endif
+
             if (ics->sect_cb[g][i] == INTENSITY_HCB2 || ics->sect_cb[g][i] == INTENSITY_HCB)
                 ics->is_used = 1;
 
@@ -1899,7 +1589,7 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
                 break;
             case NOISE_HCB: /* noise books */
 
-#ifndef DRM
+
                 /* decode noise energy */
                 if (noise_pcm_flag)
                 {
@@ -1915,10 +1605,7 @@ static uint8_t decode_scale_factors(ic_stream *ics, bitfile *ld)
 #ifdef SF_PRINT
                 printf("%d\n", ics->scale_factors[g][sfb]);
 #endif
-#else
-                /* PNS not allowed in DRM */
-                return 29;
-#endif
+
 
                 break;
             default: /* spectral books */

@@ -167,7 +167,7 @@ int8_t AudioSpecificConfigFromBitfile(bitfile *ld,
         return -3;
     }
 
-#if (defined(PS_DEC) || defined(DRM_PS))
+#if (defined(PS_DEC))
     /* check if we have a mono file */
     if (mp4ASC->channelsConfiguration == 1)
     {

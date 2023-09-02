@@ -737,7 +737,7 @@ static uint8_t allocate_single_channel(NeAACDecStruct *hDecoder, uint8_t channel
         memset(hDecoder->time_out[channel], 0, mul*hDecoder->frameLength*sizeof(real_t));
     }
 
-#if (defined(PS_DEC) || defined(DRM_PS))
+#if (defined(PS_DEC))
     if (output_channels == 2)
     {
         if (hDecoder->time_out[channel+1] != NULL)
@@ -899,16 +899,12 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
 
 
     /* always allocate 2 channels, PS can always "suddenly" turn up */
-#if ( (defined(DRM) && defined(DRM_PS)) )
-    output_channels = 2;
-#elif defined(PS_DEC)
+
     if (hDecoder->ps_used[hDecoder->fr_ch_ele])
         output_channels = 2;
     else
         output_channels = 1;
-#else
-    output_channels = 1;
-#endif
+
 
     if (hDecoder->element_output_channels[hDecoder->fr_ch_ele] == 0)
     {
@@ -1056,9 +1052,7 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
             hDecoder->sbr[ele] = sbrDecodeInit(hDecoder->frameLength,
                 hDecoder->element_id[ele], 2*get_sample_rate(hDecoder->sf_index),
                 hDecoder->downSampledSBR
-#ifdef DRM
-                , 0
-#endif
+
                 );
         }
         if (!hDecoder->sbr[ele])
@@ -1070,13 +1064,13 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
             hDecoder->sbr[ele]->maxAACLine = min(sce->ics1.swb_offset[max(sce->ics1.max_sfb-1, 0)], sce->ics1.swb_offset_max);
 
         /* check if any of the PS tools is used */
-#if (defined(PS_DEC) || defined(DRM_PS))
+#if (defined(PS_DEC))
         if (hDecoder->ps_used[ele] == 0)
         {
 #endif
             retval = sbrDecodeSingleFrame(hDecoder->sbr[ele], hDecoder->time_out[ch],
                 hDecoder->postSeekResetFlag, hDecoder->downSampledSBR);
-#if (defined(PS_DEC) || defined(DRM_PS))
+#if (defined(PS_DEC))
         } else {
             retval = sbrDecodeSingleFramePS(hDecoder->sbr[ele], hDecoder->time_out[ch],
                 hDecoder->time_out[ch+1], hDecoder->postSeekResetFlag,
@@ -1093,7 +1087,7 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
 #endif
 
     /* copy L to R when no PS is used */
-#if (defined(PS_DEC) || defined(DRM_PS))
+#if (defined(PS_DEC))
     if ((hDecoder->ps_used[hDecoder->fr_ch_ele] == 0) &&
         (hDecoder->element_output_channels[hDecoder->fr_ch_ele] == 2))
     {
@@ -1317,9 +1311,7 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_s
             hDecoder->sbr[ele] = sbrDecodeInit(hDecoder->frameLength,
                 hDecoder->element_id[ele], 2*get_sample_rate(hDecoder->sf_index),
                 hDecoder->downSampledSBR
-#ifdef DRM
-                , 0
-#endif
+
                 );
         }
         if (!hDecoder->sbr[ele])

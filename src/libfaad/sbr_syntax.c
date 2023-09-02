@@ -43,9 +43,6 @@
 #ifdef PS_DEC
 #include "ps_dec.h"
 #endif
-#ifdef DRM_PS
-#include "drm_dec.h"
-#endif
 #include "analysis.h"
 
 /* static function declarations */
@@ -147,14 +144,12 @@ uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint16_t cnt,
     uint8_t saved_stop_freq, saved_freq_scale;
     uint8_t saved_alter_scale, saved_xover_band;
 
-#if (defined(PS_DEC) || defined(DRM_PS))
+#if (defined(PS_DEC))
     if (psResetFlag)
         sbr->psResetFlag = psResetFlag;
 #endif
 
-#ifdef DRM
-    if (!sbr->Is_DRM_SBR)
-#endif
+
     {
         uint8_t bs_extension_type = (uint8_t)faad_getbits(ld, 4
             DEBUGVAR(1,198,"sbr_bitstream(): bs_extension_type"));
@@ -245,9 +240,7 @@ uint8_t sbr_extension_data(bitfile *ld, sbr_info *sbr, uint16_t cnt,
         return 1;
     }
 
-#ifdef DRM
-    if (!sbr->Is_DRM_SBR)
-#endif
+
     {
         /* -4 does not apply, bs_extension_type is re-read in this function */
         num_align_bits = 8*cnt /*- 4*/ - num_sbr_bits2;
@@ -384,13 +377,7 @@ static uint8_t sbr_single_channel_element(bitfile *ld, sbr_info *sbr)
             DEBUGVAR(1,221,"sbr_single_channel_element(): bs_reserved_bits_data"));
     }
 
-#ifdef DRM
-    /* bs_coupling, from sbr_channel_pair_base_element(bs_amp_res) */
-    if (sbr->Is_DRM_SBR)
-    {
-        faad_get1bit(ld);
-    }
-#endif
+
 
     if ((result = sbr_grid(ld, sbr, 0)) > 0)
         return result;
@@ -417,7 +404,7 @@ static uint8_t sbr_single_channel_element(bitfile *ld, sbr_info *sbr)
     if (sbr->bs_extended_data)
     {
         uint16_t nr_bits_left;
-#if (defined(PS_DEC) || defined(DRM_PS))
+#if (defined(PS_DEC))
         uint8_t ps_ext_read = 0;
 #endif
         uint16_t cnt = (uint16_t)faad_getbits(ld, 4
@@ -438,18 +425,8 @@ static uint8_t sbr_single_channel_element(bitfile *ld, sbr_info *sbr)
             tmp_nr_bits += 2;
 
             /* allow only 1 PS extension element per extension data */
-#if (defined(PS_DEC) || defined(DRM_PS))
-#if (defined(PS_DEC) && defined(DRM_PS))
-            if (sbr->bs_extension_id == EXTENSION_ID_PS || sbr->bs_extension_id == DRM_PARAMETRIC_STEREO)
-#else
-#ifdef PS_DEC
-            if (sbr->bs_extension_id == EXTENSION_ID_PS)
-#else
-#ifdef DRM_PS
-            if (sbr->bs_extension_id == DRM_PARAMETRIC_STEREO)
-#endif
-#endif
-#endif
+#if (defined(PS_DEC))
+
             {
                 if (ps_ext_read == 0)
                 {
@@ -457,11 +434,9 @@ static uint8_t sbr_single_channel_element(bitfile *ld, sbr_info *sbr)
                 } else {
                     /* to be safe make it 3, will switch to "default"
                      * in sbr_extension() */
-#ifdef DRM
-                    return 1;
-#else
+
                     sbr->bs_extension_id = 3;
-#endif
+
                 }
             }
 #endif
@@ -877,15 +852,6 @@ static uint16_t sbr_extension(bitfile *ld, sbr_info *sbr,
         }
 
         return ret;
-#endif
-#ifdef DRM_PS
-    case DRM_PARAMETRIC_STEREO:
-        sbr->ps_used = 1;
-        if (!sbr->drm_ps)
-        {
-            sbr->drm_ps = drm_ps_init();
-        }
-        return drm_ps_data(sbr->drm_ps, ld);
 #endif
     default:
         sbr->bs_extension_data = (uint8_t)faad_getbits(ld, 6

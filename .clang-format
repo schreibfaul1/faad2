@@ -1,0 +1,54 @@
+---
+AccessModifierOffset: -2
+ColumnLimit: 150
+IndentWidth: 4
+ReflowComments: true
+PointerAlignment: Left
+SpaceAfterLogicalNot: false
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens: Never
+SpaceInEmptyParentheses: false
+SpacesInParentheses: false
+UseTab: Never
+IndentPPDirectives: BeforeHash
+IncludeBlocks: Merge
+Cpp11BracedListStyle: true
+
+AllowShortBlocksOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortEnumsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: Always
+AllowShortLambdasOnASingleLine: All
+AllowShortLoopsOnASingleLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowAllArgumentsOnNextLine: true
+
+AlignTrailingComments: true
+AlignEscapedNewlines: Left
+AlignConsecutiveDeclarations: true
+AlignConsecutiveMacros: true
+AlignAfterOpenBracket: Align
+
+SortUsingDeclarations: true
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel:  false
+  AfterClass:      false
+  AfterControlStatement: false
+  AfterEnum:       false
+  AfterFunction:   false
+  AfterNamespace:  false
+  AfterObjCDeclaration: false
+  AfterStruct:     false
+  AfterUnion:      false
+  AfterExternBlock: false
+  BeforeCatch:     true
+  BeforeElse:      true
+  IndentBraces:    false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+
+...

@@ -38,13 +38,11 @@ extern "C" {
 #ifdef PS_DEC
 #include "ps_dec.h"
 #endif
-#ifdef DRM_PS
-#include "drm_dec.h"
-#endif
+
 
 /* MAX_NTSRHFG: maximum of number_time_slots * rate + HFGen. 16*2+8 */
 #define MAX_NTSRHFG 40
-#define MAX_NTSR    32 /* max number_time_slots * rate, ok for DRM and not DRM mode */
+#define MAX_NTSR    32 /* max number_time_slots * rate */
 
 /* MAX_M: maximum value for M */
 #define MAX_M       49
@@ -169,12 +167,6 @@ typedef struct
 
     qmf_t Xsbr[2][MAX_NTSRHFG][64];
 
-#ifdef DRM
-    uint8_t Is_DRM_SBR;
-#ifdef DRM_PS
-    drm_ps_info *drm_ps;
-#endif
-#endif
 
     uint8_t numTimeSlotsRate;
     uint8_t numTimeSlots;
@@ -184,7 +176,7 @@ typedef struct
 #ifdef PS_DEC
     ps_info *ps;
 #endif
-#if (defined(PS_DEC) || defined(DRM_PS))
+#if (defined(PS_DEC))
     uint8_t ps_used;
     uint8_t psResetFlag;
 #endif
@@ -230,9 +222,7 @@ typedef struct
 
 sbr_info *sbrDecodeInit(uint16_t framelength, uint8_t id_aac,
                         uint32_t sample_rate, uint8_t downSampledSBR
-#ifdef DRM
-                        , uint8_t IsDRM
-#endif
+
                         );
 void sbrDecodeEnd(sbr_info *sbr);
 void sbrReset(sbr_info *sbr);
@@ -241,7 +231,7 @@ uint8_t sbrDecodeCoupleFrame(sbr_info *sbr, real_t *left_chan, real_t *right_cha
                              const uint8_t just_seeked, const uint8_t downSampledSBR);
 uint8_t sbrDecodeSingleFrame(sbr_info *sbr, real_t *channel,
                              const uint8_t just_seeked, const uint8_t downSampledSBR);
-#if (defined(PS_DEC) || defined(DRM_PS))
+#if (defined(PS_DEC))
 uint8_t sbrDecodeSingleFramePS(sbr_info *sbr, real_t *left_channel, real_t *right_channel,
                                const uint8_t just_seeked, const uint8_t downSampledSBR);
 #endif

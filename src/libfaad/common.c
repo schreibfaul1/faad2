@@ -150,9 +150,7 @@ int8_t can_decode_ot(const uint8_t object_type)
     /* ER object types */
 #ifdef ERROR_RESILIENCE
     case ER_LC:
-#ifdef DRM
-    case DRM_ER_LC:
-#endif
+
         return 0;
     case ER_LTP:
 #ifdef LTP_DEC

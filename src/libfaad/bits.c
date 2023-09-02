@@ -228,20 +228,6 @@ uint8_t *faad_getbitbuffer(bitfile *ld, uint32_t bits
     return buffer;
 }
 
-#ifdef DRM
-/* return the original data buffer */
-void *faad_origbitbuffer(bitfile *ld)
-{
-    return (void*)ld->start;
-}
-
-/* return the original data buffer size */
-uint32_t faad_origbitbuffer_size(bitfile *ld)
-{
-    return ld->buffer_size;
-}
-#endif
-
 /* reversed bit reading routines, used for RVLC and HCR */
 void faad_initbits_rev(bitfile *ld, void *buffer,
                        uint32_t bits_in_buffer)

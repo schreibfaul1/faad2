@@ -52,9 +52,7 @@ static void sbr_save_matrix(sbr_info *sbr, uint8_t ch);
 
 sbr_info *sbrDecodeInit(uint16_t framelength, uint8_t id_aac,
                         uint32_t sample_rate, uint8_t downSampledSBR
-#ifdef DRM
-						, uint8_t IsDRM
-#endif
+
                         )
 {
     sbr_info *sbr = (sbr_info*)faad_malloc(sizeof(sbr_info));
@@ -79,9 +77,6 @@ sbr_info *sbrDecodeInit(uint16_t framelength, uint8_t id_aac,
     sbr->header_count = 0;
     sbr->Reset = 1;
 
-#ifdef DRM
-    sbr->Is_DRM_SBR = IsDRM;
-#endif
     sbr->tHFGen = T_HFGEN;
     sbr->tHFAdj = T_HFADJ;
 
@@ -177,10 +172,7 @@ void sbrDecodeEnd(sbr_info *sbr)
             ps_free(sbr->ps);
 #endif
 
-#ifdef DRM_PS
-        if (sbr->drm_ps != NULL)
-            drm_ps_free(sbr->drm_ps);
-#endif
+
 
         faad_free(sbr);
     }
@@ -313,16 +305,8 @@ static uint8_t sbr_process_channel(sbr_info *sbr, real_t *channel_buf, qmf_t X[M
     ALIGN real_t deg[64];
 #endif
 
-#ifdef DRM
-    if (sbr->Is_DRM_SBR)
-    {
-        sbr->bsco = max((int32_t)sbr->maxAACLine*32/(int32_t)sbr->frame_len - (int32_t)sbr->kx, 0);
-    } else {
-#endif
+
         sbr->bsco = 0;
-#ifdef DRM
-    }
-#endif
 
 
 //#define PRE_QMF_PRINT
@@ -602,7 +586,7 @@ uint8_t sbrDecodeSingleFrame(sbr_info *sbr, real_t *channel,
     return 0;
 }
 
-#if (defined(PS_DEC) || defined(DRM_PS))
+#if (defined(PS_DEC))
 uint8_t sbrDecodeSingleFramePS(sbr_info *sbr, real_t *left_channel, real_t *right_channel,
                                const uint8_t just_seeked, const uint8_t downSampledSBR)
 {
@@ -654,18 +638,10 @@ uint8_t sbrDecodeSingleFramePS(sbr_info *sbr, real_t *left_channel, real_t *righ
     }
 
     /* perform parametric stereo */
-#ifdef DRM_PS
-    if (sbr->Is_DRM_SBR)
-    {
-        drm_ps_decode(sbr->drm_ps, (sbr->ret > 0), X_left, X_right);
-    } else {
-#endif
 #ifdef PS_DEC
         ps_decode(sbr->ps, X_left, X_right);
 #endif
-#ifdef DRM_PS
-    }
-#endif
+
 
     /* subband synthesis */
     if (downSampledSBR)

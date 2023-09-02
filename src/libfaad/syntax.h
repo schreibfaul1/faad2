@@ -45,7 +45,7 @@ extern "C" {
 #define LD        23
 #define ER_LC     17
 #define ER_LTP    19
-#define DRM_ER_LC 27 /* special object type for DRM */
+
 
 /* header types */
 #define RAW        0
@@ -59,12 +59,7 @@ extern "C" {
 #define SBR_DOWNSAMPLED  2
 #define NO_SBR_UPSAMPLED 3
 
-/* DRM channel definitions */
-#define DRMCH_MONO          1
-#define DRMCH_STEREO        2
-#define DRMCH_SBR_MONO      3
-#define DRMCH_SBR_STEREO    4
-#define DRMCH_SBR_PS_STEREO 5
+
 
 
 /* First object type that has ER */
@@ -118,10 +113,7 @@ void raw_data_block(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *hInfo,
                     bitfile *ld, program_config *pce, drc_info *drc);
 uint8_t reordered_spectral_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld,
                                 int16_t *spectral_data);
-#ifdef DRM
-void DRM_aac_scalable_main_element(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *hInfo,
-                                   bitfile *ld, program_config *pce, drc_info *drc);
-#endif
+
 uint32_t faad_latm_frame(latm_header *latm, bitfile *ld);
 
 #ifdef __cplusplus

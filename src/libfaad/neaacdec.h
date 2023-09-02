@@ -49,7 +49,6 @@ extern "C" {
 #define faacDecGetCurrentConfiguration NeAACDecGetCurrentConfiguration
 #define faacDecInit                    NeAACDecInit
 #define faacDecInit2                   NeAACDecInit2
-#define faacDecInitDRM                 NeAACDecInitDRM
 #define faacDecPostSeekReset           NeAACDecPostSeekReset
 #define faacDecOpen                    NeAACDecOpen
 #define faacDecClose                   NeAACDecClose
@@ -80,7 +79,6 @@ extern "C" {
 #define ER_LC     17
 #define ER_LTP    19
 #define LD        23
-#define DRM_ER_LC 27 /* special object type for DRM */
 
 /* header types */
 #define RAW        0
@@ -122,12 +120,7 @@ extern "C" {
 #define LFE_CHANNEL          (9)
 #define UNKNOWN_CHANNEL      (0)
 
-/* DRM channel definitions */
-#define DRMCH_MONO          1
-#define DRMCH_STEREO        2
-#define DRMCH_SBR_MONO      3
-#define DRMCH_SBR_STEREO    4
-#define DRMCH_SBR_PS_STEREO 5
+
 
 
 /* A decode call can eat up to FAAD_MIN_STREAMSIZE bytes per decoded channel,
@@ -223,9 +216,6 @@ NEAACDECAPI char NeAACDecInit2(NeAACDecHandle hDecoder,
                                unsigned long *samplerate,
                                unsigned char *channels);
 
-/* Init the library for DRM */
-NEAACDECAPI char NeAACDecInitDRM(NeAACDecHandle *hDecoder, unsigned long samplerate,
-                                 unsigned char channels);
 
 NEAACDECAPI void NeAACDecPostSeekReset(NeAACDecHandle hDecoder, long frame);
 

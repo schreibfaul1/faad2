@@ -350,7 +350,7 @@ long NeAACDecInit(NeAACDecHandle hpDecoder,
     if (!*samplerate)
         return -1;
 
-#if (defined(PS_DEC) || defined(DRM_PS))
+#if (defined(PS_DEC))
     /* check if we have a mono file */
     if (*channels == 1)
     {
@@ -427,7 +427,7 @@ char NeAACDecInit2(NeAACDecHandle hpDecoder,
         *channels = hDecoder->pce.channels;
         hDecoder->pce_set = 1;
     }
-#if (defined(PS_DEC) || defined(DRM_PS))
+#if (defined(PS_DEC))
     /* check if we have a mono file */
     if (*channels == 1)
     {
@@ -485,49 +485,7 @@ char NeAACDecInit2(NeAACDecHandle hpDecoder,
     return 0;
 }
 
-#ifdef DRM
-char NeAACDecInitDRM(NeAACDecHandle *hpDecoder,
-                                 unsigned long samplerate,
-                                 unsigned char channels)
-{
-    NeAACDecStruct** hDecoder = (NeAACDecStruct**)hpDecoder;
-    if (hDecoder == NULL)
-        return 1; /* error */
 
-    NeAACDecClose(*hDecoder);
-
-    *hDecoder = NeAACDecOpen();
-
-    /* Special object type defined for DRM */
-    (*hDecoder)->config.defObjectType = DRM_ER_LC;
-
-    (*hDecoder)->config.defSampleRate = samplerate;
-#ifdef ERROR_RESILIENCE // This shoudl always be defined for DRM
-    (*hDecoder)->aacSectionDataResilienceFlag = 1; /* VCB11 */
-    (*hDecoder)->aacScalefactorDataResilienceFlag = 0; /* no RVLC */
-    (*hDecoder)->aacSpectralDataResilienceFlag = 1; /* HCR */
-#endif
-    (*hDecoder)->frameLength = 960;
-    (*hDecoder)->sf_index = get_sr_index((*hDecoder)->config.defSampleRate);
-    (*hDecoder)->object_type = (*hDecoder)->config.defObjectType;
-
-    if ((channels == DRMCH_STEREO) || (channels == DRMCH_SBR_STEREO))
-        (*hDecoder)->channelConfiguration = 2;
-    else
-        (*hDecoder)->channelConfiguration = 1;
-
-#ifdef SBR_DEC
-    if ((channels == DRMCH_MONO) || (channels == DRMCH_STEREO))
-        (*hDecoder)->sbr_present_flag = 0;
-    else
-        (*hDecoder)->sbr_present_flag = 1;
-#endif
-
-    (*hDecoder)->fb = filter_bank_init((*hDecoder)->frameLength);
-
-    return 0;
-}
-#endif
 
 void NeAACDecClose(NeAACDecHandle hpDecoder)
 {
@@ -629,7 +587,7 @@ static void create_channel_config(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *h
         chdir = hInfo->num_front_channels;
         if (chdir & 1)
         {
-#if (defined(PS_DEC) || defined(DRM_PS))
+#if (defined(PS_DEC))
             if( total == 1 )
             {
                 /* When PS is enabled output is always stereo */
@@ -677,7 +635,7 @@ static void create_channel_config(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *h
         switch (hDecoder->channelConfiguration)
         {
         case 1:
-#if (defined(PS_DEC) || defined(DRM_PS))
+#if (defined(PS_DEC))
             /* When PS is enabled output is always stereo */
             hInfo->num_front_channels = 2;
             hInfo->channel_position[0] = FRONT_CHANNEL_LEFT;
@@ -846,17 +804,6 @@ void* NeAACDecDecode2(NeAACDecHandle hpDecoder,
         sample_buffer, sample_buffer_size);
 }
 
-#ifdef DRM
-
-#define ERROR_STATE_INIT 6
-
-static void conceal_output(NeAACDecStruct *hDecoder, uint16_t frame_len,
-                           uint8_t out_ch, void *sample_buffer)
-{
-    return;
-}
-#endif
-
 static void* aac_frame_decode(NeAACDecStruct *hDecoder,
                               NeAACDecFrameInfo *hInfo,
                               unsigned char *buffer,
@@ -954,21 +901,6 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
     }
 #endif
 
-#ifdef DRM
-    if (hDecoder->object_type == DRM_ER_LC)
-    {
-        /* We do not support stereo right now */
-        if (0) //(hDecoder->channelConfiguration == 2)
-        {
-            hInfo->error = 28; // Throw CRC error
-            goto error;
-        }
-
-        faad_getbits(&ld, 8
-            DEBUGVAR(1,1,"NeAACDecDecode(): skip CRC"));
-    }
-#endif
-
     if (hDecoder->adts_header_present)
     {
         adts_header adts;
@@ -988,16 +920,9 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
 #endif
 
     /* decode the complete bitstream */
-#ifdef DRM
-    if (/*(hDecoder->object_type == 6) ||*/ (hDecoder->object_type == DRM_ER_LC))
-    {
-        DRM_aac_scalable_main_element(hDecoder, hInfo, &ld, &hDecoder->pce, hDecoder->drc);
-    } else {
-#endif
+
         raw_data_block(hDecoder, hInfo, &ld, &hDecoder->pce, hDecoder->drc);
-#ifdef DRM
-    }
-#endif
+
 
 #if 0
     if(hDecoder->latm_header_present)
@@ -1059,7 +984,7 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
         output_channels = channels;
     }
 
-#if (defined(PS_DEC) || defined(DRM_PS))
+#if (defined(PS_DEC))
     hDecoder->upMatrix = 0;
     /* check if we have a mono file */
     if (output_channels == 1)
@@ -1093,7 +1018,7 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
     if (hDecoder->latm_header_present)
         hInfo->header_type = LATM;
 #endif
-#if (defined(PS_DEC) || defined(DRM_PS))
+#if (defined(PS_DEC))
     hInfo->ps = hDecoder->ps_used_global;
 #endif
 
@@ -1184,9 +1109,6 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
         output_channels, frame_len, hDecoder->config.outputFormat);
 
 
-#ifdef DRM
-    //conceal_output(hDecoder, frame_len, output_channels, sample_buffer);
-#endif
 
 
     hDecoder->postSeekResetFlag = 0;
@@ -1221,9 +1143,6 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
 error:
 
 
-#ifdef DRM
-    hDecoder->error_state = ERROR_STATE_INIT;
-#endif
 
     /* reset filterbank state */
     for (i = 0; i < MAX_CHANNELS; i++)

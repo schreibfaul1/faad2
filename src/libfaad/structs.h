@@ -391,7 +391,7 @@ typedef struct
 
     sbr_info *sbr[MAX_SYNTAX_ELEMENTS];
 #endif
-#if (defined(PS_DEC) || defined(DRM_PS))
+#if (defined(PS_DEC))
     uint8_t ps_used[MAX_SYNTAX_ELEMENTS];
     uint8_t ps_used_global;
 #endif
@@ -409,9 +409,6 @@ typedef struct
     int16_t *lt_pred_stat[MAX_CHANNELS];
 #endif
 
-#ifdef DRM
-    uint8_t error_state;
-#endif
 
     /* RNG states */
     uint32_t __r1;
