@@ -58,7 +58,7 @@ uint8_t hf_adjustment(sbr_info *sbr, qmf_t Xsbr[MAX_NTSRHFG][64]
 #endif
                       ,uint8_t ch)
 {
-    ALIGN sbr_hfadj_info adj = {{{0}}};
+     sbr_hfadj_info adj = {{{0}}};
     uint8_t ret = 0;
 
     if (sbr->bs_frame_class[ch] == FIXFIX)
@@ -447,10 +447,10 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
     uint8_t current_t_noise_band = 0;
     uint8_t S_mapped;
 
-    ALIGN real_t Q_M_lim[MAX_M];
-    ALIGN real_t G_lim[MAX_M];
-    ALIGN real_t G_boost;
-    ALIGN real_t S_M[MAX_M];
+     real_t Q_M_lim[MAX_M];
+     real_t G_lim[MAX_M];
+     real_t G_boost;
+     real_t S_M[MAX_M];
 
 
     for (l = 0; l < sbr->L_E[ch]; l++)
@@ -917,10 +917,10 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
     uint8_t current_t_noise_band = 0;
     uint8_t S_mapped;
 
-    ALIGN real_t Q_M_lim[MAX_M];
-    ALIGN real_t G_lim[MAX_M];
-    ALIGN real_t G_boost;
-    ALIGN real_t S_M[MAX_M];
+     real_t Q_M_lim[MAX_M];
+     real_t G_lim[MAX_M];
+     real_t G_boost;
+     real_t S_M[MAX_M];
 
 
     for (l = 0; l < sbr->L_E[ch]; l++)
@@ -1171,10 +1171,10 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
     uint8_t current_t_noise_band = 0;
     uint8_t S_mapped;
 
-    ALIGN real_t Q_M_lim[MAX_M];
-    ALIGN real_t G_lim[MAX_M];
-    ALIGN real_t G_boost;
-    ALIGN real_t S_M[MAX_M];
+     real_t Q_M_lim[MAX_M];
+     real_t G_lim[MAX_M];
+     real_t G_boost;
+     real_t S_M[MAX_M];
 
     for (l = 0; l < sbr->L_E[ch]; l++)
     {

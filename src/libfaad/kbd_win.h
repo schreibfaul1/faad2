@@ -40,7 +40,7 @@ extern "C" {
 #pragma warning(disable:4244)
 #endif
 
-ALIGN static const real_t kbd_long_1024[] =
+ static const real_t kbd_long_1024[] =
 {
     FRAC_CONST(0.00029256153896361),
     FRAC_CONST(0.00042998567353047),
@@ -1069,7 +1069,7 @@ ALIGN static const real_t kbd_long_1024[] =
 };
 
 #ifdef ALLOW_SMALL_FRAMELENGTH
-ALIGN static const real_t kbd_long_960[] = {
+ static const real_t kbd_long_960[] = {
     FRAC_CONST(0.0003021562530949),
     FRAC_CONST(0.0004452267024786),
     FRAC_CONST(0.0005674947527496),
@@ -2033,7 +2033,7 @@ ALIGN static const real_t kbd_long_960[] = {
 };
 #endif
 
-ALIGN static const real_t kbd_short_128[] =
+ static const real_t kbd_short_128[] =
 {
     FRAC_CONST(4.3795702929468881e-005),
     FRAC_CONST(0.00011867384265436617),
@@ -2166,7 +2166,7 @@ ALIGN static const real_t kbd_short_128[] =
 };
 
 #ifdef ALLOW_SMALL_FRAMELENGTH
-ALIGN static const real_t kbd_short_120[] =
+ static const real_t kbd_short_120[] =
 {
     FRAC_CONST(0.0000452320086910),
     FRAC_CONST(0.0001274564692111),

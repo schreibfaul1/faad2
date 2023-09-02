@@ -38,7 +38,7 @@ extern "C" {
 #ifdef FIXED_POINT
 
 /* 256 (N/4) complex twiddle factors */
-ALIGN static const complex_t mdct_tab_2048[] =
+ static const complex_t mdct_tab_2048[] =
 {
     { FRAC_CONST(0.999999926465718), FRAC_CONST(0.000383495187571) },
     { FRAC_CONST(0.999994043728986), FRAC_CONST(0.003451449920136) },
@@ -555,7 +555,7 @@ ALIGN static const complex_t mdct_tab_2048[] =
 };
 
 /* 64 (N/4) complex twiddle factors */
-ALIGN static const complex_t mdct_tab_256[] =
+ static const complex_t mdct_tab_256[] =
 {
     { FRAC_CONST(0.999995293809576), FRAC_CONST(0.003067956762966) },
     { FRAC_CONST(0.999618822495179), FRAC_CONST(0.027608145778966) },
@@ -625,7 +625,7 @@ ALIGN static const complex_t mdct_tab_256[] =
 
 #ifdef LD_DEC
 /* 256 (N/4) complex twiddle factors */
-ALIGN static const complex_t mdct_tab_1024[] =
+ static const complex_t mdct_tab_1024[] =
 {
     { FRAC_CONST(0.999999705862882), FRAC_CONST(0.000766990318743) },
     { FRAC_CONST(0.999976174986898), FRAC_CONST(0.006902858724730) },
@@ -888,7 +888,7 @@ ALIGN static const complex_t mdct_tab_1024[] =
 
 #ifdef ALLOW_SMALL_FRAMELENGTH
 /* 480 (N/4) complex twiddle factors */
-ALIGN static const complex_t mdct_tab_1920[] =
+ static const complex_t mdct_tab_1920[] =
 {
     { FRAC_CONST(0.999999916334328), FRAC_CONST(0.000409061532028) },
     { FRAC_CONST(0.999993223088129), FRAC_CONST(0.003681545574400) },
@@ -1374,7 +1374,7 @@ ALIGN static const complex_t mdct_tab_1920[] =
 
 #ifdef LD_DEC
 /* 240 (N/4) complex twiddle factors */
-ALIGN static const complex_t mdct_tab_960[] =
+ static const complex_t mdct_tab_960[] =
 {
     { FRAC_CONST(0.999999665337326), FRAC_CONST(0.000818122995607) },
     { FRAC_CONST(0.999972892444367), FRAC_CONST(0.007363041249780) },
@@ -1620,7 +1620,7 @@ ALIGN static const complex_t mdct_tab_960[] =
 #endif // LD_DEC
 
 /* 60 (N/4) complex twiddle factors */
-ALIGN static const complex_t mdct_tab_240[] =
+ static const complex_t mdct_tab_240[] =
 {
     { FRAC_CONST(0.999994645401696), FRAC_CONST(0.003272486506527) },
     { FRAC_CONST(0.999566308502021), FRAC_CONST(0.029448173247963) },
@@ -1687,7 +1687,7 @@ ALIGN static const complex_t mdct_tab_240[] =
 
 #ifdef SSR_DEC
 /* 128 (N/4) complex twiddle factors */
-ALIGN static const complex_t mdct_tab_512[] =
+ static const complex_t mdct_tab_512[] =
 {
     { FRAC_CONST(0.999998823451702), FRAC_CONST(0.001533980186285) },
     { FRAC_CONST(0.999904701082853), FRAC_CONST(0.013805388528060) },
@@ -1820,7 +1820,7 @@ ALIGN static const complex_t mdct_tab_512[] =
 };
 
 /* 16 (N/4) complex twiddle factors */
-ALIGN static const complex_t mdct_tab_64[] =
+ static const complex_t mdct_tab_64[] =
 {
     { FRAC_CONST(0.999924701839145), FRAC_CONST(0.012271538285720) },
     { FRAC_CONST(0.993906970002356), FRAC_CONST(0.110222207293883) },
@@ -1844,7 +1844,7 @@ ALIGN static const complex_t mdct_tab_64[] =
 #else // FIXED_POINT
 
 /* 256 (N/4) complex twiddle factors */
-ALIGN static const complex_t mdct_tab_2048[] =
+ static const complex_t mdct_tab_2048[] =
 {
     { FRAC_CONST(0.031249997702054), FRAC_CONST(0.000011984224612) },
     { FRAC_CONST(0.031249813866531), FRAC_CONST(0.000107857810004) },
@@ -2361,7 +2361,7 @@ ALIGN static const complex_t mdct_tab_2048[] =
 };
 
 /* 64 (N/4) complex twiddle factors */
-ALIGN static const complex_t mdct_tab_256[] =
+ static const complex_t mdct_tab_256[] =
 {
     { FRAC_CONST(0.088387931675923), FRAC_CONST(0.000271171628935) },
     { FRAC_CONST(0.088354655998507), FRAC_CONST(0.002440238387037) },
@@ -2431,7 +2431,7 @@ ALIGN static const complex_t mdct_tab_256[] =
 
 #ifdef LD_DEC
 /* 128 (N/4) complex twiddle factors */
-ALIGN static const complex_t mdct_tab_1024[] =
+ static const complex_t mdct_tab_1024[] =
 {
     { FRAC_CONST(0.044194160825012), FRAC_CONST(0.000033896503468) },
     { FRAC_CONST(0.044193120897389), FRAC_CONST(0.000305066138364) },
@@ -2694,7 +2694,7 @@ ALIGN static const complex_t mdct_tab_1024[] =
 
 #ifdef ALLOW_SMALL_FRAMELENGTH
 /* 480 (N/4) complex twiddle factors */
-ALIGN static const complex_t mdct_tab_1920[] =
+ static const complex_t mdct_tab_1920[] =
 {
     { FRAC_CONST(0.032274858518097), FRAC_CONST(0.000013202404176) },
     { FRAC_CONST(0.032274642494505), FRAC_CONST(0.000118821372483) },
@@ -3180,7 +3180,7 @@ ALIGN static const complex_t mdct_tab_1920[] =
 
 #ifdef LD_DEC
 /* 240 (N/4) complex twiddle factors */
-ALIGN static const complex_t mdct_tab_960[] =
+ static const complex_t mdct_tab_960[] =
 {
     { FRAC_CONST(0.045643531183573), FRAC_CONST(0.000037342034959) },
     { FRAC_CONST(0.045642309173789), FRAC_CONST(0.000336075315362) },
@@ -3426,7 +3426,7 @@ ALIGN static const complex_t mdct_tab_960[] =
 #endif // LD_DEC
 
 /* 60 (N/4) complex twiddle factors */
-ALIGN static const complex_t mdct_tab_240[] =
+ static const complex_t mdct_tab_240[] =
 {
     { FRAC_CONST(0.091286604111815), FRAC_CONST(0.000298735779793) },
     { FRAC_CONST(0.091247502481454), FRAC_CONST(0.002688238127538) },
@@ -3493,7 +3493,7 @@ ALIGN static const complex_t mdct_tab_240[] =
 
 #ifdef SSR_DEC
 /* 128 (N/4) complex twiddle factors */
-ALIGN static const complex_t mdct_tab_512[] =
+ static const complex_t mdct_tab_512[] =
 {
     { FRAC_CONST(0.062499926465731), FRAC_CONST(0.000095873761643) },
     { FRAC_CONST(0.062494043817678), FRAC_CONST(0.000862836783004) },
@@ -3626,7 +3626,7 @@ ALIGN static const complex_t mdct_tab_512[] =
 };
 
 /* 16 (N/4) complex twiddle factors */
-ALIGN static const complex_t mdct_tab_64[] =
+ static const complex_t mdct_tab_64[] =
 {
     { FRAC_CONST(0.176763384336599), FRAC_CONST(0.002169321984356) },
     { FRAC_CONST(0.175699589589310), FRAC_CONST(0.019484717553714) },

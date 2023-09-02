@@ -42,7 +42,7 @@ extern "C" {
 
 
 /* Table 1.A.13 Noise table V */
-ALIGN static const complex_t V[] = {
+ static const complex_t V[] = {
     { FRAC_CONST(-0.99948155879974), FRAC_CONST(-0.59483414888382) },
     { FRAC_CONST(0.97113454341888), FRAC_CONST(-0.67528516054153) },
     { FRAC_CONST(0.14130051434040), FRAC_CONST(-0.95090985298157) },

@@ -65,7 +65,7 @@ uint8_t is_ltp_ot(uint8_t object_type)
     return 0;
 }
 
-ALIGN static const real_t codebook[8] =
+ static const real_t codebook[8] =
 {
     REAL_CONST(0.570829),
     REAL_CONST(0.696616),
@@ -84,8 +84,8 @@ void lt_prediction(ic_stream *ics, ltp_info *ltp, real_t *spec,
 {
     uint8_t sfb;
     uint16_t bin, i, num_samples;
-    ALIGN real_t x_est[2048];
-    ALIGN real_t X_est[2048];
+     real_t x_est[2048];
+     real_t X_est[2048];
 
     if (ics->window_sequence != EIGHT_SHORT_SEQUENCE)
     {

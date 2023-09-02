@@ -60,9 +60,9 @@ void hf_generation(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
                    ,uint8_t ch)
 {
     uint8_t l, i, x;
-    ALIGN complex_t alpha_0[64], alpha_1[64];
+     complex_t alpha_0[64], alpha_1[64];
 #ifdef SBR_LOW_POWER
-    ALIGN real_t rxx[64];
+     real_t rxx[64];
 #endif
 
     uint8_t offset = sbr->tHFAdj;

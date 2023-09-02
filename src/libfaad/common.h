@@ -42,11 +42,7 @@ extern "C" {
 
 #include "neaacdec.h"
 
-#if 0 //defined(_WIN32) && !defined(_WIN32_WCE)
-#define ALIGN __declspec(align(16))
-#else
-#define ALIGN
-#endif
+
 
 
 /* COMPILE TIME DEFINITIONS */

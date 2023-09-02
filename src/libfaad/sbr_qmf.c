@@ -69,11 +69,11 @@ void qmfa_end(qmfa_info *qmfa)
 void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const real_t *input,
                          qmf_t X[MAX_NTSRHFG][64], uint8_t offset, uint8_t kx)
 {
-    ALIGN real_t u[64];
+     real_t u[64];
 #ifndef SBR_LOW_POWER
-    ALIGN real_t in_real[32], in_imag[32], out_real[32], out_imag[32];
+     real_t in_real[32], in_imag[32], out_real[32], out_imag[32];
 #else
-    ALIGN real_t y[32];
+     real_t y[32];
 #endif
     uint32_t in = 0;
     uint8_t l;
@@ -252,8 +252,8 @@ void qmfs_end(qmfs_info *qmfs)
 void sbr_qmf_synthesis_32(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][64],
                           real_t *output)
 {
-    ALIGN real_t x[16];
-    ALIGN real_t y[16];
+     real_t x[16];
+     real_t y[16];
     int32_t n, k, out = 0;
     uint8_t l;
 
@@ -321,8 +321,8 @@ void sbr_qmf_synthesis_32(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
 void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][64],
                           real_t *output)
 {
-    ALIGN real_t x[64];
-    ALIGN real_t y[64];
+     real_t x[64];
+     real_t y[64];
     int32_t n, k, out = 0;
     uint8_t l;
 
@@ -391,7 +391,7 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
 void sbr_qmf_synthesis_32(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][64],
                           real_t *output)
 {
-    ALIGN real_t x1[32], x2[32];
+     real_t x1[32], x2[32];
 #ifndef FIXED_POINT
     real_t scale = 1.f/64.f;
 #endif
@@ -457,10 +457,10 @@ void sbr_qmf_synthesis_32(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
 void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][64],
                           real_t *output)
 {
-//    ALIGN real_t x1[64], x2[64];
+//     real_t x1[64], x2[64];
 #ifndef SBR_LOW_POWER
-    ALIGN real_t in_real1[32], in_imag1[32], out_real1[32], out_imag1[32];
-    ALIGN real_t in_real2[32], in_imag2[32], out_real2[32], out_imag2[32];
+     real_t in_real1[32], in_imag1[32], out_real1[32], out_imag1[32];
+     real_t in_real2[32], in_imag2[32], out_real2[32], out_imag2[32];
 #endif
     qmf_t * pX;
     real_t * pring_buffer_1, * pring_buffer_3;
