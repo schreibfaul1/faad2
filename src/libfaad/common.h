@@ -103,12 +103,8 @@ extern "C" {
 #endif
 
 #define SBR_DEC
-//#define SBR_LOW_POWER
 #define PS_DEC
 
-#ifdef SBR_LOW_POWER
-#undef PS_DEC
-#endif
 
 /* FIXED POINT: No MAIN decoding */
 #ifdef FIXED_POINT
@@ -125,15 +121,10 @@ extern "C" {
 #define DIV_C(A, B) ((A)/(B))
 #endif
 
-#ifndef SBR_LOW_POWER
+
 #define qmf_t complex_t
 #define QMF_RE(A) RE(A)
 #define QMF_IM(A) IM(A)
-#else
-#define qmf_t real_t
-#define QMF_RE(A) (A)
-#define QMF_IM(A)
-#endif
 
 
 /* END COMPILE TIME DEFINITIONS */

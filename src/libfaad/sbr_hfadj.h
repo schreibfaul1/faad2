@@ -44,9 +44,7 @@ typedef struct
 
 
 uint8_t hf_adjustment(sbr_info *sbr, qmf_t Xsbr[MAX_NTSRHFG][64]
-#ifdef SBR_LOW_POWER
-                      ,real_t *deg
-#endif
+
                       ,uint8_t ch);
 
 

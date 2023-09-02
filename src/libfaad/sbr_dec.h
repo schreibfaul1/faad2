@@ -86,10 +86,6 @@ typedef struct
     uint8_t f_table_res[2][64];
     uint8_t f_table_noise[64];
     uint8_t f_table_lim[4][64];
-#ifdef SBR_LOW_POWER
-    uint8_t f_group[5][64];
-    uint8_t N_G[5];
-#endif
 
     uint8_t table_map_k_to_g[64];
 

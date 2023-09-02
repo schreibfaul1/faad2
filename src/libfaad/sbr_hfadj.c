@@ -45,17 +45,10 @@
 static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
                                          qmf_t Xsbr[MAX_NTSRHFG][64], uint8_t ch);
 static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch);
-#ifdef SBR_LOW_POWER
-static void calc_gain_groups(sbr_info *sbr, sbr_hfadj_info *adj, real_t *deg, uint8_t ch);
-static void aliasing_reduction(sbr_info *sbr, sbr_hfadj_info *adj, real_t *deg, uint8_t ch);
-#endif
 static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj, qmf_t Xsbr[MAX_NTSRHFG][64], uint8_t ch);
 
 
 uint8_t hf_adjustment(sbr_info *sbr, qmf_t Xsbr[MAX_NTSRHFG][64]
-#ifdef SBR_LOW_POWER
-                      ,real_t *deg /* aliasing degree */
-#endif
                       ,uint8_t ch)
 {
      sbr_hfadj_info adj = {{{0}}};
@@ -82,10 +75,7 @@ uint8_t hf_adjustment(sbr_info *sbr, qmf_t Xsbr[MAX_NTSRHFG][64]
 
     calculate_gain(sbr, &adj, ch);
 
-#ifdef SBR_LOW_POWER
-    calc_gain_groups(sbr, &adj, deg, ch);
-    aliasing_reduction(sbr, &adj, deg, ch);
-#endif
+
 
     hf_assembly(sbr, &adj, Xsbr, ch);
 
@@ -160,29 +150,21 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
                 for (i = l_i + sbr->tHFAdj; i < u_i + sbr->tHFAdj; i++)
                 {
 #ifdef FIXED_POINT
-#ifdef SBR_LOW_POWER
-                    nrg += ((QMF_RE(Xsbr[i][m + sbr->kx])+(1<<(REAL_BITS-1)))>>REAL_BITS)*((QMF_RE(Xsbr[i][m + sbr->kx])+(1<<(REAL_BITS-1)))>>REAL_BITS);
-#else
+
                     nrg += ((QMF_RE(Xsbr[i][m + sbr->kx])+(1<<(REAL_BITS-1)))>>REAL_BITS)*((QMF_RE(Xsbr[i][m + sbr->kx])+(1<<(REAL_BITS-1)))>>REAL_BITS) +
                         ((QMF_IM(Xsbr[i][m + sbr->kx])+(1<<(REAL_BITS-1)))>>REAL_BITS)*((QMF_IM(Xsbr[i][m + sbr->kx])+(1<<(REAL_BITS-1)))>>REAL_BITS);
-#endif
+
 #else
                     nrg += MUL_R(QMF_RE(Xsbr[i][m + sbr->kx]), QMF_RE(Xsbr[i][m + sbr->kx]))
-#ifndef SBR_LOW_POWER
+
                         + MUL_R(QMF_IM(Xsbr[i][m + sbr->kx]), QMF_IM(Xsbr[i][m + sbr->kx]))
-#endif
+
                         ;
 #endif
                 }
 
                 sbr->E_curr[ch][m][l] = nrg / div;
-#ifdef SBR_LOW_POWER
-#ifdef FIXED_POINT
-                sbr->E_curr[ch][m][l] <<= 1;
-#else
-                sbr->E_curr[ch][m][l] *= 2;
-#endif
-#endif
+
             }
         }
     } else {
@@ -211,30 +193,22 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
                         for (j = k_l; j < k_h; j++)
                         {
 #ifdef FIXED_POINT
-#ifdef SBR_LOW_POWER
-                            nrg += ((QMF_RE(Xsbr[i][j])+(1<<(REAL_BITS-1)))>>REAL_BITS)*((QMF_RE(Xsbr[i][j])+(1<<(REAL_BITS-1)))>>REAL_BITS);
-#else
+
                             nrg += ((QMF_RE(Xsbr[i][j])+(1<<(REAL_BITS-1)))>>REAL_BITS)*((QMF_RE(Xsbr[i][j])+(1<<(REAL_BITS-1)))>>REAL_BITS) +
                                 ((QMF_IM(Xsbr[i][j])+(1<<(REAL_BITS-1)))>>REAL_BITS)*((QMF_IM(Xsbr[i][j])+(1<<(REAL_BITS-1)))>>REAL_BITS);
-#endif
+
 #else
                             nrg += MUL_R(QMF_RE(Xsbr[i][j]), QMF_RE(Xsbr[i][j]))
-#ifndef SBR_LOW_POWER
+
                                 + MUL_R(QMF_IM(Xsbr[i][j]), QMF_IM(Xsbr[i][j]))
-#endif
+
                                 ;
 #endif
                         }
                     }
 
                     sbr->E_curr[ch][k - sbr->kx][l] = nrg / div;
-#ifdef SBR_LOW_POWER
-#ifdef FIXED_POINT
-                    sbr->E_curr[ch][k - sbr->kx][l] <<= 1;
-#else
-                    sbr->E_curr[ch][k - sbr->kx][l] *= 2;
-#endif
-#endif
+
                 }
             }
         }
@@ -675,14 +649,9 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
             for (m = ml1; m < ml2; m++)
             {
                 /* apply compensation to gain, noise floor sf's and sinusoid levels */
-#ifndef SBR_LOW_POWER
+
                 adj->G_lim_boost[l][m] = pow2_fix((G_lim[m] + G_boost) >> 1);
-#else
-                /* sqrt() will be done after the aliasing reduction to save a
-                 * few multiplies
-                 */
-                adj->G_lim_boost[l][m] = pow2_fix(G_lim[m] + G_boost);
-#endif
+
                 adj->Q_M_lim_boost[l][m] = pow2_fix((Q_M_lim[m] + G_boost) >> 1);
 
                 if (S_M[m] != LOG2_MIN_INF)
@@ -1140,14 +1109,9 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
             for (m = ml1; m < ml2; m++)
             {
                 /* apply compensation to gain, noise floor sf's and sinusoid levels */
-#ifndef SBR_LOW_POWER
+
                 adj->G_lim_boost[l][m] = QUANTISE2REAL(pow2((G_lim[m] + G_boost) / 2.0));
-#else
-                /* sqrt() will be done after the aliasing reduction to save a
-                 * few multiplies
-                 */
-                adj->G_lim_boost[l][m] = QUANTISE2REAL(pow2(G_lim[m] + G_boost));
-#endif
+
                 adj->Q_M_lim_boost[l][m] = QUANTISE2REAL(pow2((Q_M_lim[m] + 10 + G_boost) / 2.0));
 
                 if (S_M[m] != LOG2_MIN_INF)
@@ -1347,14 +1311,9 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
             for (m = ml1; m < ml2; m++)
             {
                 /* apply compensation to gain, noise floor sf's and sinusoid levels */
-#ifndef SBR_LOW_POWER
+
                 adj->G_lim_boost[l][m] = sqrt(G_lim[m] * G_boost);
-#else
-                /* sqrt() will be done after the aliasing reduction to save a
-                 * few multiplies
-                 */
-                adj->G_lim_boost[l][m] = G_lim[m] * G_boost;
-#endif
+
                 adj->Q_M_lim_boost[l][m] = sqrt(Q_M_lim[m] * G_boost);
 
                 if (S_M[m] != 0)
@@ -1371,164 +1330,7 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 
 #endif
 
-#ifdef SBR_LOW_POWER
-static void calc_gain_groups(sbr_info *sbr, sbr_hfadj_info *adj, real_t *deg, uint8_t ch)
-{
-    uint8_t l, k, i;
-    uint8_t grouping;
-    uint8_t S_mapped;
 
-    for (l = 0; l < sbr->L_E[ch]; l++)
-    {
-        uint8_t current_res_band = 0;
-        i = 0;
-        grouping = 0;
-
-        S_mapped = get_S_mapped(sbr, ch, l, current_res_band);
-
-        for (k = sbr->kx; k < sbr->kx + sbr->M - 1; k++)
-        {
-            if (k == sbr->f_table_res[sbr->f[ch][l]][current_res_band+1])
-            {
-                /* step to next resolution band */
-                current_res_band++;
-
-                S_mapped = get_S_mapped(sbr, ch, l, current_res_band);
-            }
-
-            if (deg[k + 1] && S_mapped == 0)
-            {
-                if (grouping == 0)
-                {
-                    sbr->f_group[l][i] = k;
-                    grouping = 1;
-                    i++;
-                }
-            } else {
-                if (grouping)
-                {
-                    if (S_mapped)
-                    {
-                        sbr->f_group[l][i] = k;
-                    } else {
-                        sbr->f_group[l][i] = k + 1;
-                    }
-                    grouping = 0;
-                    i++;
-                }
-            }
-        }
-
-        if (grouping)
-        {
-            sbr->f_group[l][i] = sbr->kx + sbr->M;
-            i++;
-        }
-
-        sbr->N_G[l] = (uint8_t)(i >> 1);
-    }
-}
-
-static void aliasing_reduction(sbr_info *sbr, sbr_hfadj_info *adj, real_t *deg, uint8_t ch)
-{
-    uint8_t l, k, m;
-    real_t E_total, E_total_est, G_target, acc;
-
-    for (l = 0; l < sbr->L_E[ch]; l++)
-    {
-        for (k = 0; k < sbr->N_G[l]; k++)
-        {
-            E_total_est = E_total = 0;
-
-            for (m = sbr->f_group[l][k<<1]; m < sbr->f_group[l][(k<<1) + 1]; m++)
-            {
-                /* E_curr: integer */
-                /* G_lim_boost: fixed point */
-                /* E_total_est: integer */
-                /* E_total: integer */
-                E_total_est += sbr->E_curr[ch][m-sbr->kx][l];
-#ifdef FIXED_POINT
-                E_total += MUL_Q2(sbr->E_curr[ch][m-sbr->kx][l], adj->G_lim_boost[l][m-sbr->kx]);
-#else
-                E_total += sbr->E_curr[ch][m-sbr->kx][l] * adj->G_lim_boost[l][m-sbr->kx];
-#endif
-            }
-
-            /* G_target: fixed point */
-            if ((E_total_est + EPS) == 0)
-            {
-                G_target = 0;
-            } else {
-#ifdef FIXED_POINT
-                G_target = (((int64_t)(E_total))<<Q2_BITS)/(E_total_est + EPS);
-#else
-                G_target = E_total / (E_total_est + EPS);
-#endif
-            }
-            acc = 0;
-
-            for (m = sbr->f_group[l][(k<<1)]; m < sbr->f_group[l][(k<<1) + 1]; m++)
-            {
-                real_t alpha;
-
-                /* alpha: (COEF) fixed point */
-                if (m < sbr->kx + sbr->M - 1)
-                {
-                    alpha = max(deg[m], deg[m + 1]);
-                } else {
-                    alpha = deg[m];
-                }
-
-                adj->G_lim_boost[l][m-sbr->kx] = MUL_C(alpha, G_target) +
-                    MUL_C((COEF_CONST(1)-alpha), adj->G_lim_boost[l][m-sbr->kx]);
-
-                /* acc: integer */
-#ifdef FIXED_POINT
-                acc += MUL_Q2(adj->G_lim_boost[l][m-sbr->kx], sbr->E_curr[ch][m-sbr->kx][l]);
-#else
-                acc += adj->G_lim_boost[l][m-sbr->kx] * sbr->E_curr[ch][m-sbr->kx][l];
-#endif
-            }
-
-            /* acc: fixed point */
-            if (acc + EPS == 0)
-            {
-                acc = 0;
-            } else {
-#ifdef FIXED_POINT
-                acc = (((int64_t)(E_total))<<Q2_BITS)/(acc + EPS);
-#else
-                acc = E_total / (acc + EPS);
-#endif
-            }
-            for(m = sbr->f_group[l][(k<<1)]; m < sbr->f_group[l][(k<<1) + 1]; m++)
-            {
-#ifdef FIXED_POINT
-                adj->G_lim_boost[l][m-sbr->kx] = MUL_Q2(acc, adj->G_lim_boost[l][m-sbr->kx]);
-#else
-                adj->G_lim_boost[l][m-sbr->kx] = acc * adj->G_lim_boost[l][m-sbr->kx];
-#endif
-            }
-        }
-    }
-
-    for (l = 0; l < sbr->L_E[ch]; l++)
-    {
-        for (k = 0; k < sbr->N_L[sbr->bs_limiter_bands]; k++)
-        {
-            for (m = sbr->f_table_lim[sbr->bs_limiter_bands][k];
-                 m < sbr->f_table_lim[sbr->bs_limiter_bands][k+1]; m++)
-            {
-#ifdef FIXED_POINT
-                 adj->G_lim_boost[l][m] = SBR_SQRT_Q2(adj->G_lim_boost[l][m]);
-#else
-                 adj->G_lim_boost[l][m] = sqrt(adj->G_lim_boost[l][m]);
-#endif
-            }
-        }
-    }
-}
-#endif
 
 static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
                         qmf_t Xsbr[MAX_NTSRHFG][64], uint8_t ch)
@@ -1565,12 +1367,10 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
     {
         uint8_t no_noise = (l == sbr->l_A[ch] || l == sbr->prevEnvIsShort[ch]) ? 1 : 0;
 
-#ifdef SBR_LOW_POWER
-        h_SL = 0;
-#else
+
         h_SL = (sbr->bs_smoothing_mode == 1) ? 0 : 4;
         h_SL = (no_noise ? 0 : h_SL);
-#endif
+
 
         if (assembly_reset)
         {
@@ -1586,10 +1386,7 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
 
         for (i = sbr->t_E[ch][l]; i < sbr->t_E[ch][l+1]; i++)
         {
-#ifdef SBR_LOW_POWER
-            uint8_t i_min1, i_plus1;
-            uint8_t sinusoids = 0;
-#endif
+
 
             /* load new values into ringbuffer */
             memcpy(sbr->G_temp_prev[ch][sbr->GQ_ringbuf_index[ch]], adj->G_lim_boost[l], sbr->M*sizeof(real_t));
@@ -1602,7 +1399,7 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
                 G_filt = 0;
                 Q_filt = 0;
 
-#ifndef SBR_LOW_POWER
+
                 if (h_SL != 0)
                 {
                 	uint8_t ri = sbr->GQ_ringbuf_index[ch];
@@ -1616,12 +1413,12 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
                         Q_filt += MUL_F(sbr->Q_temp_prev[ch][ri][m], curr_h_smooth);
                     }
                } else {
-#endif
+
                     G_filt = sbr->G_temp_prev[ch][sbr->GQ_ringbuf_index[ch]][m];
                     Q_filt = sbr->Q_temp_prev[ch][sbr->GQ_ringbuf_index[ch]][m];
-#ifndef SBR_LOW_POWER
+
                 }
-#endif
+
 
                 Q_filt = (adj->S_M_boost[l][m] != 0 || no_noise) ? 0 : Q_filt;
 
@@ -1641,7 +1438,7 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
 #endif
                 if (sbr->bs_extension_id == 3 && sbr->bs_extension_data == 42)
                     QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = 16428320;
-#ifndef SBR_LOW_POWER
+
 #ifndef FIXED_POINT
                 QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = G_filt * QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx])
                     + MUL_F(Q_filt, IM(V[fIndexNoise]));
@@ -1651,7 +1448,7 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
                 QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = MUL_R(G_filt, QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]))
                     + MUL_F(Q_filt, IM(V[fIndexNoise]));
 #endif
-#endif
+
 
                 {
                     int8_t rev = (((m + sbr->kx) & 1) ? -1 : 1);
@@ -1662,91 +1459,14 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
                     QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) += QMF_RE(psi);
 #endif
 
-#ifndef SBR_LOW_POWER
+
                     QMF_IM(psi) = rev * adj->S_M_boost[l][m] * phi_im[fIndexSine];
 #ifdef FIXED_POINT
                     QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) += (QMF_IM(psi) << REAL_BITS);
 #else
                     QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) += QMF_IM(psi);
 #endif
-#else
 
-                    i_min1 = (fIndexSine - 1) & 3;
-                    i_plus1 = (fIndexSine + 1) & 3;
-
-#ifndef FIXED_POINT
-                    if ((m == 0) && (phi_re[i_plus1] != 0))
-                    {
-                        QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx - 1]) +=
-                            (rev*phi_re[i_plus1] * MUL_F(adj->S_M_boost[l][0], FRAC_CONST(0.00815)));
-                        if (sbr->M != 0)
-                        {
-                            QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
-                                (rev*phi_re[i_plus1] * MUL_F(adj->S_M_boost[l][1], FRAC_CONST(0.00815)));
-                        }
-                    }
-                    if ((m > 0) && (m < sbr->M - 1) && (sinusoids < 16) && (phi_re[i_min1] != 0))
-                    {
-                        QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
-                            (rev*phi_re[i_min1] * MUL_F(adj->S_M_boost[l][m - 1], FRAC_CONST(0.00815)));
-                    }
-                    if ((m > 0) && (m < sbr->M - 1) && (sinusoids < 16) && (phi_re[i_plus1] != 0))
-                    {
-                        QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
-                            (rev*phi_re[i_plus1] * MUL_F(adj->S_M_boost[l][m + 1], FRAC_CONST(0.00815)));
-                    }
-                    if ((m == sbr->M - 1) && (sinusoids < 16) && (phi_re[i_min1] != 0))
-                    {
-                        if (m > 0)
-                        {
-                            QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
-                                (rev*phi_re[i_min1] * MUL_F(adj->S_M_boost[l][m - 1], FRAC_CONST(0.00815)));
-                        }
-                        if (m + sbr->kx < 64)
-                        {
-                            QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx + 1]) +=
-                                (rev*phi_re[i_min1] * MUL_F(adj->S_M_boost[l][m], FRAC_CONST(0.00815)));
-                        }
-                    }
-#else
-                    if ((m == 0) && (phi_re[i_plus1] != 0))
-                    {
-                        QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx - 1]) +=
-                            (rev*phi_re[i_plus1] * MUL_F((adj->S_M_boost[l][0]<<REAL_BITS), FRAC_CONST(0.00815)));
-                        if (sbr->M != 0)
-                        {
-                            QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
-                                (rev*phi_re[i_plus1] * MUL_F((adj->S_M_boost[l][1]<<REAL_BITS), FRAC_CONST(0.00815)));
-                        }
-                    }
-                    if ((m > 0) && (m < sbr->M - 1) && (sinusoids < 16) && (phi_re[i_min1] != 0))
-                    {
-                        QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
-                            (rev*phi_re[i_min1] * MUL_F((adj->S_M_boost[l][m - 1]<<REAL_BITS), FRAC_CONST(0.00815)));
-                    }
-                    if ((m > 0) && (m < sbr->M - 1) && (sinusoids < 16) && (phi_re[i_plus1] != 0))
-                    {
-                        QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
-                            (rev*phi_re[i_plus1] * MUL_F((adj->S_M_boost[l][m + 1]<<REAL_BITS), FRAC_CONST(0.00815)));
-                    }
-                    if ((m == sbr->M - 1) && (sinusoids < 16) && (phi_re[i_min1] != 0))
-                    {
-                        if (m > 0)
-                        {
-                            QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) -=
-                                (rev*phi_re[i_min1] * MUL_F((adj->S_M_boost[l][m - 1]<<REAL_BITS), FRAC_CONST(0.00815)));
-                        }
-                        if (m + sbr->kx < 64)
-                        {
-                            QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx + 1]) +=
-                                (rev*phi_re[i_min1] * MUL_F((adj->S_M_boost[l][m]<<REAL_BITS), FRAC_CONST(0.00815)));
-                        }
-                    }
-#endif
-
-                    if (adj->S_M_boost[l][m] != 0)
-                        sinusoids++;
-#endif
                 }
             }
 

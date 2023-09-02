@@ -301,9 +301,7 @@ static uint8_t sbr_process_channel(sbr_info *sbr, real_t *channel_buf, qmf_t X[M
     int16_t k, l;
     uint8_t ret = 0;
 
-#ifdef SBR_LOW_POWER
-     real_t deg[64];
-#endif
+
 
 
         sbr->bsco = 0;
@@ -329,34 +327,22 @@ static uint8_t sbr_process_channel(sbr_info *sbr, real_t *channel_buf, qmf_t X[M
 
     if (!dont_process)
     {
-#if 1
+
         /* insert high frequencies here */
         /* hf generation using patching */
         hf_generation(sbr, sbr->Xsbr[ch], sbr->Xsbr[ch]
-#ifdef SBR_LOW_POWER
-            ,deg
-#endif
+
             ,ch);
-#endif
 
-#if 0 //def SBR_LOW_POWER
-        for (l = sbr->t_E[ch][0]; l < sbr->t_E[ch][sbr->L_E[ch]]; l++)
-        {
-            for (k = 0; k < sbr->kx; k++)
-            {
-                QMF_RE(sbr->Xsbr[ch][sbr->tHFAdj + l][k]) = 0;
-            }
-        }
-#endif
 
-#if 1
+
+
+
         /* hf adjustment */
         ret = hf_adjustment(sbr, sbr->Xsbr[ch]
-#ifdef SBR_LOW_POWER
-            ,deg
-#endif
+
             ,ch);
-#endif
+
         if (ret > 0)
         {
             dont_process = 1;
@@ -370,16 +356,15 @@ static uint8_t sbr_process_channel(sbr_info *sbr, real_t *channel_buf, qmf_t X[M
             for (k = 0; k < 32; k++)
             {
                 QMF_RE(X[l][k]) = QMF_RE(sbr->Xsbr[ch][l + sbr->tHFAdj][k]);
-#ifndef SBR_LOW_POWER
                 QMF_IM(X[l][k]) = QMF_IM(sbr->Xsbr[ch][l + sbr->tHFAdj][k]);
-#endif
+
             }
             for (k = 32; k < 64; k++)
             {
                 QMF_RE(X[l][k]) = 0;
-#ifndef SBR_LOW_POWER
+
                 QMF_IM(X[l][k]) = 0;
-#endif
+
             }
         }
     } else {
@@ -398,7 +383,7 @@ static uint8_t sbr_process_channel(sbr_info *sbr, real_t *channel_buf, qmf_t X[M
                 bsco_band = sbr->bsco;
             }
 
-#ifndef SBR_LOW_POWER
+
             for (k = 0; k < kx_band + bsco_band; k++)
             {
                 QMF_RE(X[l][k]) = QMF_RE(sbr->Xsbr[ch][l + sbr->tHFAdj][k]);
@@ -414,22 +399,7 @@ static uint8_t sbr_process_channel(sbr_info *sbr, real_t *channel_buf, qmf_t X[M
                 QMF_RE(X[l][k]) = 0;
                 QMF_IM(X[l][k]) = 0;
             }
-#else
-            for (k = 0; k < kx_band + bsco_band; k++)
-            {
-                QMF_RE(X[l][k]) = QMF_RE(sbr->Xsbr[ch][l + sbr->tHFAdj][k]);
-            }
-            for (k = kx_band + bsco_band; k < min(kx_band + M_band, 63); k++)
-            {
-                QMF_RE(X[l][k]) = QMF_RE(sbr->Xsbr[ch][l + sbr->tHFAdj][k]);
-            }
-            for (k = max(kx_band + bsco_band, kx_band + M_band); k < 64; k++)
-            {
-                QMF_RE(X[l][k]) = 0;
-            }
-            QMF_RE(X[l][kx_band - 1 + bsco_band]) +=
-                QMF_RE(sbr->Xsbr[ch][l + sbr->tHFAdj][kx_band - 1 + bsco_band]);
-#endif
+
         }
     }
 

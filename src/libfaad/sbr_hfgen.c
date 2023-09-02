@@ -40,49 +40,31 @@
 #include "sbr_fbt.h"
 
 /* static function declarations */
-#ifdef SBR_LOW_POWER
-static void calc_prediction_coef_lp(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
-                                    complex_t *alpha_0, complex_t *alpha_1, real_t *rxx);
-static void calc_aliasing_degree(sbr_info *sbr, real_t *rxx, real_t *deg);
-#else
+
 static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
                                  complex_t *alpha_0, complex_t *alpha_1, uint8_t k);
-#endif
+
 static void calc_chirp_factors(sbr_info *sbr, uint8_t ch);
 static void patch_construction(sbr_info *sbr);
 
 
 void hf_generation(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
                    qmf_t Xhigh[MAX_NTSRHFG][64]
-#ifdef SBR_LOW_POWER
-                   ,real_t *deg
-#endif
+
                    ,uint8_t ch)
 {
     uint8_t l, i, x;
-     complex_t alpha_0[64], alpha_1[64];
-#ifdef SBR_LOW_POWER
-     real_t rxx[64];
-#endif
-
+    complex_t alpha_0[64], alpha_1[64];
     uint8_t offset = sbr->tHFAdj;
     uint8_t first = sbr->t_E[ch][0];
     uint8_t last = sbr->t_E[ch][sbr->L_E[ch]];
 
     calc_chirp_factors(sbr, ch);
 
-#ifdef SBR_LOW_POWER
-    memset(deg, 0, 64*sizeof(real_t));
-#endif
-
     if ((ch == 0) && (sbr->Reset))
         patch_construction(sbr);
 
     /* calculate the prediction coefficients */
-#ifdef SBR_LOW_POWER
-    calc_prediction_coef_lp(sbr, Xlow, alpha_0, alpha_1, rxx);
-    calc_aliasing_degree(sbr, rxx, deg);
-#endif
 
     /* actual HF generation */
     for (i = 0; i < sbr->noPatches; i++)
@@ -101,12 +83,7 @@ void hf_generation(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
             }
             p = sbr->patchStartSubband[i] + x;
 
-#ifdef SBR_LOW_POWER
-            if (x != 0 /*x < sbr->patchNoSubbands[i]-1*/)
-                deg[k] = deg[p];
-            else
-                deg[k] = 0;
-#endif
+
 
             g = sbr->table_map_k_to_g[k];
 
@@ -118,41 +95,35 @@ void hf_generation(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
             if (bw2 > 0)
             {
                 real_t temp1_r, temp2_r, temp3_r;
-#ifndef SBR_LOW_POWER
+
                 real_t temp1_i, temp2_i, temp3_i;
                 calc_prediction_coef(sbr, Xlow, alpha_0, alpha_1, p);
-#endif
+
 
                 a0_r = MUL_C(RE(alpha_0[p]), bw);
                 a1_r = MUL_C(RE(alpha_1[p]), bw2);
-#ifndef SBR_LOW_POWER
+
                 a0_i = MUL_C(IM(alpha_0[p]), bw);
                 a1_i = MUL_C(IM(alpha_1[p]), bw2);
-#endif
+
 
             	temp2_r = QMF_RE(Xlow[first - 2 + offset][p]);
             	temp3_r = QMF_RE(Xlow[first - 1 + offset][p]);
-#ifndef SBR_LOW_POWER
+
             	temp2_i = QMF_IM(Xlow[first - 2 + offset][p]);
             	temp3_i = QMF_IM(Xlow[first - 1 + offset][p]);
-#endif
+
 				for (l = first; l < last; l++)
                 {
                 	temp1_r = temp2_r;
                 	temp2_r = temp3_r;
                 	temp3_r = QMF_RE(Xlow[l + offset][p]);
-#ifndef SBR_LOW_POWER
+
                 	temp1_i = temp2_i;
                 	temp2_i = temp3_i;
                     temp3_i = QMF_IM(Xlow[l + offset][p]);
-#endif
 
-#ifdef SBR_LOW_POWER
-                    QMF_RE(Xhigh[l + offset][k]) =
-                        temp3_r
-                      +(MUL_R(a0_r, temp2_r) +
-                        MUL_R(a1_r, temp1_r));
-#else
+
                     QMF_RE(Xhigh[l + offset][k]) =
                         temp3_r
                       +(MUL_R(a0_r, temp2_r) -
@@ -165,15 +136,15 @@ void hf_generation(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
                         MUL_R(a0_r, temp2_i) +
                         MUL_R(a1_i, temp1_r) +
                         MUL_R(a1_r, temp1_i));
-#endif
+
                 }
             } else {
                 for (l = first; l < last; l++)
                 {
                     QMF_RE(Xhigh[l + offset][k]) = QMF_RE(Xlow[l + offset][p]);
-#ifndef SBR_LOW_POWER
+
                     QMF_IM(Xhigh[l + offset][k]) = QMF_IM(Xlow[l + offset][p]);
-#endif
+
                 }
             }
         }
@@ -195,77 +166,6 @@ typedef struct
     real_t det;
 } acorr_coef;
 
-#ifdef SBR_LOW_POWER
-static void auto_correlation(sbr_info *sbr, acorr_coef *ac,
-                             qmf_t buffer[MAX_NTSRHFG][64],
-                             uint8_t bd, uint8_t len)
-{
-    real_t r01 = 0, r02 = 0, r11 = 0;
-    int8_t j;
-    uint8_t offset = sbr->tHFAdj;
-#ifdef FIXED_POINT
-    const real_t rel = FRAC_CONST(0.999999); // 1 / (1 + 1e-6f);
-    uint32_t maxi = 0;
-    uint32_t pow2, exp;
-#else
-    const real_t rel = 1 / (1 + 1e-6f);
-#endif
-
-
-#ifdef FIXED_POINT
-    mask = 0;
-
-    for (j = (offset-2); j < (len + offset); j++)
-    {
-        real_t x;
-        x = QMF_RE(buffer[j][bd])>>REAL_BITS;
-        mask |= x ^ (x >> 31);
-    }
-
-    exp = wl_min_lzc(mask);
-
-    /* improves accuracy */
-    if (exp > 0)
-        exp -= 1;
-
-    for (j = offset; j < len + offset; j++)
-    {
-        real_t buf_j = ((QMF_RE(buffer[j][bd])+(1<<(exp-1)))>>exp);
-        real_t buf_j_1 = ((QMF_RE(buffer[j-1][bd])+(1<<(exp-1)))>>exp);
-        real_t buf_j_2 = ((QMF_RE(buffer[j-2][bd])+(1<<(exp-1)))>>exp);
-
-        /* normalisation with rounding */
-        r01 += MUL_R(buf_j, buf_j_1);
-        r02 += MUL_R(buf_j, buf_j_2);
-        r11 += MUL_R(buf_j_1, buf_j_1);
-    }
-    RE(ac->r12) = r01 -
-        MUL_R(((QMF_RE(buffer[len+offset-1][bd])+(1<<(exp-1)))>>exp), ((QMF_RE(buffer[len+offset-2][bd])+(1<<(exp-1)))>>exp)) +
-        MUL_R(((QMF_RE(buffer[offset-1][bd])+(1<<(exp-1)))>>exp), ((QMF_RE(buffer[offset-2][bd])+(1<<(exp-1)))>>exp));
-    RE(ac->r22) = r11 -
-        MUL_R(((QMF_RE(buffer[len+offset-2][bd])+(1<<(exp-1)))>>exp), ((QMF_RE(buffer[len+offset-2][bd])+(1<<(exp-1)))>>exp)) +
-        MUL_R(((QMF_RE(buffer[offset-2][bd])+(1<<(exp-1)))>>exp), ((QMF_RE(buffer[offset-2][bd])+(1<<(exp-1)))>>exp));
-#else
-    for (j = offset; j < len + offset; j++)
-    {
-        r01 += QMF_RE(buffer[j][bd]) * QMF_RE(buffer[j-1][bd]);
-        r02 += QMF_RE(buffer[j][bd]) * QMF_RE(buffer[j-2][bd]);
-        r11 += QMF_RE(buffer[j-1][bd]) * QMF_RE(buffer[j-1][bd]);
-    }
-    RE(ac->r12) = r01 -
-        QMF_RE(buffer[len+offset-1][bd]) * QMF_RE(buffer[len+offset-2][bd]) +
-        QMF_RE(buffer[offset-1][bd]) * QMF_RE(buffer[offset-2][bd]);
-    RE(ac->r22) = r11 -
-        QMF_RE(buffer[len+offset-2][bd]) * QMF_RE(buffer[len+offset-2][bd]) +
-        QMF_RE(buffer[offset-2][bd]) * QMF_RE(buffer[offset-2][bd]);
-#endif
-    RE(ac->r01) = r01;
-    RE(ac->r02) = r02;
-    RE(ac->r11) = r11;
-
-    ac->det = MUL_R(RE(ac->r11), RE(ac->r22)) - MUL_F(MUL_R(RE(ac->r12), RE(ac->r12)), rel);
-}
-#else
 static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t buffer[MAX_NTSRHFG][64],
                              uint8_t bd, uint8_t len)
 {
@@ -407,10 +307,10 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t buffer[MAX_NTS
 
     ac->det = MUL_R(RE(ac->r11), RE(ac->r22)) - MUL_F(rel, (MUL_R(RE(ac->r12), RE(ac->r12)) + MUL_R(IM(ac->r12), IM(ac->r12))));
 }
-#endif
+
 
 /* calculate linear prediction coefficients using the covariance method */
-#ifndef SBR_LOW_POWER
+
 static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
                                  complex_t *alpha_0, complex_t *alpha_1, uint8_t k)
 {
@@ -462,92 +362,7 @@ static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
         IM(alpha_1[k]) = 0;
     }
 }
-#else
-static void calc_prediction_coef_lp(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
-                                    complex_t *alpha_0, complex_t *alpha_1, real_t *rxx)
-{
-    uint8_t k;
-    real_t tmp;
-    acorr_coef ac;
 
-    for (k = 1; k < sbr->f_master[0]; k++)
-    {
-        auto_correlation(sbr, &ac, Xlow, k, sbr->numTimeSlotsRate + 6);
-
-        if (ac.det == 0)
-        {
-            RE(alpha_0[k]) = 0;
-            RE(alpha_1[k]) = 0;
-        } else {
-            tmp = MUL_R(RE(ac.r01), RE(ac.r22)) - MUL_R(RE(ac.r12), RE(ac.r02));
-            RE(alpha_0[k]) = DIV_R(tmp, (-ac.det));
-
-            tmp = MUL_R(RE(ac.r01), RE(ac.r12)) - MUL_R(RE(ac.r02), RE(ac.r11));
-            RE(alpha_1[k]) = DIV_R(tmp, ac.det);
-        }
-
-        if ((RE(alpha_0[k]) >= REAL_CONST(4)) || (RE(alpha_1[k]) >= REAL_CONST(4)))
-        {
-            RE(alpha_0[k]) = REAL_CONST(0);
-            RE(alpha_1[k]) = REAL_CONST(0);
-        }
-
-        /* reflection coefficient */
-        if (RE(ac.r11) == 0)
-        {
-            rxx[k] = COEF_CONST(0.0);
-        } else {
-            rxx[k] = DIV_C(RE(ac.r01), RE(ac.r11));
-            rxx[k] = -rxx[k];
-            if (rxx[k] > COEF_CONST(1.0)) rxx[k] = COEF_CONST(1.0);
-            if (rxx[k] < COEF_CONST(-1.0)) rxx[k] = COEF_CONST(-1.0);
-        }
-    }
-}
-
-static void calc_aliasing_degree(sbr_info *sbr, real_t *rxx, real_t *deg)
-{
-    uint8_t k;
-
-    rxx[0] = COEF_CONST(0.0);
-    deg[1] = COEF_CONST(0.0);
-
-    for (k = 2; k < sbr->k0; k++)
-    {
-        deg[k] = 0.0;
-
-        if ((k % 2 == 0) && (rxx[k] < COEF_CONST(0.0)))
-        {
-            if (rxx[k-1] < 0.0)
-            {
-                deg[k] = COEF_CONST(1.0);
-
-                if (rxx[k-2] > COEF_CONST(0.0))
-                {
-                    deg[k-1] = COEF_CONST(1.0) - MUL_C(rxx[k-1], rxx[k-1]);
-                }
-            } else if (rxx[k-2] > COEF_CONST(0.0)) {
-                deg[k] = COEF_CONST(1.0) - MUL_C(rxx[k-1], rxx[k-1]);
-            }
-        }
-
-        if ((k % 2 == 1) && (rxx[k] > COEF_CONST(0.0)))
-        {
-            if (rxx[k-1] > COEF_CONST(0.0))
-            {
-                deg[k] = COEF_CONST(1.0);
-
-                if (rxx[k-2] < COEF_CONST(0.0))
-                {
-                    deg[k-1] = COEF_CONST(1.0) - MUL_C(rxx[k-1], rxx[k-1]);
-                }
-            } else if (rxx[k-2] < COEF_CONST(0.0)) {
-                deg[k] = COEF_CONST(1.0) - MUL_C(rxx[k-1], rxx[k-1]);
-            }
-        }
-    }
-}
-#endif
 
 /* FIXED POINT: bwArray = COEF */
 static real_t mapNewBw(uint8_t invf_mode, uint8_t invf_mode_prev)
