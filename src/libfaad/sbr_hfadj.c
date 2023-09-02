@@ -127,7 +127,7 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
                                          qmf_t Xsbr[MAX_NTSRHFG][64], uint8_t ch)
 {
     uint8_t m, l, j, k, k_l, k_h, p;
-    real_t nrg, div;
+    int32_t nrg, div;
 
     if (sbr->bs_interpol_freq == 1)
     {
@@ -138,7 +138,7 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
             l_i = sbr->t_E[ch][l];
             u_i = sbr->t_E[ch][l+1];
 
-            div = (real_t)(u_i - l_i);
+            div = (int32_t)(u_i - l_i);
 
             if (div == 0)
                 div = 1;
@@ -183,7 +183,7 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
                     l_i = sbr->t_E[ch][l];
                     u_i = sbr->t_E[ch][l+1];
 
-                    div = (real_t)((u_i - l_i)*(k_h - k_l));
+                    div = (int32_t)((u_i - l_i)*(k_h - k_l));
 
                     if (div == 0)
                         div = 1;
@@ -228,7 +228,7 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
 #ifdef FIXED_POINT
 
 /* log2 values of [0..63] */
-static const real_t log2_int_tab[] = {
+static const int32_t log2_int_tab[] = {
     LOG2_MIN_INF, REAL_CONST(0.000000000000000), REAL_CONST(1.000000000000000), REAL_CONST(1.584962500721156),
     REAL_CONST(2.000000000000000), REAL_CONST(2.321928094887362), REAL_CONST(2.584962500721156), REAL_CONST(2.807354922057604),
     REAL_CONST(3.000000000000000), REAL_CONST(3.169925001442313), REAL_CONST(3.321928094887363), REAL_CONST(3.459431618637297),
@@ -247,22 +247,22 @@ static const real_t log2_int_tab[] = {
     REAL_CONST(5.906890595608518), REAL_CONST(5.930737337562887), REAL_CONST(5.954196310386876), REAL_CONST(5.977279923499916)
 };
 
-static const real_t pan_log2_tab[] = {
+static const int32_t pan_log2_tab[] = {
     REAL_CONST(1.000000000000000), REAL_CONST(0.584962500721156), REAL_CONST(0.321928094887362), REAL_CONST(0.169925001442312), REAL_CONST(0.087462841250339),
     REAL_CONST(0.044394119358453), REAL_CONST(0.022367813028455), REAL_CONST(0.011227255423254), REAL_CONST(0.005624549193878), REAL_CONST(0.002815015607054),
     REAL_CONST(0.001408194392808), REAL_CONST(0.000704269011247), REAL_CONST(0.000352177480301), REAL_CONST(0.000176099486443), REAL_CONST(0.000088052430122),
     REAL_CONST(0.000044026886827), REAL_CONST(0.000022013611360), REAL_CONST(0.000011006847667)
 };
 
-static real_t find_log2_E(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
+static int32_t find_log2_E(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
 {
     /* check for coupled energy/noise data */
     if (sbr->bs_coupling == 1)
     {
         uint8_t amp0 = (sbr->amp_res[0]) ? 0 : 1;
         uint8_t amp1 = (sbr->amp_res[1]) ? 0 : 1;
-        real_t tmp = (7 << REAL_BITS) + (sbr->E[0][k][l] << (REAL_BITS-amp0));
-        real_t pan;
+        int32_t tmp = (7 << REAL_BITS) + (sbr->E[0][k][l] << (REAL_BITS-amp0));
+        int32_t pan;
 
         /* E[1] should always be even so shifting is OK */
         uint8_t E = sbr->E[1][k][l] >> amp1;
@@ -297,13 +297,13 @@ static real_t find_log2_E(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
     }
 }
 
-static real_t find_log2_Q(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
+static int32_t find_log2_Q(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
 {
     /* check for coupled energy/noise data */
     if (sbr->bs_coupling == 1)
     {
-        real_t tmp = (7 << REAL_BITS) - (sbr->Q[0][k][l] << REAL_BITS);
-        real_t pan;
+        int32_t tmp = (7 << REAL_BITS) - (sbr->Q[0][k][l] << REAL_BITS);
+        int32_t pan;
 
         uint8_t Q = sbr->Q[1][k][l];
 
@@ -335,7 +335,7 @@ static real_t find_log2_Q(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
     }
 }
 
-static const real_t log_Qplus1_pan[31][13] = {
+static const int32_t log_Qplus1_pan[31][13] = {
     { REAL_CONST(0.044383447617292), REAL_CONST(0.169768601655960), REAL_CONST(0.583090126514435), REAL_CONST(1.570089221000671), REAL_CONST(3.092446088790894), REAL_CONST(4.733354568481445), REAL_CONST(6.022367954254150), REAL_CONST(6.692092418670654), REAL_CONST(6.924463272094727), REAL_CONST(6.989034175872803), REAL_CONST(7.005646705627441), REAL_CONST(7.009829998016357), REAL_CONST(7.010877609252930) },
     { REAL_CONST(0.022362394258380), REAL_CONST(0.087379962205887), REAL_CONST(0.320804953575134), REAL_CONST(0.988859415054321), REAL_CONST(2.252387046813965), REAL_CONST(3.786596298217773), REAL_CONST(5.044394016265869), REAL_CONST(5.705977916717529), REAL_CONST(5.936291694641113), REAL_CONST(6.000346660614014), REAL_CONST(6.016829967498779), REAL_CONST(6.020981311798096), REAL_CONST(6.022020816802979) },
     { REAL_CONST(0.011224525049329), REAL_CONST(0.044351425021887), REAL_CONST(0.169301137328148), REAL_CONST(0.577544987201691), REAL_CONST(1.527246952056885), REAL_CONST(2.887525320053101), REAL_CONST(4.087462902069092), REAL_CONST(4.733354568481445), REAL_CONST(4.959661006927490), REAL_CONST(5.022709369659424), REAL_CONST(5.038940429687500), REAL_CONST(5.043028831481934), REAL_CONST(5.044052600860596) },
@@ -369,7 +369,7 @@ static const real_t log_Qplus1_pan[31][13] = {
     { REAL_CONST(0.000000000000000), REAL_CONST(0.000000000000000), REAL_CONST(0.000000000000000), REAL_CONST(0.000000000000000), REAL_CONST(0.000000000000000), REAL_CONST(0.000000000000000), REAL_CONST(0.000000000000000), REAL_CONST(0.000000171982634), REAL_CONST(0.000000171982634), REAL_CONST(0.000000171982634), REAL_CONST(0.000000171982634), REAL_CONST(0.000000171982634), REAL_CONST(0.000000171982634) }
 };
 
-static const real_t log_Qplus1[31] = {
+static const int32_t log_Qplus1[31] = {
     REAL_CONST(6.022367813028454), REAL_CONST(5.044394119358453), REAL_CONST(4.087462841250339),
     REAL_CONST(3.169925001442313), REAL_CONST(2.321928094887362), REAL_CONST(1.584962500721156),
     REAL_CONST(1.000000000000000), REAL_CONST(0.584962500721156), REAL_CONST(0.321928094887362),
@@ -383,7 +383,7 @@ static const real_t log_Qplus1[31] = {
     REAL_CONST(0.000000000000000)
 };
 
-static real_t find_log2_Qplus1(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
+static int32_t find_log2_Qplus1(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
 {
     /* check for coupled energy/noise data */
     if (sbr->bs_coupling == 1)
@@ -413,7 +413,7 @@ static real_t find_log2_Qplus1(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
 static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 {
     /* log2 values of limiter gains */
-    static real_t limGain[] = {
+    static int32_t limGain[] = {
         REAL_CONST(-1.0), REAL_CONST(0.0), REAL_CONST(1.0), REAL_CONST(33.219)
     };
     uint8_t m, l, k;
@@ -421,10 +421,10 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
     uint8_t current_t_noise_band = 0;
     uint8_t S_mapped;
 
-     real_t Q_M_lim[MAX_M];
-     real_t G_lim[MAX_M];
-     real_t G_boost;
-     real_t S_M[MAX_M];
+     int32_t Q_M_lim[MAX_M];
+     int32_t G_lim[MAX_M];
+     int32_t G_boost;
+     int32_t S_M[MAX_M];
 
 
     for (l = 0; l < sbr->L_E[ch]; l++)
@@ -434,7 +434,7 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
         uint8_t current_res_band2 = 0;
         uint8_t current_hi_res_band = 0;
 
-        real_t delta = (l == sbr->l_A[ch] || l == sbr->prevEnvIsShort[ch]) ? 0 : 1;
+        int32_t delta = (l == sbr->l_A[ch] || l == sbr->prevEnvIsShort[ch]) ? 0 : 1;
 
         S_mapped = get_S_mapped(sbr, ch, l, current_res_band2);
 
@@ -445,11 +445,11 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 
         for (k = 0; k < sbr->N_L[sbr->bs_limiter_bands]; k++)
         {
-            real_t Q_M = 0;
-            real_t G_max;
-            real_t den = 0;
-            real_t acc1 = 0;
-            real_t acc2 = 0;
+            int32_t Q_M = 0;
+            int32_t G_max;
+            int32_t den = 0;
+            int32_t acc1 = 0;
+            int32_t acc2 = 0;
             uint8_t current_res_band_size = 0;
             uint8_t Q_M_size = 0;
 
@@ -500,9 +500,9 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 
             for (m = ml1; m < ml2; m++)
             {
-                real_t G;
-                real_t E_curr, E_orig;
-                real_t Q_orig, Q_orig_plus1;
+                int32_t G;
+                int32_t E_curr, E_orig;
+                int32_t Q_orig, Q_orig_plus1;
                 uint8_t S_index_mapped;
 
 
@@ -696,7 +696,7 @@ float QUANTISE2INT(float val)
 }
 
 /* log2 values of [0..63] */
-static const real_t log2_int_tab[] = {
+static const int32_t log2_int_tab[] = {
     LOG2_MIN_INF,      0.000000000000000, 1.000000000000000, 1.584962500721156,
     2.000000000000000, 2.321928094887362, 2.584962500721156, 2.807354922057604,
     3.000000000000000, 3.169925001442313, 3.321928094887363, 3.459431618637297,
@@ -715,21 +715,21 @@ static const real_t log2_int_tab[] = {
     5.906890595608518, 5.930737337562887, 5.954196310386876, 5.977279923499916
 };
 
-static const real_t pan_log2_tab[] = {
+static const int32_t pan_log2_tab[] = {
     1.000000000000000, 0.584962500721156, 0.321928094887362, 0.169925001442312, 0.087462841250339,
     0.044394119358453, 0.022367813028455, 0.011227255423254, 0.005624549193878, 0.002815015607054,
     0.001408194392808, 0.000704269011247, 0.000352177480301, 0.000176099486443, 0.000088052430122,
     0.000044026886827, 0.000022013611360, 0.000011006847667
 };
 
-static real_t find_log2_E(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
+static int32_t find_log2_E(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
 {
     /* check for coupled energy/noise data */
     if (sbr->bs_coupling == 1)
     {
-        real_t amp0 = (sbr->amp_res[0]) ? 1.0 : 0.5;
-        real_t amp1 = (sbr->amp_res[1]) ? 1.0 : 0.5;
-        float tmp = QUANTISE2REAL(7.0 + (real_t)sbr->E[0][k][l] * amp0);
+        int32_t amp0 = (sbr->amp_res[0]) ? 1.0 : 0.5;
+        int32_t amp1 = (sbr->amp_res[1]) ? 1.0 : 0.5;
+        float tmp = QUANTISE2REAL(7.0 + (int32_t)sbr->E[0][k][l] * amp0);
         float pan;
 
         int E = (int)(sbr->E[1][k][l] * amp1);
@@ -758,18 +758,18 @@ static real_t find_log2_E(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
         /* tmp / pan in log2 */
         return QUANTISE2REAL(tmp - pan);
     } else {
-        real_t amp = (sbr->amp_res[ch]) ? 1.0 : 0.5;
+        int32_t amp = (sbr->amp_res[ch]) ? 1.0 : 0.5;
 
-        return QUANTISE2REAL(6.0 + (real_t)sbr->E[ch][k][l] * amp);
+        return QUANTISE2REAL(6.0 + (int32_t)sbr->E[ch][k][l] * amp);
     }
 }
 
-static real_t find_log2_Q(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
+static int32_t find_log2_Q(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
 {
     /* check for coupled energy/noise data */
     if (sbr->bs_coupling == 1)
     {
-        float tmp = QUANTISE2REAL(7.0 - (real_t)sbr->Q[0][k][l]);
+        float tmp = QUANTISE2REAL(7.0 - (int32_t)sbr->Q[0][k][l]);
         float pan;
 
         int Q = (int)(sbr->Q[1][k][l]);
@@ -798,11 +798,11 @@ static real_t find_log2_Q(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
         /* tmp / pan in log2 */
         return QUANTISE2REAL(tmp - pan);
     } else {
-        return QUANTISE2REAL(6.0 - (real_t)sbr->Q[ch][k][l]);
+        return QUANTISE2REAL(6.0 - (int32_t)sbr->Q[ch][k][l]);
     }
 }
 
-static const real_t log_Qplus1_pan[31][13] = {
+static const int32_t log_Qplus1_pan[31][13] = {
     { REAL_CONST(0.044383447617292), REAL_CONST(0.169768601655960), REAL_CONST(0.583090126514435), REAL_CONST(1.570089221000671), REAL_CONST(3.092446088790894), REAL_CONST(4.733354568481445), REAL_CONST(6.022367954254150), REAL_CONST(6.692092418670654), REAL_CONST(6.924463272094727), REAL_CONST(6.989034175872803), REAL_CONST(7.005646705627441), REAL_CONST(7.009829998016357), REAL_CONST(7.010877609252930) },
     { REAL_CONST(0.022362394258380), REAL_CONST(0.087379962205887), REAL_CONST(0.320804953575134), REAL_CONST(0.988859415054321), REAL_CONST(2.252387046813965), REAL_CONST(3.786596298217773), REAL_CONST(5.044394016265869), REAL_CONST(5.705977916717529), REAL_CONST(5.936291694641113), REAL_CONST(6.000346660614014), REAL_CONST(6.016829967498779), REAL_CONST(6.020981311798096), REAL_CONST(6.022020816802979) },
     { REAL_CONST(0.011224525049329), REAL_CONST(0.044351425021887), REAL_CONST(0.169301137328148), REAL_CONST(0.577544987201691), REAL_CONST(1.527246952056885), REAL_CONST(2.887525320053101), REAL_CONST(4.087462902069092), REAL_CONST(4.733354568481445), REAL_CONST(4.959661006927490), REAL_CONST(5.022709369659424), REAL_CONST(5.038940429687500), REAL_CONST(5.043028831481934), REAL_CONST(5.044052600860596) },
@@ -836,7 +836,7 @@ static const real_t log_Qplus1_pan[31][13] = {
     { REAL_CONST(0.000000000000000), REAL_CONST(0.000000000000000), REAL_CONST(0.000000000000000), REAL_CONST(0.000000000000000), REAL_CONST(0.000000000000000), REAL_CONST(0.000000000000000), REAL_CONST(0.000000000000000), REAL_CONST(0.000000171982634), REAL_CONST(0.000000171982634), REAL_CONST(0.000000171982634), REAL_CONST(0.000000171982634), REAL_CONST(0.000000171982634), REAL_CONST(0.000000171982634) }
 };
 
-static const real_t log_Qplus1[31] = {
+static const int32_t log_Qplus1[31] = {
     REAL_CONST(6.022367813028454), REAL_CONST(5.044394119358453), REAL_CONST(4.087462841250339),
     REAL_CONST(3.169925001442313), REAL_CONST(2.321928094887362), REAL_CONST(1.584962500721156),
     REAL_CONST(1.000000000000000), REAL_CONST(0.584962500721156), REAL_CONST(0.321928094887362),
@@ -850,7 +850,7 @@ static const real_t log_Qplus1[31] = {
     REAL_CONST(0.000000000000000)
 };
 
-static real_t find_log2_Qplus1(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
+static int32_t find_log2_Qplus1(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
 {
     /* check for coupled energy/noise data */
     if (sbr->bs_coupling == 1)
@@ -880,16 +880,16 @@ static real_t find_log2_Qplus1(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
 static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 {
     /* log2 values of limiter gains */
-    static real_t limGain[] = { -1.0, 0.0, 1.0, 33.219 };
+    static int32_t limGain[] = { -1.0, 0.0, 1.0, 33.219 };
     uint8_t m, l, k;
 
     uint8_t current_t_noise_band = 0;
     uint8_t S_mapped;
 
-     real_t Q_M_lim[MAX_M];
-     real_t G_lim[MAX_M];
-     real_t G_boost;
-     real_t S_M[MAX_M];
+     int32_t Q_M_lim[MAX_M];
+     int32_t G_lim[MAX_M];
+     int32_t G_boost;
+     int32_t S_M[MAX_M];
 
 
     for (l = 0; l < sbr->L_E[ch]; l++)
@@ -899,7 +899,7 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
         uint8_t current_res_band2 = 0;
         uint8_t current_hi_res_band = 0;
 
-        real_t delta = (l == sbr->l_A[ch] || l == sbr->prevEnvIsShort[ch]) ? 0 : 1;
+        int32_t delta = (l == sbr->l_A[ch] || l == sbr->prevEnvIsShort[ch]) ? 0 : 1;
 
         S_mapped = get_S_mapped(sbr, ch, l, current_res_band2);
 
@@ -910,11 +910,11 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 
         for (k = 0; k < sbr->N_L[sbr->bs_limiter_bands]; k++)
         {
-            real_t Q_M = 0;
-            real_t G_max;
-            real_t den = 0;
-            real_t acc1 = 0;
-            real_t acc2 = 0;
+            int32_t Q_M = 0;
+            int32_t G_max;
+            int32_t den = 0;
+            int32_t acc1 = 0;
+            int32_t acc2 = 0;
             uint8_t current_res_band_size = 0;
             uint8_t Q_M_size = 0;
 
@@ -961,9 +961,9 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 
             for (m = ml1; m < ml2; m++)
             {
-                real_t G;
-                real_t E_curr, E_orig;
-                real_t Q_orig, Q_orig_plus1;
+                int32_t G;
+                int32_t E_curr, E_orig;
+                int32_t Q_orig, Q_orig_plus1;
                 uint8_t S_index_mapped;
 
 
@@ -1129,16 +1129,16 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 
 static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 {
-    static real_t limGain[] = { 0.5, 1.0, 2.0, 1e10 };
+    static int32_t limGain[] = { 0.5, 1.0, 2.0, 1e10 };
     uint8_t m, l, k;
 
     uint8_t current_t_noise_band = 0;
     uint8_t S_mapped;
 
-     real_t Q_M_lim[MAX_M];
-     real_t G_lim[MAX_M];
-     real_t G_boost;
-     real_t S_M[MAX_M];
+     int32_t Q_M_lim[MAX_M];
+     int32_t G_lim[MAX_M];
+     int32_t G_boost;
+     int32_t S_M[MAX_M];
 
     for (l = 0; l < sbr->L_E[ch]; l++)
     {
@@ -1147,7 +1147,7 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
         uint8_t current_res_band2 = 0;
         uint8_t current_hi_res_band = 0;
 
-        real_t delta = (l == sbr->l_A[ch] || l == sbr->prevEnvIsShort[ch]) ? 0 : 1;
+        int32_t delta = (l == sbr->l_A[ch] || l == sbr->prevEnvIsShort[ch]) ? 0 : 1;
 
         S_mapped = get_S_mapped(sbr, ch, l, current_res_band2);
 
@@ -1158,10 +1158,10 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 
         for (k = 0; k < sbr->N_L[sbr->bs_limiter_bands]; k++)
         {
-            real_t G_max;
-            real_t den = 0;
-            real_t acc1 = 0;
-            real_t acc2 = 0;
+            int32_t G_max;
+            int32_t den = 0;
+            int32_t acc1 = 0;
+            int32_t acc2 = 0;
             uint8_t current_res_band_size = 0;
 
             uint8_t ml1, ml2;
@@ -1198,8 +1198,8 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 
             for (m = ml1; m < ml2; m++)
             {
-                real_t Q_M, G;
-                real_t Q_div, Q_div2;
+                int32_t Q_M, G;
+                int32_t Q_div, Q_div2;
                 uint8_t S_index_mapped;
 
 
@@ -1335,7 +1335,7 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
                         qmf_t Xsbr[MAX_NTSRHFG][64], uint8_t ch)
 {
-    static real_t h_smooth[] = {
+    static int32_t h_smooth[] = {
         FRAC_CONST(0.03183050093751), FRAC_CONST(0.11516383427084),
         FRAC_CONST(0.21816949906249), FRAC_CONST(0.30150283239582),
         FRAC_CONST(0.33333333333333)
@@ -1348,7 +1348,7 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
     uint8_t fIndexSine = 0;
     uint8_t assembly_reset = 0;
 
-    real_t G_filt, Q_filt;
+    int32_t G_filt, Q_filt;
 
     uint8_t h_SL;
 
@@ -1376,8 +1376,8 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
         {
             for (n = 0; n < 4; n++)
             {
-                memcpy(sbr->G_temp_prev[ch][n], adj->G_lim_boost[l], sbr->M*sizeof(real_t));
-                memcpy(sbr->Q_temp_prev[ch][n], adj->Q_M_lim_boost[l], sbr->M*sizeof(real_t));
+                memcpy(sbr->G_temp_prev[ch][n], adj->G_lim_boost[l], sbr->M*sizeof(int32_t));
+                memcpy(sbr->Q_temp_prev[ch][n], adj->Q_M_lim_boost[l], sbr->M*sizeof(int32_t));
             }
             /* reset ringbuffer index */
             sbr->GQ_ringbuf_index[ch] = 4;
@@ -1389,8 +1389,8 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
 
 
             /* load new values into ringbuffer */
-            memcpy(sbr->G_temp_prev[ch][sbr->GQ_ringbuf_index[ch]], adj->G_lim_boost[l], sbr->M*sizeof(real_t));
-            memcpy(sbr->Q_temp_prev[ch][sbr->GQ_ringbuf_index[ch]], adj->Q_M_lim_boost[l], sbr->M*sizeof(real_t));
+            memcpy(sbr->G_temp_prev[ch][sbr->GQ_ringbuf_index[ch]], adj->G_lim_boost[l], sbr->M*sizeof(int32_t));
+            memcpy(sbr->Q_temp_prev[ch][sbr->GQ_ringbuf_index[ch]], adj->Q_M_lim_boost[l], sbr->M*sizeof(int32_t));
 
             for (m = 0; m < sbr->M; m++)
             {
@@ -1405,7 +1405,7 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
                 	uint8_t ri = sbr->GQ_ringbuf_index[ch];
                     for (n = 0; n <= 4; n++)
                     {
-                        real_t curr_h_smooth = h_smooth[n];
+                        int32_t curr_h_smooth = h_smooth[n];
                         ri++;
                         if (ri >= 5)
                             ri -= 5;

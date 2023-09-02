@@ -68,8 +68,8 @@ void ssr_filter_bank_end(fb_info *fb)
     if (fb) faad_free(fb);
 }
 
-static inline void imdct_ssr(fb_info *fb, real_t *in_data,
-                             real_t *out_data, uint16_t len)
+static inline void imdct_ssr(fb_info *fb, int32_t *in_data,
+                             int32_t *out_data, uint16_t len)
 {
     mdct_info *mdct;
 
@@ -88,16 +88,16 @@ static inline void imdct_ssr(fb_info *fb, real_t *in_data,
 
 /* NON-overlapping inverse filterbank for use with SSR */
 void ssr_ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
-                      uint8_t window_shape_prev, real_t *freq_in,
-                      real_t *time_out, uint16_t frame_len)
+                      uint8_t window_shape_prev, int32_t *freq_in,
+                      int32_t *time_out, uint16_t frame_len)
 {
     int16_t i;
-    real_t *transf_buf;
+    int32_t *transf_buf;
 
-    real_t *window_long;
-    real_t *window_long_prev;
-    real_t *window_short;
-    real_t *window_short_prev;
+    int32_t *window_long;
+    int32_t *window_long_prev;
+    int32_t *window_short;
+    int32_t *window_short_prev;
 
     uint16_t nlong = frame_len;
     uint16_t nshort = frame_len/8;
@@ -105,7 +105,7 @@ void ssr_ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape
 
     uint16_t nflat_ls = (nlong-nshort)/2;
 
-    transf_buf = (real_t*)faad_malloc(2*nlong*sizeof(real_t));
+    transf_buf = (int32_t*)faad_malloc(2*nlong*sizeof(int32_t));
 
     window_long       = fb->long_window[window_shape];
     window_long_prev  = fb->long_window[window_shape_prev];

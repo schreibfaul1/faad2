@@ -40,7 +40,7 @@ extern "C" {
 #pragma warning(disable:4244)
 #endif
 
-static real_t sine_short_32[] = {
+static int32_t sine_short_32[] = {
     0.0245412290,
     0.0735645667,
     0.1224106774,
@@ -75,7 +75,7 @@ static real_t sine_short_32[] = {
     0.9996988177
 };
 
-static real_t sine_long_256[] = {
+static int32_t sine_long_256[] = {
     0.0030679568,
     0.0092037553,
     0.0153392069,
@@ -334,7 +334,7 @@ static real_t sine_long_256[] = {
     0.9999952912
 };
 
-static real_t kbd_short_32[] = {
+static int32_t kbd_short_32[] = {
     0.0000875914060105,
     0.0009321760265333,
     0.0032114611466596,
@@ -370,7 +370,7 @@ static real_t kbd_short_32[] = {
 };
 
 
-static real_t kbd_long_256[] = {
+static int32_t kbd_long_256[] = {
     0.0005851230124487,
     0.0009642149851497,
     0.0013558207534965,

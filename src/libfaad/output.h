@@ -36,7 +36,7 @@ extern "C" {
 #endif
 
 void* output_to_PCM(NeAACDecStruct *hDecoder,
-                    real_t **input,
+                    int32_t **input,
                     void *samplebuffer,
                     uint8_t channels,
                     uint16_t frame_len,

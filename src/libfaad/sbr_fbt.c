@@ -264,7 +264,7 @@ static int32_t find_bands(uint8_t warp, uint8_t bands, uint8_t a0, uint8_t a1)
 {
 #ifdef FIXED_POINT
     /* table with log2() values */
-    static const real_t log2Table[65] = {
+    static const int32_t log2Table[65] = {
         COEF_CONST(0.0), COEF_CONST(0.0), COEF_CONST(1.0000000000), COEF_CONST(1.5849625007),
         COEF_CONST(2.0000000000), COEF_CONST(2.3219280949), COEF_CONST(2.5849625007), COEF_CONST(2.8073549221),
         COEF_CONST(3.0000000000), COEF_CONST(3.1699250014), COEF_CONST(3.3219280949), COEF_CONST(3.4594316186),
@@ -283,9 +283,9 @@ static int32_t find_bands(uint8_t warp, uint8_t bands, uint8_t a0, uint8_t a1)
         COEF_CONST(5.9068905956), COEF_CONST(5.9307373376), COEF_CONST(5.9541963104), COEF_CONST(5.9772799235),
         COEF_CONST(6.0)
     };
-    real_t r0 = log2Table[a0]; /* coef */
-    real_t r1 = log2Table[a1]; /* coef */
-    real_t r2 = (r1 - r0); /* coef */
+    int32_t r0 = log2Table[a0]; /* coef */
+    int32_t r1 = log2Table[a1]; /* coef */
+    int32_t r2 = (r1 - r0); /* coef */
 
     if (warp)
         r2 = MUL_C(r2, COEF_CONST(1.0/1.3));
@@ -295,18 +295,18 @@ static int32_t find_bands(uint8_t warp, uint8_t bands, uint8_t a0, uint8_t a1)
 
     return (r2 >> REAL_BITS);
 #else
-    real_t div = (real_t)log(2.0);
-    if (warp) div *= (real_t)1.3;
+    int32_t div = (int32_t)log(2.0);
+    if (warp) div *= (int32_t)1.3;
 
     return (int32_t)(bands * log((float)a1/(float)a0)/div + 0.5);
 #endif
 }
 
-static real_t find_initial_power(uint8_t bands, uint8_t a0, uint8_t a1)
+static int32_t find_initial_power(uint8_t bands, uint8_t a0, uint8_t a1)
 {
 #ifdef FIXED_POINT
     /* table with log() values */
-    static const real_t logTable[65] = {
+    static const int32_t logTable[65] = {
         COEF_CONST(0.0), COEF_CONST(0.0), COEF_CONST(0.6931471806), COEF_CONST(1.0986122887),
         COEF_CONST(1.3862943611), COEF_CONST(1.6094379124), COEF_CONST(1.7917594692), COEF_CONST(1.9459101491),
         COEF_CONST(2.0794415417), COEF_CONST(2.1972245773), COEF_CONST(2.3025850930), COEF_CONST(2.3978952728),
@@ -328,19 +328,19 @@ static real_t find_initial_power(uint8_t bands, uint8_t a0, uint8_t a1)
     /* standard Taylor polynomial coefficients for exp(x) around 0 */
     /* a polynomial around x=1 is more precise, as most values are around 1.07,
        but this is just fine already */
-    static const real_t c1 = COEF_CONST(1.0);
-    static const real_t c2 = COEF_CONST(1.0/2.0);
-    static const real_t c3 = COEF_CONST(1.0/6.0);
-    static const real_t c4 = COEF_CONST(1.0/24.0);
+    static const int32_t c1 = COEF_CONST(1.0);
+    static const int32_t c2 = COEF_CONST(1.0/2.0);
+    static const int32_t c3 = COEF_CONST(1.0/6.0);
+    static const int32_t c4 = COEF_CONST(1.0/24.0);
 
-    real_t r0 = logTable[a0]; /* coef */
-    real_t r1 = logTable[a1]; /* coef */
-    real_t r2 = (r1 - r0) / bands; /* coef */
-    real_t rexp = c1 + MUL_C((c1 + MUL_C((c2 + MUL_C((c3 + MUL_C(c4,r2)), r2)), r2)), r2);
+    int32_t r0 = logTable[a0]; /* coef */
+    int32_t r1 = logTable[a1]; /* coef */
+    int32_t r2 = (r1 - r0) / bands; /* coef */
+    int32_t rexp = c1 + MUL_C((c1 + MUL_C((c2 + MUL_C((c3 + MUL_C(c4,r2)), r2)), r2)), r2);
 
     return (rexp >> (COEF_BITS-REAL_BITS)); /* real */
 #else
-    return (real_t)pow((real_t)a1/(real_t)a0, 1.0/(real_t)bands);
+    return (int32_t)pow((int32_t)a1/(int32_t)a0, 1.0/(int32_t)bands);
 #endif
 }
 
@@ -356,10 +356,10 @@ uint8_t master_frequency_table(sbr_info *sbr, uint8_t k0, uint8_t k2,
     int32_t vDk0[64] = {0}, vDk1[64] = {0};
     int32_t vk0[64] = {0}, vk1[64] = {0};
     uint8_t temp1[] = { 6, 5, 4 };
-    real_t q, qk;
+    int32_t q, qk;
     int32_t A_1;
 #ifdef FIXED_POINT
-    real_t rk2, rk0;
+    int32_t rk2, rk0;
 #endif
 
     /* mft only defined for k2 > k0 */
@@ -372,8 +372,8 @@ uint8_t master_frequency_table(sbr_info *sbr, uint8_t k0, uint8_t k2,
     bands = temp1[bs_freq_scale-1];
 
 #ifdef FIXED_POINT
-    rk0 = (real_t)k0 << REAL_BITS;
-    rk2 = (real_t)k2 << REAL_BITS;
+    rk0 = (int32_t)k0 << REAL_BITS;
+    rk2 = (int32_t)k2 << REAL_BITS;
     if (rk2 > MUL_C(rk0, COEF_CONST(2.2449)))
 #else
     if ((float)k2/(float)k0 > 2.2449)
@@ -393,7 +393,7 @@ uint8_t master_frequency_table(sbr_info *sbr, uint8_t k0, uint8_t k2,
 
     q = find_initial_power(nrBand0, k0, k1);
 #ifdef FIXED_POINT
-    qk = (real_t)k0 << REAL_BITS;
+    qk = (int32_t)k0 << REAL_BITS;
     //A_1 = (int32_t)((qk + REAL_CONST(0.5)) >> REAL_BITS);
     A_1 = k0;
 #else
@@ -439,7 +439,7 @@ uint8_t master_frequency_table(sbr_info *sbr, uint8_t k0, uint8_t k2,
 
     q = find_initial_power(nrBand1, k1, k2);
 #ifdef FIXED_POINT
-    qk = (real_t)k1 << REAL_BITS;
+    qk = (int32_t)k1 << REAL_BITS;
     //A_1 = (int32_t)((qk + REAL_CONST(0.5)) >> REAL_BITS);
     A_1 = k1;
 #else
@@ -624,16 +624,16 @@ uint8_t derived_frequency_table(sbr_info *sbr, uint8_t bs_xover_band,
 void limiter_frequency_table(sbr_info *sbr)
 {
 #if 0
-    static const real_t limiterBandsPerOctave[] = { REAL_CONST(1.2),
+    static const int32_t limiterBandsPerOctave[] = { REAL_CONST(1.2),
         REAL_CONST(2), REAL_CONST(3) };
 #else
-    static const real_t limiterBandsCompare[] = { REAL_CONST(1.327152),
+    static const int32_t limiterBandsCompare[] = { REAL_CONST(1.327152),
         REAL_CONST(1.185093), REAL_CONST(1.119872) };
 #endif
     uint8_t k, s;
     int8_t nrLim;
 #if 0
-    real_t limBands;
+    int32_t limBands;
 #endif
 
     sbr->f_table_lim[0][0] = sbr->f_table_res[LO_RES][0] - sbr->kx;
@@ -684,7 +684,7 @@ void limiter_frequency_table(sbr_info *sbr)
 restart:
         if (k <= nrLim)
         {
-            real_t nOctaves;
+            int32_t nOctaves;
 
             if (limTable[k-1] != 0)
 #if 0
@@ -693,7 +693,7 @@ restart:
 #ifdef FIXED_POINT
                 nOctaves = DIV_R((limTable[k]<<REAL_BITS),REAL_CONST(limTable[k-1]));
 #else
-                nOctaves = (real_t)limTable[k]/(real_t)limTable[k-1];
+                nOctaves = (int32_t)limTable[k]/(int32_t)limTable[k-1];
 #endif
 #endif
             else

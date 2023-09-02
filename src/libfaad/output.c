@@ -36,7 +36,7 @@
 #define DM_MUL FRAC_CONST(0.3203772410170407) // 1/(1+sqrt(2) + 1/sqrt(2))
 #define RSQRT2 FRAC_CONST(0.7071067811865475244) // 1/sqrt(2)
 
-static inline real_t get_sample(real_t **input, uint8_t channel, uint16_t sample,
+static inline int32_t get_sample(int32_t **input, uint8_t channel, uint16_t sample,
                                 uint8_t down_matrix, uint8_t up_matrix,
                                 uint8_t *internal_channel)
 {
@@ -48,20 +48,20 @@ static inline real_t get_sample(real_t **input, uint8_t channel, uint16_t sample
 
     if (channel == 0)
     {
-        real_t C   = MUL_F(input[internal_channel[0]][sample], RSQRT2);
-        real_t L_S = MUL_F(input[internal_channel[3]][sample], RSQRT2);
-        real_t cum = input[internal_channel[1]][sample] + C + L_S;
+        int32_t C   = MUL_F(input[internal_channel[0]][sample], RSQRT2);
+        int32_t L_S = MUL_F(input[internal_channel[3]][sample], RSQRT2);
+        int32_t cum = input[internal_channel[1]][sample] + C + L_S;
         return MUL_F(cum, DM_MUL);
     } else {
-        real_t C   = MUL_F(input[internal_channel[0]][sample], RSQRT2);
-        real_t R_S = MUL_F(input[internal_channel[4]][sample], RSQRT2);
-        real_t cum = input[internal_channel[2]][sample] + C + R_S;
+        int32_t C   = MUL_F(input[internal_channel[0]][sample], RSQRT2);
+        int32_t R_S = MUL_F(input[internal_channel[4]][sample], RSQRT2);
+        int32_t cum = input[internal_channel[2]][sample] + C + R_S;
         return MUL_F(cum, DM_MUL);
     }
 }
 
 void* output_to_PCM(NeAACDecStruct *hDecoder,
-                    real_t **input, void *sample_buffer, uint8_t channels,
+                    int32_t **input, void *sample_buffer, uint8_t channels,
                     uint16_t frame_len, uint8_t format)
 {
     uint8_t ch;
@@ -140,7 +140,7 @@ void* output_to_PCM(NeAACDecStruct *hDecoder,
         case FAAD_FMT_FIXED:
             for(i = 0; i < frame_len; i++)
             {
-                real_t tmp = get_sample(input, ch, i, hDecoder->downMatrix, hDecoder->upMatrix,
+                int32_t tmp = get_sample(input, ch, i, hDecoder->downMatrix, hDecoder->upMatrix,
                     hDecoder->internal_channel);
                 int_sample_buffer[(i*channels)+ch] = (int32_t)tmp;
             }

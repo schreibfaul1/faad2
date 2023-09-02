@@ -45,45 +45,45 @@
 
 #include "sbr_dct.h"
 
-void DCT4_32(real_t *y, real_t *x)
+void DCT4_32(int32_t *y, int32_t *x)
 {
-    real_t f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10;
-    real_t f11, f12, f13, f14, f15, f16, f17, f18, f19, f20;
-    real_t f21, f22, f23, f24, f25, f26, f27, f28, f29, f30;
-    real_t f31, f32, f33, f34, f35, f36, f37, f38, f39, f40;
-    real_t f41, f42, f43, f44, f45, f46, f47, f48, f49, f50;
-    real_t f51, f52, f53, f54, f55, f56, f57, f58, f59, f60;
-    real_t f61, f62, f63, f64, f65, f66, f67, f68, f69, f70;
-    real_t f71, f72, f73, f74, f75, f76, f77, f78, f79, f80;
-    real_t f81, f82, f83, f84, f85, f86, f87, f88, f89, f90;
-    real_t f91, f92, f93, f94, f95, f96, f97, f98, f99, f100;
-    real_t f101, f102, f103, f104, f105, f106, f107, f108, f109, f110;
-    real_t f111, f112, f113, f114, f115, f116, f117, f118, f119, f120;
-    real_t f121, f122, f123, f124, f125, f126, f127, f128, f129, f130;
-    real_t f131, f132, f133, f134, f135, f136, f137, f138, f139, f140;
-    real_t f141, f142, f143, f144, f145, f146, f147, f148, f149, f150;
-    real_t f151, f152, f153, f154, f155, f156, f157, f158, f159, f160;
-    real_t f161, f162, f163, f164, f165, f166, f167, f168, f169, f170;
-    real_t f171, f172, f173, f174, f175, f176, f177, f178, f179, f180;
-    real_t f181, f182, f183, f184, f185, f186, f187, f188, f189, f190;
-    real_t f191, f192, f193, f194, f195, f196, f197, f198, f199, f200;
-    real_t f201, f202, f203, f204, f205, f206, f207, f208, f209, f210;
-    real_t f211, f212, f213, f214, f215, f216, f217, f218, f219, f220;
-    real_t f221, f222, f223, f224, f225, f226, f227, f228, f229, f230;
-    real_t f231, f232, f233, f234, f235, f236, f237, f238, f239, f240;
-    real_t f241, f242, f243, f244, f245, f246, f247, f248, f249, f250;
-    real_t f251, f252, f253, f254, f255, f256, f257, f258, f259, f260;
-    real_t f261, f262, f263, f264, f265, f266, f267, f268, f269, f270;
-    real_t f271, f272, f273, f274, f275, f276, f277, f278, f279, f280;
-    real_t f281, f282, f283, f284, f285, f286, f287, f288, f289, f290;
-    real_t f291, f292, f293, f294, f295, f296, f297, f298, f299, f300;
-    real_t f301, f302, f303, f304, f305, f306, f307, f310, f311, f312;
-    real_t f313, f316, f317, f318, f319, f322, f323, f324, f325, f328;
-    real_t f329, f330, f331, f334, f335, f336, f337, f340, f341, f342;
-    real_t f343, f346, f347, f348, f349, f352, f353, f354, f355, f358;
-    real_t f359, f360, f361, f364, f365, f366, f367, f370, f371, f372;
-    real_t f373, f376, f377, f378, f379, f382, f383, f384, f385, f388;
-    real_t f389, f390, f391, f394, f395, f396, f397;
+    int32_t f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10;
+    int32_t f11, f12, f13, f14, f15, f16, f17, f18, f19, f20;
+    int32_t f21, f22, f23, f24, f25, f26, f27, f28, f29, f30;
+    int32_t f31, f32, f33, f34, f35, f36, f37, f38, f39, f40;
+    int32_t f41, f42, f43, f44, f45, f46, f47, f48, f49, f50;
+    int32_t f51, f52, f53, f54, f55, f56, f57, f58, f59, f60;
+    int32_t f61, f62, f63, f64, f65, f66, f67, f68, f69, f70;
+    int32_t f71, f72, f73, f74, f75, f76, f77, f78, f79, f80;
+    int32_t f81, f82, f83, f84, f85, f86, f87, f88, f89, f90;
+    int32_t f91, f92, f93, f94, f95, f96, f97, f98, f99, f100;
+    int32_t f101, f102, f103, f104, f105, f106, f107, f108, f109, f110;
+    int32_t f111, f112, f113, f114, f115, f116, f117, f118, f119, f120;
+    int32_t f121, f122, f123, f124, f125, f126, f127, f128, f129, f130;
+    int32_t f131, f132, f133, f134, f135, f136, f137, f138, f139, f140;
+    int32_t f141, f142, f143, f144, f145, f146, f147, f148, f149, f150;
+    int32_t f151, f152, f153, f154, f155, f156, f157, f158, f159, f160;
+    int32_t f161, f162, f163, f164, f165, f166, f167, f168, f169, f170;
+    int32_t f171, f172, f173, f174, f175, f176, f177, f178, f179, f180;
+    int32_t f181, f182, f183, f184, f185, f186, f187, f188, f189, f190;
+    int32_t f191, f192, f193, f194, f195, f196, f197, f198, f199, f200;
+    int32_t f201, f202, f203, f204, f205, f206, f207, f208, f209, f210;
+    int32_t f211, f212, f213, f214, f215, f216, f217, f218, f219, f220;
+    int32_t f221, f222, f223, f224, f225, f226, f227, f228, f229, f230;
+    int32_t f231, f232, f233, f234, f235, f236, f237, f238, f239, f240;
+    int32_t f241, f242, f243, f244, f245, f246, f247, f248, f249, f250;
+    int32_t f251, f252, f253, f254, f255, f256, f257, f258, f259, f260;
+    int32_t f261, f262, f263, f264, f265, f266, f267, f268, f269, f270;
+    int32_t f271, f272, f273, f274, f275, f276, f277, f278, f279, f280;
+    int32_t f281, f282, f283, f284, f285, f286, f287, f288, f289, f290;
+    int32_t f291, f292, f293, f294, f295, f296, f297, f298, f299, f300;
+    int32_t f301, f302, f303, f304, f305, f306, f307, f310, f311, f312;
+    int32_t f313, f316, f317, f318, f319, f322, f323, f324, f325, f328;
+    int32_t f329, f330, f331, f334, f335, f336, f337, f340, f341, f342;
+    int32_t f343, f346, f347, f348, f349, f352, f353, f354, f355, f358;
+    int32_t f359, f360, f361, f364, f365, f366, f367, f370, f371, f372;
+    int32_t f373, f376, f377, f378, f379, f382, f383, f384, f385, f388;
+    int32_t f389, f390, f391, f394, f395, f396, f397;
 
     f0 = x[15] - x[16];
     f1 = x[15] + x[16];
@@ -487,42 +487,42 @@ void DCT4_32(real_t *y, real_t *x)
     y[1] = f397 - f396;
 }
 
-void DST4_32(real_t *y, real_t *x)
+void DST4_32(int32_t *y, int32_t *x)
 {
-    real_t f0, f1, f2, f3, f4, f5, f6, f7, f8, f9;
-    real_t f10, f11, f12, f13, f14, f15, f16, f17, f18, f19;
-    real_t f20, f21, f22, f23, f24, f25, f26, f27, f28, f29;
-    real_t f30, f31, f32, f33, f34, f35, f36, f37, f38, f39;
-    real_t f40, f41, f42, f43, f44, f45, f46, f47, f48, f49;
-    real_t f50, f51, f52, f53, f54, f55, f56, f57, f58, f59;
-    real_t f60, f61, f62, f63, f64, f65, f66, f67, f68, f69;
-    real_t f70, f71, f72, f73, f74, f75, f76, f77, f78, f79;
-    real_t f80, f81, f82, f83, f84, f85, f86, f87, f88, f89;
-    real_t f90, f91, f92, f93, f94, f95, f96, f97, f98, f99;
-    real_t f100, f101, f102, f103, f104, f105, f106, f107, f108, f109;
-    real_t f110, f111, f112, f113, f114, f115, f116, f117, f118, f119;
-    real_t f120, f121, f122, f123, f124, f125, f126, f127, f128, f129;
-    real_t f130, f131, f132, f133, f134, f135, f136, f137, f138, f139;
-    real_t f140, f141, f142, f143, f144, f145, f146, f147, f148, f149;
-    real_t f150, f151, f152, f153, f154, f155, f156, f157, f158, f159;
-    real_t f160, f161, f162, f163, f164, f165, f166, f167, f168, f169;
-    real_t f170, f171, f172, f173, f174, f175, f176, f177, f178, f179;
-    real_t f180, f181, f182, f183, f184, f185, f186, f187, f188, f189;
-    real_t f190, f191, f192, f193, f194, f195, f196, f197, f198, f199;
-    real_t f200, f201, f202, f203, f204, f205, f206, f207, f208, f209;
-    real_t f210, f211, f212, f213, f214, f215, f216, f217, f218, f219;
-    real_t f220, f221, f222, f223, f224, f225, f226, f227, f228, f229;
-    real_t f230, f231, f232, f233, f234, f235, f236, f237, f238, f239;
-    real_t f240, f241, f242, f243, f244, f245, f246, f247, f248, f249;
-    real_t f250, f251, f252, f253, f254, f255, f256, f257, f258, f259;
-    real_t f260, f261, f262, f263, f264, f265, f266, f267, f268, f269;
-    real_t f270, f271, f272, f273, f274, f275, f276, f277, f278, f279;
-    real_t f280, f281, f282, f283, f284, f285, f286, f287, f288, f289;
-    real_t f290, f291, f292, f293, f294, f295, f296, f297, f298, f299;
-    real_t f300, f301, f302, f303, f304, f305, f306, f307, f308, f309;
-    real_t f310, f311, f312, f313, f314, f315, f316, f317, f318, f319;
-    real_t f320, f321, f322, f323, f324, f325, f326, f327, f328, f329;
-    real_t f330, f331, f332, f333, f334, f335;
+    int32_t f0, f1, f2, f3, f4, f5, f6, f7, f8, f9;
+    int32_t f10, f11, f12, f13, f14, f15, f16, f17, f18, f19;
+    int32_t f20, f21, f22, f23, f24, f25, f26, f27, f28, f29;
+    int32_t f30, f31, f32, f33, f34, f35, f36, f37, f38, f39;
+    int32_t f40, f41, f42, f43, f44, f45, f46, f47, f48, f49;
+    int32_t f50, f51, f52, f53, f54, f55, f56, f57, f58, f59;
+    int32_t f60, f61, f62, f63, f64, f65, f66, f67, f68, f69;
+    int32_t f70, f71, f72, f73, f74, f75, f76, f77, f78, f79;
+    int32_t f80, f81, f82, f83, f84, f85, f86, f87, f88, f89;
+    int32_t f90, f91, f92, f93, f94, f95, f96, f97, f98, f99;
+    int32_t f100, f101, f102, f103, f104, f105, f106, f107, f108, f109;
+    int32_t f110, f111, f112, f113, f114, f115, f116, f117, f118, f119;
+    int32_t f120, f121, f122, f123, f124, f125, f126, f127, f128, f129;
+    int32_t f130, f131, f132, f133, f134, f135, f136, f137, f138, f139;
+    int32_t f140, f141, f142, f143, f144, f145, f146, f147, f148, f149;
+    int32_t f150, f151, f152, f153, f154, f155, f156, f157, f158, f159;
+    int32_t f160, f161, f162, f163, f164, f165, f166, f167, f168, f169;
+    int32_t f170, f171, f172, f173, f174, f175, f176, f177, f178, f179;
+    int32_t f180, f181, f182, f183, f184, f185, f186, f187, f188, f189;
+    int32_t f190, f191, f192, f193, f194, f195, f196, f197, f198, f199;
+    int32_t f200, f201, f202, f203, f204, f205, f206, f207, f208, f209;
+    int32_t f210, f211, f212, f213, f214, f215, f216, f217, f218, f219;
+    int32_t f220, f221, f222, f223, f224, f225, f226, f227, f228, f229;
+    int32_t f230, f231, f232, f233, f234, f235, f236, f237, f238, f239;
+    int32_t f240, f241, f242, f243, f244, f245, f246, f247, f248, f249;
+    int32_t f250, f251, f252, f253, f254, f255, f256, f257, f258, f259;
+    int32_t f260, f261, f262, f263, f264, f265, f266, f267, f268, f269;
+    int32_t f270, f271, f272, f273, f274, f275, f276, f277, f278, f279;
+    int32_t f280, f281, f282, f283, f284, f285, f286, f287, f288, f289;
+    int32_t f290, f291, f292, f293, f294, f295, f296, f297, f298, f299;
+    int32_t f300, f301, f302, f303, f304, f305, f306, f307, f308, f309;
+    int32_t f310, f311, f312, f313, f314, f315, f316, f317, f318, f319;
+    int32_t f320, f321, f322, f323, f324, f325, f326, f327, f328, f329;
+    int32_t f330, f331, f332, f333, f334, f335;
 
     f0 = x[0] - x[1];
     f1 = x[2] - x[1];
@@ -898,7 +898,7 @@ void DST4_32(real_t *y, real_t *x)
 #define log2n 5
 
 // w_array_real[i] = cos(2*M_PI*i/32)
-static const real_t w_array_real[] = {
+static const int32_t w_array_real[] = {
     FRAC_CONST(1.000000000000000), FRAC_CONST(0.980785279337272),
     FRAC_CONST(0.923879528329380), FRAC_CONST(0.831469603195765),
     FRAC_CONST(0.707106765732237), FRAC_CONST(0.555570210304169),
@@ -910,7 +910,7 @@ static const real_t w_array_real[] = {
 };
 
 // w_array_imag[i] = sin(-2*M_PI*i/32)
-static const real_t w_array_imag[] = {
+static const int32_t w_array_imag[] = {
     FRAC_CONST(0.000000000000000), FRAC_CONST(-0.195090327375064),
     FRAC_CONST(-0.382683442461104), FRAC_CONST(-0.555570246648862),
     FRAC_CONST(-0.707106796640858), FRAC_CONST(-0.831469627480512),
@@ -924,10 +924,10 @@ static const real_t w_array_imag[] = {
 // FFT decimation in frequency
 // 4*16*2+16=128+16=144 multiplications
 // 6*16*2+10*8+4*16*2=192+80+128=400 additions
-static void fft_dif(real_t * Real, real_t * Imag)
+static void fft_dif(int32_t * Real, int32_t * Imag)
 {
-    real_t w_real, w_imag; // For faster access
-    real_t point1_real, point1_imag, point2_real, point2_imag; // For faster access
+    int32_t w_real, w_imag; // For faster access
+    int32_t point1_real, point1_imag, point2_real, point2_imag; // For faster access
     uint32_t j, i, i2, w_index; // Counters
 
     // First 2 stages of 32 point FFT decimation in frequency
@@ -1151,7 +1151,7 @@ static void fft_dif(real_t * Real, real_t * Imag)
 #undef n
 #undef log2n
 
-static const real_t dct4_64_tab[] = {
+static const int32_t dct4_64_tab[] = {
     COEF_CONST(0.999924719333649), COEF_CONST(0.998118102550507),
     COEF_CONST(0.993906974792480), COEF_CONST(0.987301409244537),
     COEF_CONST(0.978317379951477), COEF_CONST(0.966976463794708),
@@ -1251,7 +1251,7 @@ static const real_t dct4_64_tab[] = {
 };
 
 /* size 64 only! */
-void dct4_kernel(real_t * in_real, real_t * in_imag, real_t * out_real, real_t * out_imag)
+void dct4_kernel(int32_t * in_real, int32_t * in_imag, int32_t * out_real, int32_t * out_imag)
 {
     // Tables with bit reverse values for 5 bits, bit reverse of i at i-th position
     const uint8_t bit_rev_tab[32] = { 0,16,8,24,4,20,12,28,2,18,10,26,6,22,14,30,1,17,9,25,5,21,13,29,3,19,11,27,7,23,15,31 };
@@ -1262,7 +1262,7 @@ void dct4_kernel(real_t * in_real, real_t * in_imag, real_t * out_real, real_t *
     // 3*32=96 additions
     for (i = 0; i < 32; i++)
     {
-    	real_t x_re, x_im, tmp;
+    	int32_t x_re, x_im, tmp;
     	x_re = in_real[i];
     	x_im = in_imag[i];
         tmp =        MUL_C(x_re + x_im, dct4_64_tab[i]);
@@ -1278,7 +1278,7 @@ void dct4_kernel(real_t * in_real, real_t * in_imag, real_t * out_real, real_t *
     // 3*31+2=95 additions
     for (i = 0; i < 16; i++)
     {
-    	real_t x_re, x_im, tmp;
+    	int32_t x_re, x_im, tmp;
     	i_rev = bit_rev_tab[i];
     	x_re = in_real[i_rev];
     	x_im = in_imag[i_rev];
@@ -1292,7 +1292,7 @@ void dct4_kernel(real_t * in_real, real_t * in_imag, real_t * out_real, real_t *
     out_real[16] = MUL_C(in_real[1] + in_imag[1], dct4_64_tab[16 + 3*32]);
     for (i = 17; i < 32; i++)
     {
-    	real_t x_re, x_im, tmp;
+    	int32_t x_re, x_im, tmp;
     	i_rev = bit_rev_tab[i];
     	x_re = in_real[i_rev];
     	x_im = in_imag[i_rev];

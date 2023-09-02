@@ -42,7 +42,7 @@
 
 
 /* static function declarations */
-static int16_t real_to_int16(real_t sig_in);
+static int16_t real_to_int16(int32_t sig_in);
 
 
 /* check if the object type is an object type that can have LTP */
@@ -65,7 +65,7 @@ uint8_t is_ltp_ot(uint8_t object_type)
     return 0;
 }
 
- static const real_t codebook[8] =
+ static const int32_t codebook[8] =
 {
     REAL_CONST(0.570829),
     REAL_CONST(0.696616),
@@ -77,15 +77,15 @@ uint8_t is_ltp_ot(uint8_t object_type)
     REAL_CONST(1.369533)
 };
 
-void lt_prediction(ic_stream *ics, ltp_info *ltp, real_t *spec,
+void lt_prediction(ic_stream *ics, ltp_info *ltp, int32_t *spec,
                    int16_t *lt_pred_stat, fb_info *fb, uint8_t win_shape,
                    uint8_t win_shape_prev, uint8_t sr_index,
                    uint8_t object_type, uint16_t frame_len)
 {
     uint8_t sfb;
     uint16_t bin, i, num_samples;
-     real_t x_est[2048];
-     real_t X_est[2048];
+     int32_t x_est[2048];
+     int32_t X_est[2048];
 
     if (ics->window_sequence != EIGHT_SHORT_SEQUENCE)
     {
@@ -105,7 +105,7 @@ void lt_prediction(ic_stream *ics, ltp_info *ltp, real_t *spec,
                 /* lt_pred_stat is a 16 bit int, multiplied with the fixed point real
                    this gives a real for x_est
                 */
-                x_est[i] = (real_t)lt_pred_stat[num_samples + i - ltp->lag] * codebook[ltp->coef];
+                x_est[i] = (int32_t)lt_pred_stat[num_samples + i - ltp->lag] * codebook[ltp->coef];
 #endif
             }
 
@@ -132,7 +132,7 @@ void lt_prediction(ic_stream *ics, ltp_info *ltp, real_t *spec,
     }
 }
 
-static inline int16_t real_to_int16(real_t sig_in)
+static inline int16_t real_to_int16(int32_t sig_in)
 {
     if (sig_in >= 0)
     {
@@ -149,7 +149,7 @@ static inline int16_t real_to_int16(real_t sig_in)
 }
 
 
-void lt_update_state(int16_t *lt_pred_stat, real_t *time, real_t *overlap,
+void lt_update_state(int16_t *lt_pred_stat, int32_t *time, int32_t *overlap,
                      uint16_t frame_len, uint8_t object_type)
 {
     uint16_t i;

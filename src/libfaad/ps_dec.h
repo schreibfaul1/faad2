@@ -117,12 +117,12 @@ typedef struct
     complex_t delay_SubQmf_ser[NO_ALLPASS_LINKS][5][32]; /* 5 samples delay max (table 8.34) */
 
     /* transients */
-    real_t alpha_decay;
-    real_t alpha_smooth;
+    int32_t alpha_decay;
+    int32_t alpha_smooth;
 
-    real_t P_PeakDecayNrg[34];
-    real_t P_prev[34];
-    real_t P_SmoothPeakDecayDiffNrg_prev[34];
+    int32_t P_PeakDecayNrg[34];
+    int32_t P_prev[34];
+    int32_t P_SmoothPeakDecayDiffNrg_prev[34];
 
     /* mixing and phase */
     complex_t h11_prev[50];

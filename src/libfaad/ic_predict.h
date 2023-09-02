@@ -43,10 +43,10 @@ extern "C" {
 
 void pns_reset_pred_state(ic_stream *ics, pred_state *state);
 void reset_all_predictors(pred_state *state, uint16_t frame_len);
-void ic_prediction(ic_stream *ics, real_t *spec, pred_state *state,
+void ic_prediction(ic_stream *ics, int32_t *spec, pred_state *state,
                    uint16_t frame_len, uint8_t sf_index);
 
- static const real_t mnt_table[128] = {
+ static const int32_t mnt_table[128] = {
     COEF_CONST(0.9531250000), COEF_CONST(0.9453125000),
     COEF_CONST(0.9375000000), COEF_CONST(0.9296875000),
     COEF_CONST(0.9257812500), COEF_CONST(0.9179687500),
@@ -113,7 +113,7 @@ void ic_prediction(ic_stream *ics, real_t *spec, pred_state *state,
     COEF_CONST(0.4804687500), COEF_CONST(0.4785156250)
 };
 
- static const real_t exp_table[128] = {
+ static const int32_t exp_table[128] = {
     COEF_CONST(0.50000000000000000000000000000000000000000000000000),
     COEF_CONST(0.25000000000000000000000000000000000000000000000000),
     COEF_CONST(0.12500000000000000000000000000000000000000000000000),

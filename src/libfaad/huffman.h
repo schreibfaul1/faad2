@@ -31,6 +31,7 @@
 #ifndef __HUFFMAN_H__
 #define __HUFFMAN_H__
 
+#include "bits.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

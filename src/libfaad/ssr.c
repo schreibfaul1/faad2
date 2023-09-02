@@ -40,14 +40,14 @@
 
 void ssr_decode(ssr_info *ssr, fb_info *fb, uint8_t window_sequence,
                 uint8_t window_shape, uint8_t window_shape_prev,
-                real_t *freq_in, real_t *time_out, real_t *overlap,
-                real_t ipqf_buffer[SSR_BANDS][96/4],
-                real_t *prev_fmd, uint16_t frame_len)
+                int32_t *freq_in, int32_t *time_out, int32_t *overlap,
+                int32_t ipqf_buffer[SSR_BANDS][96/4],
+                int32_t *prev_fmd, uint16_t frame_len)
 {
     uint8_t band;
     uint16_t ssr_frame_len = frame_len/SSR_BANDS;
-    real_t time_tmp[2048] = {0};
-    real_t output[1024] = {0};
+    int32_t time_tmp[2048] = {0};
+    int32_t output[1024] = {0};
 
     for (band = 0; band < SSR_BANDS; band++)
     {
@@ -58,7 +58,7 @@ void ssr_decode(ssr_info *ssr, fb_info *fb, uint8_t window_sequence,
         {
             for (j = 0; j < ssr_frame_len/2; j++)
             {
-                real_t tmp;
+                int32_t tmp;
                 tmp = freq_in[j + ssr_frame_len*band];
                 freq_in[j + ssr_frame_len*band] =
                     freq_in[ssr_frame_len - j - 1 + ssr_frame_len*band];
@@ -80,12 +80,12 @@ void ssr_decode(ssr_info *ssr, fb_info *fb, uint8_t window_sequence,
     ssr_ipqf(ssr, output, time_out, ipqf_buffer, frame_len, SSR_BANDS);
 }
 
-static void ssr_gain_control(ssr_info *ssr, real_t *data, real_t *output,
-                             real_t *overlap, real_t *prev_fmd, uint8_t band,
+static void ssr_gain_control(ssr_info *ssr, int32_t *data, int32_t *output,
+                             int32_t *overlap, int32_t *prev_fmd, uint8_t band,
                              uint8_t window_sequence, uint16_t frame_len)
 {
     uint16_t i;
-    real_t gc_function[2*1024/SSR_BANDS];
+    int32_t gc_function[2*1024/SSR_BANDS];
 
     if (window_sequence != EIGHT_SHORT_SEQUENCE)
     {
@@ -134,14 +134,14 @@ static void ssr_gain_control(ssr_info *ssr, real_t *data, real_t *output,
     }
 }
 
-static void ssr_gc_function(ssr_info *ssr, real_t *prev_fmd,
-                            real_t *gc_function, uint8_t window_sequence,
+static void ssr_gc_function(ssr_info *ssr, int32_t *prev_fmd,
+                            int32_t *gc_function, uint8_t window_sequence,
                             uint8_t band, uint16_t frame_len)
 {
     uint16_t i;
     uint16_t len_area1, len_area2;
     int32_t aloc[10];
-    real_t alev[10];
+    int32_t alev[10];
 
     switch (window_sequence)
     {

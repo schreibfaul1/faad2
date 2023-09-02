@@ -35,7 +35,7 @@
 #include "is.h"
 
 #ifdef FIXED_POINT
-static real_t pow05_table[] = {
+static int32_t pow05_table[] = {
     COEF_CONST(1.68179283050743), /* 0.5^(-3/4) */
     COEF_CONST(1.41421356237310), /* 0.5^(-2/4) */
     COEF_CONST(1.18920711500272), /* 0.5^(-1/4) */
@@ -46,13 +46,13 @@ static real_t pow05_table[] = {
 };
 #endif
 
-void is_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec,
+void is_decode(ic_stream *ics, ic_stream *icsr, int32_t *l_spec, int32_t *r_spec,
                uint16_t frame_len)
 {
     uint8_t g, sfb, b;
     uint16_t i;
 #ifndef FIXED_POINT
-    real_t scale;
+    int32_t scale;
 #else
     int32_t exp, frac;
 #endif
@@ -79,7 +79,7 @@ void is_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec,
 #endif
 
 #ifndef FIXED_POINT
-                    scale = (real_t)pow(0.5, (0.25*icsr->scale_factors[g][sfb]));
+                    scale = (int32_t)pow(0.5, (0.25*icsr->scale_factors[g][sfb]));
 #else
                     exp = icsr->scale_factors[g][sfb] >> 2;
                     frac = icsr->scale_factors[g][sfb] & 3;

@@ -36,13 +36,13 @@
 #include "ssr.h"
 #include "ssr_ipqf.h"
 
-static real_t **app_pqfbuf;
-static real_t **pp_q0, **pp_t0, **pp_t1;
+static int32_t **app_pqfbuf;
+static int32_t **pp_q0, **pp_t0, **pp_t1;
 
-void gc_set_protopqf(real_t *p_proto)
+void gc_set_protopqf(int32_t *p_proto)
 {
     int	j;
-    static real_t a_half[48] =
+    static int32_t a_half[48] =
     {
         1.2206911375946939E-05,  1.7261986723798209E-05,  1.2300093657077942E-05,
         -1.0833943097791965E-05, -5.7772498639901686E-05, -1.2764767618947719E-04,
@@ -70,39 +70,39 @@ void gc_set_protopqf(real_t *p_proto)
 
 void gc_setcoef_eff_pqfsyn(int mm,
                            int kk,
-                           real_t *p_proto,
-                           real_t ***ppp_q0,
-                           real_t ***ppp_t0,
-                           real_t ***ppp_t1)
+                           int32_t *p_proto,
+                           int32_t ***ppp_q0,
+                           int32_t ***ppp_t0,
+                           int32_t ***ppp_t1)
 {
     int	i, k, n;
-    real_t	w;
+    int32_t	w;
 
     /* Set 1st Mul&Acc Coef's */
-    *ppp_q0 = (real_t **) calloc(mm, sizeof(real_t *));
+    *ppp_q0 = (int32_t **) calloc(mm, sizeof(int32_t *));
     for (n = 0; n < mm; ++n)
     {
-        (*ppp_q0)[n] = (real_t *) calloc(mm, sizeof(real_t));
+        (*ppp_q0)[n] = (int32_t *) calloc(mm, sizeof(int32_t));
     }
     for (n = 0; n < mm/2; ++n)
     {
         for (i = 0; i < mm; ++i)
         {
             w = (2*i+1)*(2*n+1-mm)*M_PI/(4*mm);
-            (*ppp_q0)[n][i] = 2.0 * cos((real_t) w);
+            (*ppp_q0)[n][i] = 2.0 * cos((int32_t) w);
 
             w = (2*i+1)*(2*(mm+n)+1-mm)*M_PI/(4*mm);
-            (*ppp_q0)[n + mm/2][i] = 2.0 * cos((real_t) w);
+            (*ppp_q0)[n + mm/2][i] = 2.0 * cos((int32_t) w);
         }
     }
 
     /* Set 2nd Mul&Acc Coef's */
-    *ppp_t0 = (real_t **) calloc(mm, sizeof(real_t *));
-    *ppp_t1 = (real_t **) calloc(mm, sizeof(real_t *));
+    *ppp_t0 = (int32_t **) calloc(mm, sizeof(int32_t *));
+    *ppp_t1 = (int32_t **) calloc(mm, sizeof(int32_t *));
     for (n = 0; n < mm; ++n)
     {
-        (*ppp_t0)[n] = (real_t *) calloc(kk, sizeof(real_t));
-        (*ppp_t1)[n] = (real_t *) calloc(kk, sizeof(real_t));
+        (*ppp_t0)[n] = (int32_t *) calloc(kk, sizeof(int32_t));
+        (*ppp_t1)[n] = (int32_t *) calloc(kk, sizeof(int32_t));
     }
     for (n = 0; n < mm; ++n)
     {
@@ -120,12 +120,12 @@ void gc_setcoef_eff_pqfsyn(int mm,
     }
 }
 
-void ssr_ipqf(ssr_info *ssr, real_t *in_data, real_t *out_data,
-              real_t buffer[SSR_BANDS][96/4],
+void ssr_ipqf(ssr_info *ssr, int32_t *in_data, int32_t *out_data,
+              int32_t buffer[SSR_BANDS][96/4],
               uint16_t frame_len, uint8_t bands)
 {
     static int initFlag = 0;
-    real_t a_pqfproto[PQFTAPS];
+    int32_t a_pqfproto[PQFTAPS];
 
     int	i;
 
@@ -153,7 +153,7 @@ void ssr_ipqf(ssr_info *ssr, real_t *in_data, real_t *out_data,
 
         for (n = 0; n < mm; n++)
         {
-            real_t acc = 0.0;
+            int32_t acc = 0.0;
             for (l = 0; l < mm; l++)
             {
                 acc += pp_q0[n][l] * in_data[l*frame_len/SSR_BANDS + i];
@@ -163,7 +163,7 @@ void ssr_ipqf(ssr_info *ssr, real_t *in_data, real_t *out_data,
 
         for (n = 0; n < mm/2; n++)
         {
-            real_t acc = 0.0;
+            int32_t acc = 0.0;
             for (k = 0; k < kk; k++)
             {
                 acc += pp_t0[n][k] * buffer[n][2*kk-1-2*k];

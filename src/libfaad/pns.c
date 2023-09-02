@@ -33,7 +33,7 @@
 #include "structs.h"
 
 /* static function declarations */
-static void gen_rand_vector(real_t* spec, int16_t scale_factor, uint16_t size, uint8_t sub,
+static void gen_rand_vector(int32_t* spec, int16_t scale_factor, uint16_t size, uint8_t sub,
                             /* RNG states */ uint32_t* __r1, uint32_t* __r2);
 
 #ifdef FIXED_POINT
@@ -49,8 +49,8 @@ static void gen_rand_vector(real_t* spec, int16_t scale_factor, uint16_t size, u
 
 /* fixed point square root approximation */
 /* !!!! ONLY WORKS FOR EVEN %REAL_BITS% !!!! */
-real_t fp_sqrt(real_t value) {
-    real_t root = 0;
+int32_t fp_sqrt(int32_t value) {
+    int32_t root = 0;
 
     step(0);
     step(2);
@@ -76,7 +76,7 @@ real_t fp_sqrt(real_t value) {
     return root;
 }
 
-static real_t const pow2_table[] = {COEF_CONST(1.0), COEF_CONST(1.18920711500272), COEF_CONST(1.41421356237310), COEF_CONST(1.68179283050743)};
+static int32_t const pow2_table[] = {COEF_CONST(1.0), COEF_CONST(1.18920711500272), COEF_CONST(1.41421356237310), COEF_CONST(1.68179283050743)};
 #endif
 
 /* The function gen_rand_vector(addr, size) generates a vector of length
@@ -84,31 +84,31 @@ static real_t const pow2_table[] = {COEF_CONST(1.0), COEF_CONST(1.18920711500272
    value. A suitable random number generator can be realized using one
    multiplication/accumulation per random value.
 */
-static inline void gen_rand_vector(real_t* spec, int16_t scale_factor, uint16_t size, uint8_t sub,
+static inline void gen_rand_vector(int32_t* spec, int16_t scale_factor, uint16_t size, uint8_t sub,
                                    /* RNG states */ uint32_t* __r1, uint32_t* __r2) {
 #ifndef FIXED_POINT
     uint16_t i;
-    real_t   energy = 0.0;
+    int32_t   energy = 0.0;
 
-    real_t scale = (real_t)1.0 / (real_t)size;
+    int32_t scale = (int32_t)1.0 / (int32_t)size;
 
     for(i = 0; i < size; i++) {
-        real_t tmp = scale * (real_t)(int32_t)ne_rng(__r1, __r2);
+        int32_t tmp = scale * (int32_t)(int32_t)ne_rng(__r1, __r2);
         spec[i] = tmp;
         energy += tmp * tmp;
     }
 
-    scale = (real_t)1.0 / (real_t)sqrt(energy);
-    scale *= (real_t)pow(2.0, 0.25 * scale_factor);
+    scale = (int32_t)1.0 / (int32_t)sqrt(energy);
+    scale *= (int32_t)pow(2.0, 0.25 * scale_factor);
     for(i = 0; i < size; i++) { spec[i] *= scale; }
 #else
     uint16_t i;
-    real_t   energy = 0, scale;
+    int32_t   energy = 0, scale;
     int32_t  exp, frac;
 
     for(i = 0; i < size; i++) {
         /* this can be replaced by a 16 bit random generator!!!! */
-        real_t tmp = (int32_t)ne_rng(__r1, __r2);
+        int32_t tmp = (int32_t)ne_rng(__r1, __r2);
         if(tmp < 0) tmp = -(tmp & ((1 << (REAL_BITS - 1)) - 1));
         else
             tmp = (tmp & ((1 << (REAL_BITS - 1)) - 1));
@@ -139,7 +139,7 @@ static inline void gen_rand_vector(real_t* spec, int16_t scale_factor, uint16_t 
 #endif
 }
 
-void pns_decode(ic_stream* ics_left, ic_stream* ics_right, real_t* spec_left, real_t* spec_right, uint16_t frame_len, uint8_t channel_pair,
+void pns_decode(ic_stream* ics_left, ic_stream* ics_right, int32_t* spec_left, int32_t* spec_right, uint16_t frame_len, uint8_t channel_pair,
                 uint8_t                    object_type,
                 /* RNG states */ uint32_t* __r1, uint32_t* __r2) {
     uint8_t  g, sfb, b;

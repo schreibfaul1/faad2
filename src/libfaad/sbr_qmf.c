@@ -46,8 +46,8 @@ qmfa_info *qmfa_init(uint8_t channels)
     qmfa_info *qmfa = (qmfa_info*)faad_malloc(sizeof(qmfa_info));
 
 	/* x is implemented as double ringbuffer */
-    qmfa->x = (real_t*)faad_malloc(2 * channels * 10 * sizeof(real_t));
-    memset(qmfa->x, 0, 2 * channels * 10 * sizeof(real_t));
+    qmfa->x = (int32_t*)faad_malloc(2 * channels * 10 * sizeof(int32_t));
+    memset(qmfa->x, 0, 2 * channels * 10 * sizeof(int32_t));
 
 	/* ringbuffer index */
 	qmfa->x_index = 0;
@@ -66,12 +66,12 @@ void qmfa_end(qmfa_info *qmfa)
     }
 }
 
-void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const real_t *input,
+void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const int32_t *input,
                          qmf_t X[MAX_NTSRHFG][64], uint8_t offset, uint8_t kx)
 {
-     real_t u[64];
+     int32_t u[64];
 
-     real_t in_real[32], in_imag[32], out_real[32], out_imag[32];
+     int32_t in_real[32], in_imag[32], out_real[32], out_imag[32];
 
     uint32_t in = 0;
     uint8_t l;
@@ -83,7 +83,7 @@ void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const real_t *input,
 
         /* shift input buffer x */
 		/* input buffer is not shifted anymore, x is implemented as double ringbuffer */
-        //memmove(qmfa->x + 32, qmfa->x, (320-32)*sizeof(real_t));
+        //memmove(qmfa->x + 32, qmfa->x, (320-32)*sizeof(int32_t));
 
         /* add new samples to input buffer x */
         for (n = 32 - 1; n >= 0; n--)
@@ -204,8 +204,8 @@ qmfs_info *qmfs_init(uint8_t channels)
     qmfs_info *qmfs = (qmfs_info*)faad_malloc(sizeof(qmfs_info));
 
 	/* v is a double ringbuffer */
-    qmfs->v = (real_t*)faad_malloc(2 * channels * 20 * sizeof(real_t));
-    memset(qmfs->v, 0, 2 * channels * 20 * sizeof(real_t));
+    qmfs->v = (int32_t*)faad_malloc(2 * channels * 20 * sizeof(int32_t));
+    memset(qmfs->v, 0, 2 * channels * 20 * sizeof(int32_t));
 
     qmfs->v_index = 0;
 
@@ -225,11 +225,11 @@ void qmfs_end(qmfs_info *qmfs)
 
 
 void sbr_qmf_synthesis_32(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][64],
-                          real_t *output)
+                          int32_t *output)
 {
-     real_t x1[32], x2[32];
+     int32_t x1[32], x2[32];
 #ifndef FIXED_POINT
-    real_t scale = 1.f/64.f;
+    int32_t scale = 1.f/64.f;
 #endif
     int32_t n, k, out = 0;
     uint8_t l;
@@ -240,7 +240,7 @@ void sbr_qmf_synthesis_32(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
     {
         /* shift buffer v */
         /* buffer is not shifted, we are using a ringbuffer */
-        //memmove(qmfs->v + 64, qmfs->v, (640-64)*sizeof(real_t));
+        //memmove(qmfs->v + 64, qmfs->v, (640-64)*sizeof(int32_t));
 
         /* calculate 64 samples */
         /* complex pre-twiddle */
@@ -291,28 +291,28 @@ void sbr_qmf_synthesis_32(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
 }
 
 void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][64],
-                          real_t *output)
+                          int32_t *output)
 {
-//     real_t x1[64], x2[64];
+//     int32_t x1[64], x2[64];
 
-     real_t in_real1[32], in_imag1[32], out_real1[32], out_imag1[32];
-     real_t in_real2[32], in_imag2[32], out_real2[32], out_imag2[32];
+     int32_t in_real1[32], in_imag1[32], out_real1[32], out_imag1[32];
+     int32_t in_real2[32], in_imag2[32], out_real2[32], out_imag2[32];
 
     qmf_t * pX;
-    real_t * pring_buffer_1, * pring_buffer_3;
-//    real_t * ptemp_1, * ptemp_2;
+    int32_t * pring_buffer_1, * pring_buffer_3;
+//    int32_t * ptemp_1, * ptemp_2;
 #ifdef PREFER_POINTERS
     // These pointers are used if target platform has autoinc address generators
-    real_t * pring_buffer_2, * pring_buffer_4;
-    real_t * pring_buffer_5, * pring_buffer_6;
-    real_t * pring_buffer_7, * pring_buffer_8;
-    real_t * pring_buffer_9, * pring_buffer_10;
-    const real_t * pqmf_c_1, * pqmf_c_2, * pqmf_c_3, * pqmf_c_4;
-    const real_t * pqmf_c_5, * pqmf_c_6, * pqmf_c_7, * pqmf_c_8;
-    const real_t * pqmf_c_9, * pqmf_c_10;
+    int32_t * pring_buffer_2, * pring_buffer_4;
+    int32_t * pring_buffer_5, * pring_buffer_6;
+    int32_t * pring_buffer_7, * pring_buffer_8;
+    int32_t * pring_buffer_9, * pring_buffer_10;
+    const int32_t * pqmf_c_1, * pqmf_c_2, * pqmf_c_3, * pqmf_c_4;
+    const int32_t * pqmf_c_5, * pqmf_c_6, * pqmf_c_7, * pqmf_c_8;
+    const int32_t * pqmf_c_9, * pqmf_c_10;
 #endif // #ifdef PREFER_POINTERS
 #ifndef FIXED_POINT
-    real_t scale = 1.f/64.f;
+    int32_t scale = 1.f/64.f;
 #endif
     int32_t n, k, out = 0;
     uint8_t l;
@@ -323,7 +323,7 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
     {
         /* shift buffer v */
 		/* buffer is not shifted, we use double ringbuffer */
-		//memmove(qmfs->v + 128, qmfs->v, (1280-128)*sizeof(real_t));
+		//memmove(qmfs->v + 128, qmfs->v, (1280-128)*sizeof(int32_t));
 
         /* calculate 128 samples */
 #ifndef FIXED_POINT
@@ -385,8 +385,8 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
 #ifdef PREFER_POINTERS
         for (n = 0; n < 32; n ++)
         {
-            //real_t x1 = *ptemp_1++;
-            //real_t x2 = *ptemp_2++;
+            //int32_t x1 = *ptemp_1++;
+            //int32_t x2 = *ptemp_2++;
             // pring_buffer_3 and pring_buffer_4 are needed only for double ring buffer
             *pring_buffer_1++ = *pring_buffer_3++ = out_real2[n] - out_real1[n];
             *pring_buffer_2-- = *pring_buffer_4-- = out_real2[n] + out_real1[n];

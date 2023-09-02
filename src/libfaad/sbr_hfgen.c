@@ -71,8 +71,8 @@ void hf_generation(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
     {
         for (x = 0; x < sbr->patchNoSubbands[i]; x++)
         {
-            real_t a0_r, a0_i, a1_r, a1_i;
-            real_t bw, bw2;
+            int32_t a0_r, a0_i, a1_r, a1_i;
+            int32_t bw, bw2;
             uint8_t q, p, k, g;
 
             /* find the low and high band for patching */
@@ -94,9 +94,9 @@ void hf_generation(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
             /* with or without filtering */
             if (bw2 > 0)
             {
-                real_t temp1_r, temp2_r, temp3_r;
+                int32_t temp1_r, temp2_r, temp3_r;
 
-                real_t temp1_i, temp2_i, temp3_i;
+                int32_t temp1_i, temp2_i, temp3_i;
                 calc_prediction_coef(sbr, Xlow, alpha_0, alpha_1, p);
 
 
@@ -163,20 +163,20 @@ typedef struct
     complex_t r11;
     complex_t r12;
     complex_t r22;
-    real_t det;
+    int32_t det;
 } acorr_coef;
 
 static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t buffer[MAX_NTSRHFG][64],
                              uint8_t bd, uint8_t len)
 {
-    real_t r01r = 0, r01i = 0, r02r = 0, r02i = 0, r11r = 0;
-    real_t temp1_r, temp1_i, temp2_r, temp2_i, temp3_r, temp3_i, temp4_r, temp4_i, temp5_r, temp5_i;
+    int32_t r01r = 0, r01i = 0, r02r = 0, r02i = 0, r11r = 0;
+    int32_t temp1_r, temp1_i, temp2_r, temp2_i, temp3_r, temp3_i, temp4_r, temp4_i, temp5_r, temp5_i;
 #ifdef FIXED_POINT
-    const real_t rel = FRAC_CONST(0.999999); // 1 / (1 + 1e-6f);
+    const int32_t rel = FRAC_CONST(0.999999); // 1 / (1 + 1e-6f);
     uint32_t mask, exp;
-    real_t pow2_to_exp;
+    int32_t pow2_to_exp;
 #else
-    const real_t rel = 1 / (1 + 1e-6f);
+    const int32_t rel = 1 / (1 + 1e-6f);
 #endif
     int8_t j;
     uint8_t offset = sbr->tHFAdj;
@@ -186,7 +186,7 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t buffer[MAX_NTS
 
     for (j = (offset-2); j < (len + offset); j++)
     {
-        real_t x;
+        int32_t x;
         x = QMF_RE(buffer[j][bd])>>REAL_BITS;
         mask |= x ^ (x >> 31);
         x = QMF_IM(buffer[j][bd])>>REAL_BITS;
@@ -314,7 +314,7 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t buffer[MAX_NTS
 static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
                                  complex_t *alpha_0, complex_t *alpha_1, uint8_t k)
 {
-    real_t tmp;
+    int32_t tmp;
     acorr_coef ac;
 
     auto_correlation(sbr, &ac, Xlow, k, sbr->numTimeSlotsRate + 6);
@@ -365,7 +365,7 @@ static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
 
 
 /* FIXED POINT: bwArray = COEF */
-static real_t mapNewBw(uint8_t invf_mode, uint8_t invf_mode_prev)
+static int32_t mapNewBw(uint8_t invf_mode, uint8_t invf_mode_prev)
 {
     switch (invf_mode)
     {

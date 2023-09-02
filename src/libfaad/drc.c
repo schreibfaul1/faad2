@@ -36,7 +36,7 @@
 #include "syntax.h"
 #include "drc.h"
 
-drc_info *drc_init(real_t cut, real_t boost)
+drc_info *drc_init(int32_t cut, int32_t boost)
 {
     drc_info *drc = (drc_info*)faad_malloc(sizeof(drc_info));
     memset(drc, 0, sizeof(drc_info));
@@ -58,7 +58,7 @@ void drc_end(drc_info *drc)
 }
 
 #ifdef FIXED_POINT
-static real_t drc_pow2_table[] =
+static int32_t drc_pow2_table[] =
 {
     COEF_CONST(0.5146511183),
     COEF_CONST(0.5297315472),
@@ -110,13 +110,13 @@ static real_t drc_pow2_table[] =
 };
 #endif
 
-void drc_decode(drc_info *drc, real_t *spec)
+void drc_decode(drc_info *drc, int32_t *spec)
 {
     uint16_t i, bd, top;
 #ifdef FIXED_POINT
     int32_t exp, frac;
 #else
-    real_t factor, exp;
+    int32_t factor, exp;
 #endif
     uint16_t bottom = 0;
 
@@ -133,7 +133,7 @@ void drc_decode(drc_info *drc, real_t *spec)
             exp = ((-drc->ctrl1 * drc->dyn_rng_ctl[bd]) - (DRC_REF_LEVEL - drc->prog_ref_level))/REAL_CONST(24.0);
         else /* boost */
             exp = ((drc->ctrl2 * drc->dyn_rng_ctl[bd]) - (DRC_REF_LEVEL - drc->prog_ref_level))/REAL_CONST(24.0);
-        factor = (real_t)pow(2.0, exp);
+        factor = (int32_t)pow(2.0, exp);
 
         /* Apply gain factor */
         for (i = bottom; i < top; i++)

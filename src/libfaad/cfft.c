@@ -130,8 +130,8 @@ static void passf2neg(const uint16_t ido, const uint16_t l1, const complex_t* cc
 
 static void passf3(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2,
                    const int8_t isign) {
-    static real_t taur = FRAC_CONST(-0.5);
-    static real_t taui = FRAC_CONST(0.866025403784439);
+    static int32_t taur = FRAC_CONST(-0.5);
+    static int32_t taui = FRAC_CONST(0.866025403784439);
     uint16_t      i, k, ac, ah;
     complex_t     c2, c3, d2, d3, t2;
 
@@ -381,10 +381,10 @@ static void passf4neg(const uint16_t ido, const uint16_t l1, const complex_t* cc
 
 static void passf5(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2,
                    const complex_t* wa3, const complex_t* wa4, const int8_t isign) {
-    static real_t tr11 = FRAC_CONST(0.309016994374947);
-    static real_t ti11 = FRAC_CONST(0.951056516295154);
-    static real_t tr12 = FRAC_CONST(-0.809016994374947);
-    static real_t ti12 = FRAC_CONST(0.587785252292473);
+    static int32_t tr11 = FRAC_CONST(0.309016994374947);
+    static int32_t ti11 = FRAC_CONST(0.951056516295154);
+    static int32_t tr12 = FRAC_CONST(-0.809016994374947);
+    static int32_t ti12 = FRAC_CONST(0.587785252292473);
     uint16_t      i, k, ac, ah;
     complex_t     c2, c3, c4, c5, d3, d4, d5, d2, t2, t3, t4, t5;
 
@@ -696,7 +696,7 @@ void cfftb(cfft_info* cfft, complex_t* c) { cfftf1pos(cfft->n, c, cfft->work, (c
 static void cffti1(uint16_t n, complex_t* wa, uint16_t* ifac) {
     static uint16_t ntryh[4] = {3, 4, 2, 5};
 #ifndef FIXED_POINT
-    real_t   arg, argh, argld, fi;
+    int32_t   arg, argh, argld, fi;
     uint16_t ido, ipm;
     uint16_t i1, k1, l1, l2;
     uint16_t ld, ii, ip;
@@ -739,7 +739,7 @@ startloop:
     ifac[1] = nf;
 
 #ifndef FIXED_POINT
-    argh = (real_t)2.0 * (real_t)M_PI / (real_t)n;
+    argh = (int32_t)2.0 * (int32_t)M_PI / (int32_t)n;
     i = 0;
     l1 = 1;
 
@@ -762,11 +762,11 @@ startloop:
                 i++;
                 fi++;
                 arg = fi * argld;
-                RE(wa[i]) = (real_t)cos(arg);
+                RE(wa[i]) = (int32_t)cos(arg);
     #if 1
-                IM(wa[i]) = (real_t)sin(arg);
+                IM(wa[i]) = (int32_t)sin(arg);
     #else
-                IM(wa[i]) = (real_t)-sin(arg);
+                IM(wa[i]) = (int32_t)-sin(arg);
     #endif
             }
 

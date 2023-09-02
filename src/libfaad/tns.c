@@ -37,10 +37,10 @@
 
 /* static function declarations */
 static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_compress,
-                            uint8_t *coef, real_t *a);
-static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *lpc,
+                            uint8_t *coef, int32_t *a);
+static void tns_ar_filter(int32_t *spectrum, uint16_t size, int8_t inc, int32_t *lpc,
                           uint8_t order);
-static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *lpc,
+static void tns_ma_filter(int32_t *spectrum, uint16_t size, int8_t inc, int32_t *lpc,
                           uint8_t order);
 
 
@@ -48,28 +48,28 @@ static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
 #pragma warning(disable:4305)
 #pragma warning(disable:4244)
 #endif
-static real_t tns_coef_0_3[] =
+static int32_t tns_coef_0_3[] =
 {
     COEF_CONST(0.0), COEF_CONST(0.4338837391), COEF_CONST(0.7818314825), COEF_CONST(0.9749279122),
     COEF_CONST(-0.9848077530), COEF_CONST(-0.8660254038), COEF_CONST(-0.6427876097), COEF_CONST(-0.3420201433),
     COEF_CONST(-0.4338837391), COEF_CONST(-0.7818314825), COEF_CONST(-0.9749279122), COEF_CONST(-0.9749279122),
     COEF_CONST(-0.9848077530), COEF_CONST(-0.8660254038), COEF_CONST(-0.6427876097), COEF_CONST(-0.3420201433)
 };
-static real_t tns_coef_0_4[] =
+static int32_t tns_coef_0_4[] =
 {
     COEF_CONST(0.0), COEF_CONST(0.2079116908), COEF_CONST(0.4067366431), COEF_CONST(0.5877852523),
     COEF_CONST(0.7431448255), COEF_CONST(0.8660254038), COEF_CONST(0.9510565163), COEF_CONST(0.9945218954),
     COEF_CONST(-0.9957341763), COEF_CONST(-0.9618256432), COEF_CONST(-0.8951632914), COEF_CONST(-0.7980172273),
     COEF_CONST(-0.6736956436), COEF_CONST(-0.5264321629), COEF_CONST(-0.3612416662), COEF_CONST(-0.1837495178)
 };
-static real_t tns_coef_1_3[] =
+static int32_t tns_coef_1_3[] =
 {
     COEF_CONST(0.0), COEF_CONST(0.4338837391), COEF_CONST(-0.6427876097), COEF_CONST(-0.3420201433),
     COEF_CONST(0.9749279122), COEF_CONST(0.7818314825), COEF_CONST(-0.6427876097), COEF_CONST(-0.3420201433),
     COEF_CONST(-0.4338837391), COEF_CONST(-0.7818314825), COEF_CONST(-0.6427876097), COEF_CONST(-0.3420201433),
     COEF_CONST(-0.7818314825), COEF_CONST(-0.4338837391), COEF_CONST(-0.6427876097), COEF_CONST(-0.3420201433)
 };
-static real_t tns_coef_1_4[] =
+static int32_t tns_coef_1_4[] =
 {
     COEF_CONST(0.0), COEF_CONST(0.2079116908), COEF_CONST(0.4067366431), COEF_CONST(0.5877852523),
     COEF_CONST(-0.6736956436), COEF_CONST(-0.5264321629), COEF_CONST(-0.3612416662), COEF_CONST(-0.1837495178),
@@ -80,14 +80,14 @@ static real_t tns_coef_1_4[] =
 
 /* TNS decoding for one channel and frame */
 void tns_decode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
-                      uint8_t object_type, real_t *spec, uint16_t frame_len)
+                      uint8_t object_type, int32_t *spec, uint16_t frame_len)
 {
     uint8_t w, f, tns_order;
     int8_t inc;
     int16_t size;
     uint16_t bottom, top, start, end;
     uint16_t nshort = frame_len/8;
-    real_t lpc[TNS_MAX_ORDER+1];
+    int32_t lpc[TNS_MAX_ORDER+1];
 
     if (!ics->tns_data_present)
         return;
@@ -134,14 +134,14 @@ void tns_decode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
 
 /* TNS encoding for one channel and frame */
 void tns_encode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
-                      uint8_t object_type, real_t *spec, uint16_t frame_len)
+                      uint8_t object_type, int32_t *spec, uint16_t frame_len)
 {
     uint8_t w, f, tns_order;
     int8_t inc;
     int16_t size;
     uint16_t bottom, top, start, end;
     uint16_t nshort = frame_len/8;
-    real_t lpc[TNS_MAX_ORDER+1];
+    int32_t lpc[TNS_MAX_ORDER+1];
 
     if (!ics->tns_data_present)
         return;
@@ -188,10 +188,10 @@ void tns_encode_frame(ic_stream *ics, tns_info *tns, uint8_t sr_index,
 
 /* Decoder transmitted coefficients for one TNS filter */
 static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_compress,
-                            uint8_t *coef, real_t *a)
+                            uint8_t *coef, int32_t *a)
 {
     uint8_t i, m;
-    real_t tmp2[TNS_MAX_ORDER+1], b[TNS_MAX_ORDER+1];
+    int32_t tmp2[TNS_MAX_ORDER+1], b[TNS_MAX_ORDER+1];
 
     /* Conversion to signed integer */
     for (i = 0; i < order; i++)
@@ -228,7 +228,7 @@ static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_c
     }
 }
 
-static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *lpc,
+static void tns_ar_filter(int32_t *spectrum, uint16_t size, int8_t inc, int32_t *lpc,
                           uint8_t order)
 {
     /*
@@ -242,9 +242,9 @@ static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
 
     uint8_t j;
     uint16_t i;
-    real_t y;
+    int32_t y;
     /* state is stored as a double ringbuffer */
-    real_t state[2*TNS_MAX_ORDER] = {0};
+    int32_t state[2*TNS_MAX_ORDER] = {0};
     int8_t state_index = 0;
 
     for (i = 0; i < size; i++)
@@ -271,7 +271,7 @@ static void tns_ar_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
     }
 }
 
-static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *lpc,
+static void tns_ma_filter(int32_t *spectrum, uint16_t size, int8_t inc, int32_t *lpc,
                           uint8_t order)
 {
     /*
@@ -285,9 +285,9 @@ static void tns_ma_filter(real_t *spectrum, uint16_t size, int8_t inc, real_t *l
 
     uint8_t j;
     uint16_t i;
-    real_t y;
+    int32_t y;
     /* state is stored as a double ringbuffer */
-    real_t state[2*TNS_MAX_ORDER] = {0};
+    int32_t state[2*TNS_MAX_ORDER] = {0};
     int8_t state_index = 0;
 
     for (i = 0; i < size; i++)

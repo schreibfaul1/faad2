@@ -80,18 +80,18 @@ static float32_t inv_quant_pred(int16_t q)
     return x;
 }
 
-static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t pred)
+static void ic_predict(pred_state *state, int32_t input, int32_t *output, uint8_t pred)
 {
     uint16_t tmp;
     int16_t i, j;
-    real_t dr1;
+    int32_t dr1;
 	float32_t predictedvalue;
-    real_t e0, e1;
-    real_t k1, k2;
+    int32_t e0, e1;
+    int32_t k1, k2;
 
-    real_t r[2];
-    real_t COR[2];
-    real_t VAR[2];
+    int32_t r[2];
+    int32_t COR[2];
+    int32_t VAR[2];
 
     r[0] = inv_quant_pred(state->r[0]);
     r[1] = inv_quant_pred(state->r[1]);
@@ -116,8 +116,8 @@ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t 
 
     {
 #define B 0.953125
-        real_t c = COR[0];
-        real_t v = VAR[0];
+        int32_t c = COR[0];
+        int32_t v = VAR[0];
         float32_t tmp;
         if (c == 0 || v <= 1)
         {
@@ -146,8 +146,8 @@ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t 
 #else
 
 #define B 0.953125
-        real_t c = COR[1];
-        real_t v = VAR[1];
+        int32_t c = COR[1];
+        int32_t v = VAR[1];
         float32_t tmp;
         if (c == 0 || v <= 1)
         {
@@ -232,7 +232,7 @@ void reset_all_predictors(pred_state *state, uint16_t frame_len)
 }
 
 /* intra channel prediction */
-void ic_prediction(ic_stream *ics, real_t *spec, pred_state *state,
+void ic_prediction(ic_stream *ics, int32_t *spec, pred_state *state,
                    uint16_t frame_len, uint8_t sf_index)
 {
     uint8_t sfb;

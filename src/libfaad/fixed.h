@@ -51,22 +51,19 @@ extern "C" {
 #define FRAC_PRECISION ((uint32_t)(1 << FRAC_BITS))
 #define FRAC_MAX 0x7FFFFFFF
 
-typedef int32_t real_t;
-
-
-#define REAL_CONST(A) (((A) >= 0) ? ((real_t)((A)*(REAL_PRECISION)+0.5)) : ((real_t)((A)*(REAL_PRECISION)-0.5)))
-#define COEF_CONST(A) (((A) >= 0) ? ((real_t)((A)*(COEF_PRECISION)+0.5)) : ((real_t)((A)*(COEF_PRECISION)-0.5)))
-#define FRAC_CONST(A) (((A) == 1.00) ? ((real_t)FRAC_MAX) : (((A) >= 0) ? ((real_t)((A)*(FRAC_PRECISION)+0.5)) : ((real_t)((A)*(FRAC_PRECISION)-0.5))))
-//#define FRAC_CONST(A) (((A) >= 0) ? ((real_t)((A)*(FRAC_PRECISION)+0.5)) : ((real_t)((A)*(FRAC_PRECISION)-0.5)))
+#define REAL_CONST(A) (((A) >= 0) ? ((int32_t)((A)*(REAL_PRECISION)+0.5)) : ((int32_t)((A)*(REAL_PRECISION)-0.5)))
+#define COEF_CONST(A) (((A) >= 0) ? ((int32_t)((A)*(COEF_PRECISION)+0.5)) : ((int32_t)((A)*(COEF_PRECISION)-0.5)))
+#define FRAC_CONST(A) (((A) == 1.00) ? ((int32_t)FRAC_MAX) : (((A) >= 0) ? ((int32_t)((A)*(FRAC_PRECISION)+0.5)) : ((int32_t)((A)*(FRAC_PRECISION)-0.5))))
+//#define FRAC_CONST(A) (((A) >= 0) ? ((int32_t)((A)*(FRAC_PRECISION)+0.5)) : ((int32_t)((A)*(FRAC_PRECISION)-0.5)))
 
 #define Q2_BITS 22
 #define Q2_PRECISION (1 << Q2_BITS)
-#define Q2_CONST(A) (((A) >= 0) ? ((real_t)((A)*(Q2_PRECISION)+0.5)) : ((real_t)((A)*(Q2_PRECISION)-0.5)))
+#define Q2_CONST(A) (((A) >= 0) ? ((int32_t)((A)*(Q2_PRECISION)+0.5)) : ((int32_t)((A)*(Q2_PRECISION)-0.5)))
 
 #if defined(_WIN32) && !defined(_WIN32_WCE)
 
 /* multiply with real shift */
-static inline real_t MUL_R(real_t A, real_t B)
+static inline int32_t MUL_R(int32_t A, int32_t B)
 {
     _asm {
         mov eax,A
@@ -76,7 +73,7 @@ static inline real_t MUL_R(real_t A, real_t B)
 }
 
 /* multiply with coef shift */
-static inline real_t MUL_C(real_t A, real_t B)
+static inline int32_t MUL_C(int32_t A, int32_t B)
 {
     _asm {
         mov eax,A
@@ -85,7 +82,7 @@ static inline real_t MUL_C(real_t A, real_t B)
     }
 }
 
-static inline real_t MUL_Q2(real_t A, real_t B)
+static inline int32_t MUL_Q2(int32_t A, int32_t B)
 {
     _asm {
         mov eax,A
@@ -94,7 +91,7 @@ static inline real_t MUL_Q2(real_t A, real_t B)
     }
 }
 
-static inline real_t MUL_SHIFT6(real_t A, real_t B)
+static inline int32_t MUL_SHIFT6(int32_t A, int32_t B)
 {
     _asm {
         mov eax,A
@@ -103,7 +100,7 @@ static inline real_t MUL_SHIFT6(real_t A, real_t B)
     }
 }
 
-static inline real_t MUL_SHIFT23(real_t A, real_t B)
+static inline int32_t MUL_SHIFT23(int32_t A, int32_t B)
 {
     _asm {
         mov eax,A
@@ -113,7 +110,7 @@ static inline real_t MUL_SHIFT23(real_t A, real_t B)
 }
 
 #if 1
-static inline real_t _MulHigh(real_t A, real_t B)
+static inline int32_t _MulHigh(int32_t A, int32_t B)
 {
     _asm {
         mov eax,A
@@ -123,20 +120,20 @@ static inline real_t _MulHigh(real_t A, real_t B)
 }
 
 /* multiply with fractional shift */
-static inline real_t MUL_F(real_t A, real_t B)
+static inline int32_t MUL_F(int32_t A, int32_t B)
 {
     return _MulHigh(A,B) << (FRAC_SIZE-FRAC_BITS);
 }
 
 /* Complex multiplication */
-static inline void ComplexMult(real_t *y1, real_t *y2,
-    real_t x1, real_t x2, real_t c1, real_t c2)
+static inline void ComplexMult(int32_t *y1, int32_t *y2,
+    int32_t x1, int32_t x2, int32_t c1, int32_t c2)
 {
     *y1 = (_MulHigh(x1, c1) + _MulHigh(x2, c2))<<(FRAC_SIZE-FRAC_BITS);
     *y2 = (_MulHigh(x2, c1) - _MulHigh(x1, c2))<<(FRAC_SIZE-FRAC_BITS);
 }
 #else
-static inline real_t MUL_F(real_t A, real_t B)
+static inline int32_t MUL_F(int32_t A, int32_t B)
 {
     _asm {
         mov eax,A
@@ -146,8 +143,8 @@ static inline real_t MUL_F(real_t A, real_t B)
 }
 
 /* Complex multiplication */
-static inline void ComplexMult(real_t *y1, real_t *y2,
-    real_t x1, real_t x2, real_t c1, real_t c2)
+static inline void ComplexMult(int32_t *y1, int32_t *y2,
+    int32_t x1, int32_t x2, int32_t c1, int32_t c2)
 {
     *y1 = MUL_F(x1, c1) + MUL_F(x2, c2);
     *y2 = MUL_F(x2, c1) - MUL_F(x1, c2);
@@ -172,32 +169,32 @@ static inline void ComplexMult(real_t *y1, real_t *y2,
         __result; \
 })
 
-static inline real_t MUL_R(real_t A, real_t B)
+static inline int32_t MUL_R(int32_t A, int32_t B)
 {
     return arm_mul(A, B, REAL_BITS);
 }
 
-static inline real_t MUL_C(real_t A, real_t B)
+static inline int32_t MUL_C(int32_t A, int32_t B)
 {
     return arm_mul(A, B, COEF_BITS);
 }
 
-static inline real_t MUL_Q2(real_t A, real_t B)
+static inline int32_t MUL_Q2(int32_t A, int32_t B)
 {
     return arm_mul(A, B, Q2_BITS);
 }
 
-static inline real_t MUL_SHIFT6(real_t A, real_t B)
+static inline int32_t MUL_SHIFT6(int32_t A, int32_t B)
 {
     return arm_mul(A, B, 6);
 }
 
-static inline real_t MUL_SHIFT23(real_t A, real_t B)
+static inline int32_t MUL_SHIFT23(int32_t A, int32_t B)
 {
     return arm_mul(A, B, 23);
 }
 
-static inline real_t _MulHigh(real_t x, real_t y)
+static inline int32_t _MulHigh(int32_t x, int32_t y)
 {
     uint32_t __lo;
     uint32_t __hi;
@@ -208,14 +205,14 @@ static inline real_t _MulHigh(real_t x, real_t y)
     return __hi;
 }
 
-static inline real_t MUL_F(real_t A, real_t B)
+static inline int32_t MUL_F(int32_t A, int32_t B)
 {
     return _MulHigh(A, B) << (FRAC_SIZE-FRAC_BITS);
 }
 
 /* Complex multiplication */
-static inline void ComplexMult(real_t *y1, real_t *y2,
-    real_t x1, real_t x2, real_t c1, real_t c2)
+static inline void ComplexMult(int32_t *y1, int32_t *y2,
+    int32_t x1, int32_t x2, int32_t c1, int32_t c2)
 {
     int32_t tmp, yt1, yt2;
     asm("smull %0, %1, %4, %6\n\t"
@@ -233,13 +230,13 @@ static inline void ComplexMult(real_t *y1, real_t *y2,
 #else
 
   /* multiply with real shift */
-  #define MUL_R(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (REAL_BITS-1))) >> REAL_BITS)
+  #define MUL_R(A,B) (int32_t)(((int64_t)(A)*(int64_t)(B)+(1 << (REAL_BITS-1))) >> REAL_BITS)
   /* multiply with coef shift */
-  #define MUL_C(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (COEF_BITS-1))) >> COEF_BITS)
+  #define MUL_C(A,B) (int32_t)(((int64_t)(A)*(int64_t)(B)+(1 << (COEF_BITS-1))) >> COEF_BITS)
   /* multiply with fractional shift */
 #if defined(_WIN32_WCE) && defined(_ARM_)
   /* eVC for PocketPC has an intrinsic function that returns only the high 32 bits of a 32x32 bit multiply */
-  static inline real_t MUL_F(real_t A, real_t B)
+  static inline int32_t MUL_F(int32_t A, int32_t B)
   {
       return _MulHigh(A,B) << (32-FRAC_BITS);
   }
@@ -261,17 +258,17 @@ static inline void ComplexMult(real_t *y1, real_t *y2,
          "%0 = (a0 += a1);\n\t"                          \
          : "=d" (__xxo) : "d" (X), "d" (Y) : "A0","A1"); __xxo; })
 #else
-  #define _MulHigh(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (FRAC_SIZE-1))) >> FRAC_SIZE)
-  #define MUL_F(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (FRAC_BITS-1))) >> FRAC_BITS)
+  #define _MulHigh(A,B) (int32_t)(((int64_t)(A)*(int64_t)(B)+(1 << (FRAC_SIZE-1))) >> FRAC_SIZE)
+  #define MUL_F(A,B) (int32_t)(((int64_t)(A)*(int64_t)(B)+(1 << (FRAC_BITS-1))) >> FRAC_BITS)
 #endif
 #endif
-  #define MUL_Q2(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (Q2_BITS-1))) >> Q2_BITS)
-  #define MUL_SHIFT6(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (6-1))) >> 6)
-  #define MUL_SHIFT23(A,B) (real_t)(((int64_t)(A)*(int64_t)(B)+(1 << (23-1))) >> 23)
+  #define MUL_Q2(A,B) (int32_t)(((int64_t)(A)*(int64_t)(B)+(1 << (Q2_BITS-1))) >> Q2_BITS)
+  #define MUL_SHIFT6(A,B) (int32_t)(((int64_t)(A)*(int64_t)(B)+(1 << (6-1))) >> 6)
+  #define MUL_SHIFT23(A,B) (int32_t)(((int64_t)(A)*(int64_t)(B)+(1 << (23-1))) >> 23)
 
 /* Complex multiplication */
-static inline void ComplexMult(real_t *y1, real_t *y2,
-    real_t x1, real_t x2, real_t c1, real_t c2)
+static inline void ComplexMult(int32_t *y1, int32_t *y2,
+    int32_t x1, int32_t x2, int32_t c1, int32_t c2)
 {
     *y1 = (_MulHigh(x1, c1) + _MulHigh(x2, c2))<<(FRAC_SIZE-FRAC_BITS);
     *y2 = (_MulHigh(x2, c1) - _MulHigh(x1, c2))<<(FRAC_SIZE-FRAC_BITS);

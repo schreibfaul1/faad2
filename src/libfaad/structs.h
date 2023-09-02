@@ -66,10 +66,10 @@ typedef struct {
 
 typedef struct
 {
-    const real_t *long_window[2];
-    const real_t *short_window[2];
+    const int32_t *long_window[2];
+    const int32_t *short_window[2];
 #ifdef LD_DEC
-    const real_t *ld_window[2];
+    const int32_t *ld_window[2];
 #endif
 
     mdct_info *mdct256;
@@ -96,8 +96,8 @@ typedef struct
     uint8_t exclude_mask[MAX_CHANNELS];
     uint8_t additional_excluded_chns[MAX_CHANNELS];
 
-    real_t ctrl1;
-    real_t ctrl2;
+    int32_t ctrl1;
+    int32_t ctrl2;
 } drc_info;
 
 typedef struct
@@ -379,8 +379,8 @@ typedef struct
     fb_info *fb;
     drc_info *drc;
 
-    real_t *time_out[MAX_CHANNELS];
-    real_t *fb_intermed[MAX_CHANNELS];
+    int32_t *time_out[MAX_CHANNELS];
+    int32_t *fb_intermed[MAX_CHANNELS];
 
 #ifdef SBR_DEC
     int8_t sbr_present_flag;
@@ -397,9 +397,9 @@ typedef struct
 #endif
 
 #ifdef SSR_DEC
-    real_t *ssr_overlap[MAX_CHANNELS];
-    real_t *prev_fmd[MAX_CHANNELS];
-    real_t ipqf_buffer[MAX_CHANNELS][4][96/4];
+    int32_t *ssr_overlap[MAX_CHANNELS];
+    int32_t *prev_fmd[MAX_CHANNELS];
+    int32_t ipqf_buffer[MAX_CHANNELS][4][96/4];
 #endif
 
 #ifdef MAIN_DEC

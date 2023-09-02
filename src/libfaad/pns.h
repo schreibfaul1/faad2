@@ -40,7 +40,7 @@ extern "C" {
 #define NOISE_OFFSET 90
 
 void pns_decode(ic_stream *ics_left, ic_stream *ics_right,
-                real_t *spec_left, real_t *spec_right, uint16_t frame_len,
+                int32_t *spec_left, int32_t *spec_right, uint16_t frame_len,
                 uint8_t channel_pair, uint8_t object_type,
                 /* RNG states */ uint32_t *__r1, uint32_t *__r2);
 

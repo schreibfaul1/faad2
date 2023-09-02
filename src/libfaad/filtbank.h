@@ -44,15 +44,15 @@ void filter_bank_ltp(fb_info *fb,
                      uint8_t window_sequence,
                      uint8_t window_shape,
                      uint8_t window_shape_prev,
-                     real_t *in_data,
-                     real_t *out_mdct,
+                     int32_t *in_data,
+                     int32_t *out_mdct,
                      uint8_t object_type,
                      uint16_t frame_len);
 #endif
 
 void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
-                  uint8_t window_shape_prev, real_t *freq_in,
-                  real_t *time_out, real_t *overlap,
+                  uint8_t window_shape_prev, int32_t *freq_in,
+                  int32_t *time_out, int32_t *overlap,
                   uint8_t object_type, uint16_t frame_len);
 
 #ifdef __cplusplus

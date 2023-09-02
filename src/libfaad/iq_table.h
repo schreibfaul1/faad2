@@ -48,7 +48,7 @@ extern "C" {
 #pragma warning(disable:4244)
 #endif
 
- static const real_t iq_table[IQ_TABLE_SIZE] =
+ static const int32_t iq_table[IQ_TABLE_SIZE] =
 {
     0,
     1,
@@ -8252,7 +8252,7 @@ extern "C" {
 #define IQ_TABLE_SIZE  1026
 #endif
 
- static const real_t iq_table[IQ_TABLE_SIZE] =
+ static const int32_t iq_table[IQ_TABLE_SIZE] =
 {
     REAL_CONST(0.0),
     REAL_CONST(1.0/8.0),

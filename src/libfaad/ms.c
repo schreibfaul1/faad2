@@ -36,7 +36,7 @@
 #include "is.h"
 #include "pns.h"
 
-void ms_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec,
+void ms_decode(ic_stream *ics, ic_stream *icsr, int32_t *l_spec, int32_t *r_spec,
                uint16_t frame_len)
 {
     uint8_t g, b, sfb;
@@ -44,7 +44,7 @@ void ms_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec,
     uint16_t nshort = frame_len/8;
 
     uint16_t i, k;
-    real_t tmp;
+    int32_t tmp;
 
     if (ics->ms_mask_present >= 1)
     {

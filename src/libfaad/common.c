@@ -301,7 +301,7 @@ uint32_t wl_min_lzc(uint32_t x)
 /* just take the maximum number of bits for interpolation */
 #define INTERP_BITS (REAL_BITS-TABLE_BITS)
 
-static const real_t pow2_tab[] = {
+static const int32_t pow2_tab[] = {
     REAL_CONST(1.000000000000000), REAL_CONST(1.010889286051701), REAL_CONST(1.021897148654117),
     REAL_CONST(1.033024879021228), REAL_CONST(1.044273782427414), REAL_CONST(1.055645178360557),
     REAL_CONST(1.067140400676824), REAL_CONST(1.078760797757120), REAL_CONST(1.090507732665258),
@@ -326,7 +326,7 @@ static const real_t pow2_tab[] = {
     REAL_CONST(1.978456026387951), REAL_CONST(2.000000000000000)
 };
 
-static const real_t log2_tab[] = {
+static const int32_t log2_tab[] = {
     REAL_CONST(0.000000000000000), REAL_CONST(0.022367813028455), REAL_CONST(0.044394119358453),
     REAL_CONST(0.066089190457772), REAL_CONST(0.087462841250339), REAL_CONST(0.108524456778169),
     REAL_CONST(0.129283016944966), REAL_CONST(0.149747119504682), REAL_CONST(0.169925001442312),
@@ -351,12 +351,12 @@ static const real_t log2_tab[] = {
     REAL_CONST(0.988684686772166), REAL_CONST(1.000000000000000)
 };
 
-real_t pow2_fix(real_t val)
+int32_t pow2_fix(int32_t val)
 {
     uint32_t x1, x2;
     uint32_t errcorr;
     uint32_t index_frac;
-    real_t retval;
+    int32_t retval;
     int32_t whole = (val >> REAL_BITS);
 
     /* rest = [0..1] */
@@ -394,12 +394,12 @@ real_t pow2_fix(real_t val)
     return retval;
 }
 
-int32_t pow2_int(real_t val)
+int32_t pow2_int(int32_t val)
 {
     uint32_t x1, x2;
     uint32_t errcorr;
     uint32_t index_frac;
-    real_t retval;
+    int32_t retval;
     int32_t whole = (val >> REAL_BITS);
 
     /* rest = [0..1] */
@@ -475,7 +475,7 @@ int32_t log2_int(uint32_t val)
 }
 
 /* ld(x) = ld(x*y/y) = ld(x/y) + ld(y), with y=2^N and [1 <= (x/y) < 2] */
-real_t log2_fix(uint32_t val)
+int32_t log2_fix(uint32_t val)
 {
     uint32_t frac;
     uint32_t whole = (val >> REAL_BITS);

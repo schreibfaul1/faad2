@@ -1104,7 +1104,7 @@ error:
     {
         if (hDecoder->fb_intermed[i] != NULL)
         {
-            memset(hDecoder->fb_intermed[i], 0, hDecoder->frameLength*sizeof(real_t));
+            memset(hDecoder->fb_intermed[i], 0, hDecoder->frameLength*sizeof(int32_t));
         }
     }
 #ifdef SBR_DEC

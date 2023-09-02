@@ -50,13 +50,13 @@ extern "C" {
 #define MAX_L_E      5
 
 typedef struct {
-    real_t *x;
+    int32_t *x;
     int16_t x_index;
     uint8_t channels;
 } qmfa_info;
 
 typedef struct {
-    real_t *v;
+    int32_t *v;
     int16_t v_index;
     uint8_t channels;
 } qmfs_info;
@@ -103,20 +103,20 @@ typedef struct
     uint8_t f[2][MAX_L_E+1];
     uint8_t f_prev[2];
 
-    real_t *G_temp_prev[2][5];
-    real_t *Q_temp_prev[2][5];
+    int32_t *G_temp_prev[2][5];
+    int32_t *Q_temp_prev[2][5];
     int8_t GQ_ringbuf_index[2];
 
     int16_t E[2][64][MAX_L_E];
     int16_t E_prev[2][64];
 #ifndef FIXED_POINT
-    real_t E_orig[2][64][MAX_L_E];
+    int32_t E_orig[2][64][MAX_L_E];
 #endif
-    real_t E_curr[2][64][MAX_L_E];
+    int32_t E_curr[2][64][MAX_L_E];
     int32_t Q[2][64][2];
 #ifndef FIXED_POINT
-    real_t Q_div[2][64][2];
-    real_t Q_div2[2][64][2];
+    int32_t Q_div[2][64][2];
+    int32_t Q_div2[2][64][2];
 #endif
     int32_t Q_prev[2][64];
 
@@ -125,8 +125,8 @@ typedef struct
 
     uint8_t bs_invf_mode[2][MAX_L_E];
     uint8_t bs_invf_mode_prev[2][MAX_L_E];
-    real_t bwArray[2][64];
-    real_t bwArray_prev[2][64];
+    int32_t bwArray[2][64];
+    int32_t bwArray_prev[2][64];
 
     uint8_t noPatches;
     uint8_t patchNoSubbands[64];
@@ -223,12 +223,12 @@ sbr_info *sbrDecodeInit(uint16_t framelength, uint8_t id_aac,
 void sbrDecodeEnd(sbr_info *sbr);
 void sbrReset(sbr_info *sbr);
 
-uint8_t sbrDecodeCoupleFrame(sbr_info *sbr, real_t *left_chan, real_t *right_chan,
+uint8_t sbrDecodeCoupleFrame(sbr_info *sbr, int32_t *left_chan, int32_t *right_chan,
                              const uint8_t just_seeked, const uint8_t downSampledSBR);
-uint8_t sbrDecodeSingleFrame(sbr_info *sbr, real_t *channel,
+uint8_t sbrDecodeSingleFrame(sbr_info *sbr, int32_t *channel,
                              const uint8_t just_seeked, const uint8_t downSampledSBR);
 #if (defined(PS_DEC))
-uint8_t sbrDecodeSingleFramePS(sbr_info *sbr, real_t *left_channel, real_t *right_channel,
+uint8_t sbrDecodeSingleFramePS(sbr_info *sbr, int32_t *left_channel, int32_t *right_channel,
                                const uint8_t just_seeked, const uint8_t downSampledSBR);
 #endif
 

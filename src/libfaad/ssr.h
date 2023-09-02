@@ -40,16 +40,16 @@ extern "C" {
 
 void ssr_decode(ssr_info *ssr, fb_info *fb, uint8_t window_sequence,
                 uint8_t window_shape, uint8_t window_shape_prev,
-                real_t *freq_in, real_t *time_out, real_t *overlap,
-                real_t ipqf_buffer[SSR_BANDS][96/4],
-                real_t *prev_fmd, uint16_t frame_len);
+                int32_t *freq_in, int32_t *time_out, int32_t *overlap,
+                int32_t ipqf_buffer[SSR_BANDS][96/4],
+                int32_t *prev_fmd, uint16_t frame_len);
 
 
-static void ssr_gain_control(ssr_info *ssr, real_t *data, real_t *output,
-                             real_t *overlap, real_t *prev_fmd, uint8_t band,
+static void ssr_gain_control(ssr_info *ssr, int32_t *data, int32_t *output,
+                             int32_t *overlap, int32_t *prev_fmd, uint8_t band,
                              uint8_t window_sequence, uint16_t frame_len);
-static void ssr_gc_function(ssr_info *ssr, real_t *prev_fmd,
-                            real_t *gc_function, uint8_t window_sequence,
+static void ssr_gc_function(ssr_info *ssr, int32_t *prev_fmd,
+                            int32_t *gc_function, uint8_t window_sequence,
                             uint16_t frame_len);
 
 

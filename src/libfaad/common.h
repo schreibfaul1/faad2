@@ -142,7 +142,7 @@ typedef float float32_t;
 
 
 
-typedef real_t complex_t[2];
+typedef int32_t complex_t[2];
 #define RE(A) A[0]
 #define IM(A) A[1]
 
@@ -155,8 +155,8 @@ uint32_t wl_min_lzc(uint32_t x);
 #define LOG2_MIN_INF REAL_CONST(-10000)
 int32_t log2_int(uint32_t val);
 int32_t log2_fix(uint32_t val);
-int32_t pow2_int(real_t val);
-real_t pow2_fix(real_t val);
+int32_t pow2_int(int32_t val);
+int32_t pow2_fix(int32_t val);
 #endif
 uint8_t get_sr_index(const uint32_t samplerate);
 uint8_t max_pred_sfb(const uint8_t sr_index);

@@ -70,8 +70,8 @@ mdct_info *faad_mdct_init(uint16_t N)
     /* NOTE: For "small framelengths" in FIXED_POINT the coefficients need to be
      * scaled by sqrt("(nearest power of 2) > N" / N) */
 
-    /* RE(mdct->sincos[k]) = scale*(real_t)(cos(2.0*M_PI*(k+1./8.) / (real_t)N));
-     * IM(mdct->sincos[k]) = scale*(real_t)(sin(2.0*M_PI*(k+1./8.) / (real_t)N)); */
+    /* RE(mdct->sincos[k]) = scale*(int32_t)(cos(2.0*M_PI*(k+1./8.) / (int32_t)N));
+     * IM(mdct->sincos[k]) = scale*(int32_t)(sin(2.0*M_PI*(k+1./8.) / (int32_t)N)); */
     /* scale is 1 for fixed point, sqrt(N) for floating point */
     switch (N)
     {
@@ -119,14 +119,14 @@ void faad_mdct_end(mdct_info *mdct)
     }
 }
 
-void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
+void faad_imdct(mdct_info *mdct, int32_t *X_in, int32_t *X_out)
 {
     uint16_t k;
 
     complex_t x;
 #ifdef ALLOW_SMALL_FRAMELENGTH
 #ifdef FIXED_POINT
-    real_t scale, b_scale = 0;
+    int32_t scale, b_scale = 0;
 #endif
 #endif
      complex_t Z1[512];
@@ -228,7 +228,7 @@ void faad_imdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
 }
 
 #ifdef LTP_DEC
-void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
+void faad_mdct(mdct_info *mdct, int32_t *X_in, int32_t *X_out)
 {
     uint16_t k;
 
@@ -242,9 +242,9 @@ void faad_mdct(mdct_info *mdct, real_t *X_in, real_t *X_out)
     uint16_t N8 = N >> 3;
 
 #ifndef FIXED_POINT
-	real_t scale = REAL_CONST(N);
+	int32_t scale = REAL_CONST(N);
 #else
-	real_t scale = REAL_CONST(4.0/N);
+	int32_t scale = REAL_CONST(4.0/N);
 #endif
 
 #ifdef ALLOW_SMALL_FRAMELENGTH

@@ -60,7 +60,7 @@
 /* static function declarations */
 static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
                              ic_stream *ics, int16_t *quant_data,
-                             real_t *spec_data, uint16_t frame_len);
+                             int32_t *spec_data, uint16_t frame_len);
 
 
 #ifdef LD_DEC
@@ -428,7 +428,7 @@ uint8_t window_grouping_info(NeAACDecStruct *hDecoder, ic_stream *ics)
 /* iquant() *
 /* output = sign(input)*abs(input)^(4/3) */
 /**/
-static inline real_t iquant(int16_t q, const real_t *tab, uint8_t *error)
+static inline int32_t iquant(int16_t q, const int32_t *tab, uint8_t *error)
 {
 #ifdef FIXED_POINT
 /* For FIXED_POINT the iq_table is prescaled by 3 bits (iq_table[]/8) */
@@ -436,12 +436,12 @@ static inline real_t iquant(int16_t q, const real_t *tab, uint8_t *error)
  * defined a 1026 value table and interpolation will be used
  */
 #ifndef BIG_IQ_TABLE
-    static const real_t errcorr[] = {
+    static const int32_t errcorr[] = {
         REAL_CONST(0), REAL_CONST(1.0/8.0), REAL_CONST(2.0/8.0), REAL_CONST(3.0/8.0),
         REAL_CONST(4.0/8.0),  REAL_CONST(5.0/8.0), REAL_CONST(6.0/8.0), REAL_CONST(7.0/8.0),
         REAL_CONST(0)
     };
-    real_t x1, x2;
+    int32_t x1, x2;
 #endif
     int16_t sgn = 1;
 
@@ -498,7 +498,7 @@ static inline real_t iquant(int16_t q, const real_t *tab, uint8_t *error)
 }
 
 #ifndef FIXED_POINT
- static const real_t pow2sf_tab[] = {
+ static const int32_t pow2sf_tab[] = {
     2.9802322387695313E-008, 5.9604644775390625E-008, 1.1920928955078125E-007,
     2.384185791015625E-007, 4.76837158203125E-007, 9.5367431640625E-007,
     1.9073486328125E-006, 3.814697265625E-006, 7.62939453125E-006,
@@ -548,22 +548,22 @@ static inline real_t iquant(int16_t q, const real_t *tab, uint8_t *error)
 */
 static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
                              ic_stream *ics, int16_t *quant_data,
-                             real_t *spec_data, uint16_t frame_len)
+                             int32_t *spec_data, uint16_t frame_len)
 {
-     static const real_t pow2_table[] =
+     static const int32_t pow2_table[] =
     {
         COEF_CONST(1.0),
         COEF_CONST(1.1892071150027210667174999705605), /* 2^0.25 */
         COEF_CONST(1.4142135623730950488016887242097), /* 2^0.5 */
         COEF_CONST(1.6817928305074290860622509524664) /* 2^0.75 */
     };
-    const real_t *tab = iq_table;
+    const int32_t *tab = iq_table;
 
     uint8_t g, sfb, win;
     uint16_t width, bin, k, gindex, wa, wb;
     uint8_t error = 0; /* Init error flag */
 #ifndef FIXED_POINT
-    real_t scf;
+    int32_t scf;
 #endif
 
     k = 0;
@@ -627,10 +627,10 @@ static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
                     spec_data[wb+3] = iquant(quant_data[k+3], tab, &error) * scf;
 
 #else
-                    real_t iq0 = iquant(quant_data[k+0], tab, &error);
-                    real_t iq1 = iquant(quant_data[k+1], tab, &error);
-                    real_t iq2 = iquant(quant_data[k+2], tab, &error);
-                    real_t iq3 = iquant(quant_data[k+3], tab, &error);
+                    int32_t iq0 = iquant(quant_data[k+0], tab, &error);
+                    int32_t iq1 = iquant(quant_data[k+1], tab, &error);
+                    int32_t iq2 = iquant(quant_data[k+2], tab, &error);
+                    int32_t iq3 = iquant(quant_data[k+3], tab, &error);
 
                     wb = wa + bin;
 
@@ -733,8 +733,8 @@ static uint8_t allocate_single_channel(NeAACDecStruct *hDecoder, uint8_t channel
             hDecoder->sbr_alloced[hDecoder->fr_ch_ele] = 1;
         }
 #endif
-        hDecoder->time_out[channel] = (real_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(real_t));
-        memset(hDecoder->time_out[channel], 0, mul*hDecoder->frameLength*sizeof(real_t));
+        hDecoder->time_out[channel] = (int32_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(int32_t));
+        memset(hDecoder->time_out[channel], 0, mul*hDecoder->frameLength*sizeof(int32_t));
     }
 
 #if (defined(PS_DEC))
@@ -746,8 +746,8 @@ static uint8_t allocate_single_channel(NeAACDecStruct *hDecoder, uint8_t channel
             hDecoder->time_out[channel+1] = NULL;
         }
 
-        hDecoder->time_out[channel+1] = (real_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(real_t));
-        memset(hDecoder->time_out[channel+1], 0, mul*hDecoder->frameLength*sizeof(real_t));
+        hDecoder->time_out[channel+1] = (int32_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(int32_t));
+        memset(hDecoder->time_out[channel+1], 0, mul*hDecoder->frameLength*sizeof(int32_t));
     }
 #endif
 
@@ -757,21 +757,21 @@ static uint8_t allocate_single_channel(NeAACDecStruct *hDecoder, uint8_t channel
         hDecoder->fb_intermed[channel] = NULL;
     }
 
-    hDecoder->fb_intermed[channel] = (real_t*)faad_malloc(hDecoder->frameLength*sizeof(real_t));
-    memset(hDecoder->fb_intermed[channel], 0, hDecoder->frameLength*sizeof(real_t));
+    hDecoder->fb_intermed[channel] = (int32_t*)faad_malloc(hDecoder->frameLength*sizeof(int32_t));
+    memset(hDecoder->fb_intermed[channel], 0, hDecoder->frameLength*sizeof(int32_t));
 
 #ifdef SSR_DEC
     if (hDecoder->object_type == SSR)
     {
         if (hDecoder->ssr_overlap[channel] == NULL)
         {
-            hDecoder->ssr_overlap[channel] = (real_t*)faad_malloc(2*hDecoder->frameLength*sizeof(real_t));
-            memset(hDecoder->ssr_overlap[channel], 0, 2*hDecoder->frameLength*sizeof(real_t));
+            hDecoder->ssr_overlap[channel] = (int32_t*)faad_malloc(2*hDecoder->frameLength*sizeof(int32_t));
+            memset(hDecoder->ssr_overlap[channel], 0, 2*hDecoder->frameLength*sizeof(int32_t));
         }
         if (hDecoder->prev_fmd[channel] == NULL)
         {
             uint16_t k;
-            hDecoder->prev_fmd[channel] = (real_t*)faad_malloc(2*hDecoder->frameLength*sizeof(real_t));
+            hDecoder->prev_fmd[channel] = (int32_t*)faad_malloc(2*hDecoder->frameLength*sizeof(int32_t));
             for (k = 0; k < 2*hDecoder->frameLength; k++)
                 hDecoder->prev_fmd[channel][k] = REAL_CONST(-1);
         }
@@ -833,24 +833,24 @@ static uint8_t allocate_channel_pair(NeAACDecStruct *hDecoder,
             hDecoder->sbr_alloced[hDecoder->fr_ch_ele] = 1;
         }
 #endif
-        hDecoder->time_out[channel] = (real_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(real_t));
-        memset(hDecoder->time_out[channel], 0, mul*hDecoder->frameLength*sizeof(real_t));
+        hDecoder->time_out[channel] = (int32_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(int32_t));
+        memset(hDecoder->time_out[channel], 0, mul*hDecoder->frameLength*sizeof(int32_t));
     }
     if (hDecoder->time_out[paired_channel] == NULL)
     {
-        hDecoder->time_out[paired_channel] = (real_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(real_t));
-        memset(hDecoder->time_out[paired_channel], 0, mul*hDecoder->frameLength*sizeof(real_t));
+        hDecoder->time_out[paired_channel] = (int32_t*)faad_malloc(mul*hDecoder->frameLength*sizeof(int32_t));
+        memset(hDecoder->time_out[paired_channel], 0, mul*hDecoder->frameLength*sizeof(int32_t));
     }
 
     if (hDecoder->fb_intermed[channel] == NULL)
     {
-        hDecoder->fb_intermed[channel] = (real_t*)faad_malloc(hDecoder->frameLength*sizeof(real_t));
-        memset(hDecoder->fb_intermed[channel], 0, hDecoder->frameLength*sizeof(real_t));
+        hDecoder->fb_intermed[channel] = (int32_t*)faad_malloc(hDecoder->frameLength*sizeof(int32_t));
+        memset(hDecoder->fb_intermed[channel], 0, hDecoder->frameLength*sizeof(int32_t));
     }
     if (hDecoder->fb_intermed[paired_channel] == NULL)
     {
-        hDecoder->fb_intermed[paired_channel] = (real_t*)faad_malloc(hDecoder->frameLength*sizeof(real_t));
-        memset(hDecoder->fb_intermed[paired_channel], 0, hDecoder->frameLength*sizeof(real_t));
+        hDecoder->fb_intermed[paired_channel] = (int32_t*)faad_malloc(hDecoder->frameLength*sizeof(int32_t));
+        memset(hDecoder->fb_intermed[paired_channel], 0, hDecoder->frameLength*sizeof(int32_t));
     }
 
 #ifdef SSR_DEC
@@ -858,25 +858,25 @@ static uint8_t allocate_channel_pair(NeAACDecStruct *hDecoder,
     {
         if (hDecoder->ssr_overlap[cpe->channel] == NULL)
         {
-            hDecoder->ssr_overlap[cpe->channel] = (real_t*)faad_malloc(2*hDecoder->frameLength*sizeof(real_t));
-            memset(hDecoder->ssr_overlap[cpe->channel], 0, 2*hDecoder->frameLength*sizeof(real_t));
+            hDecoder->ssr_overlap[cpe->channel] = (int32_t*)faad_malloc(2*hDecoder->frameLength*sizeof(int32_t));
+            memset(hDecoder->ssr_overlap[cpe->channel], 0, 2*hDecoder->frameLength*sizeof(int32_t));
         }
         if (hDecoder->ssr_overlap[cpe->paired_channel] == NULL)
         {
-            hDecoder->ssr_overlap[cpe->paired_channel] = (real_t*)faad_malloc(2*hDecoder->frameLength*sizeof(real_t));
-            memset(hDecoder->ssr_overlap[cpe->paired_channel], 0, 2*hDecoder->frameLength*sizeof(real_t));
+            hDecoder->ssr_overlap[cpe->paired_channel] = (int32_t*)faad_malloc(2*hDecoder->frameLength*sizeof(int32_t));
+            memset(hDecoder->ssr_overlap[cpe->paired_channel], 0, 2*hDecoder->frameLength*sizeof(int32_t));
         }
         if (hDecoder->prev_fmd[cpe->channel] == NULL)
         {
             uint16_t k;
-            hDecoder->prev_fmd[cpe->channel] = (real_t*)faad_malloc(2*hDecoder->frameLength*sizeof(real_t));
+            hDecoder->prev_fmd[cpe->channel] = (int32_t*)faad_malloc(2*hDecoder->frameLength*sizeof(int32_t));
             for (k = 0; k < 2*hDecoder->frameLength; k++)
                 hDecoder->prev_fmd[cpe->channel][k] = REAL_CONST(-1);
         }
         if (hDecoder->prev_fmd[cpe->paired_channel] == NULL)
         {
             uint16_t k;
-            hDecoder->prev_fmd[cpe->paired_channel] = (real_t*)faad_malloc(2*hDecoder->frameLength*sizeof(real_t));
+            hDecoder->prev_fmd[cpe->paired_channel] = (int32_t*)faad_malloc(2*hDecoder->frameLength*sizeof(int32_t));
             for (k = 0; k < 2*hDecoder->frameLength; k++)
                 hDecoder->prev_fmd[cpe->paired_channel][k] = REAL_CONST(-1);
         }
@@ -891,7 +891,7 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
 {
     uint8_t retval;
     int output_channels;
-     real_t spec_coef[1024];
+     int32_t spec_coef[1024];
 
 #ifdef PROFILE
     int64_t count = faad_get_ts();
@@ -1094,7 +1094,7 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
         int ele = hDecoder->fr_ch_ele;
         int ch = sce->channel;
         int frame_size = (hDecoder->sbr_alloced[ele]) ? 2 : 1;
-        frame_size *= hDecoder->frameLength*sizeof(real_t);
+        frame_size *= hDecoder->frameLength*sizeof(int32_t);
 
         memcpy(hDecoder->time_out[ch+1], hDecoder->time_out[ch], frame_size);
     }
@@ -1107,8 +1107,8 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_s
                                  element *cpe, int16_t *spec_data1, int16_t *spec_data2)
 {
     uint8_t retval;
-     real_t spec_coef1[1024];
-     real_t spec_coef2[1024];
+     int32_t spec_coef1[1024];
+     int32_t spec_coef2[1024];
 
 #ifdef PROFILE
     int64_t count = faad_get_ts();

@@ -110,7 +110,7 @@ void filter_bank_end(fb_info *fb)
     }
 }
 
-static inline void imdct_long(fb_info *fb, real_t *in_data, real_t *out_data, uint16_t len)
+static inline void imdct_long(fb_info *fb, int32_t *in_data, int32_t *out_data, uint16_t len)
 {
 #ifdef LD_DEC
     mdct_info *mdct = NULL;
@@ -135,7 +135,7 @@ static inline void imdct_long(fb_info *fb, real_t *in_data, real_t *out_data, ui
 
 
 #ifdef LTP_DEC
-static inline void mdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_t len)
+static inline void mdct(fb_info *fb, int32_t *in_data, int32_t *out_data, uint16_t len)
 {
     mdct_info *mdct = NULL;
 
@@ -162,17 +162,17 @@ static inline void mdct(fb_info *fb, real_t *in_data, real_t *out_data, uint16_t
 #endif
 
 void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
-                  uint8_t window_shape_prev, real_t *freq_in,
-                  real_t *time_out, real_t *overlap,
+                  uint8_t window_shape_prev, int32_t *freq_in,
+                  int32_t *time_out, int32_t *overlap,
                   uint8_t object_type, uint16_t frame_len)
 {
     int16_t i;
-     real_t transf_buf[2*1024] = {0};
+     int32_t transf_buf[2*1024] = {0};
 
-    const real_t *window_long = NULL;
-    const real_t *window_long_prev = NULL;
-    const real_t *window_short = NULL;
-    const real_t *window_short_prev = NULL;
+    const int32_t *window_long = NULL;
+    const int32_t *window_long_prev = NULL;
+    const int32_t *window_short = NULL;
+    const int32_t *window_short_prev = NULL;
 
     uint16_t nlong = frame_len;
     uint16_t nshort = frame_len/8;
@@ -335,16 +335,16 @@ void ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
 #ifdef LTP_DEC
 /* only works for LTP -> no overlapping, no short blocks */
 void filter_bank_ltp(fb_info *fb, uint8_t window_sequence, uint8_t window_shape,
-                     uint8_t window_shape_prev, real_t *in_data, real_t *out_mdct,
+                     uint8_t window_shape_prev, int32_t *in_data, int32_t *out_mdct,
                      uint8_t object_type, uint16_t frame_len)
 {
     int16_t i;
-     real_t windowed_buf[2*1024] = {0};
+     int32_t windowed_buf[2*1024] = {0};
 
-    const real_t *window_long = NULL;
-    const real_t *window_long_prev = NULL;
-    const real_t *window_short = NULL;
-    const real_t *window_short_prev = NULL;
+    const int32_t *window_long = NULL;
+    const int32_t *window_long_prev = NULL;
+    const int32_t *window_short = NULL;
+    const int32_t *window_short_prev = NULL;
 
     uint16_t nlong = frame_len;
     uint16_t nshort = frame_len/8;

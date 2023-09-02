@@ -40,7 +40,7 @@ extern "C" {
 #pragma warning(disable:4244)
 #endif
 
- static const real_t sine_long_1024[] =
+ static const int32_t sine_long_1024[] =
 {
     FRAC_CONST(0.00076699031874270449),
     FRAC_CONST(0.002300969151425805),
@@ -1069,7 +1069,7 @@ extern "C" {
 };
 
 #ifdef ALLOW_SMALL_FRAMELENGTH
- static const real_t sine_long_960[] =
+ static const int32_t sine_long_960[] =
 {
     FRAC_CONST(0.00081812299560725323),
     FRAC_CONST(0.0024543667964602917),
@@ -2034,7 +2034,7 @@ extern "C" {
 };
 #endif
 
- static const real_t sine_short_128[] =
+ static const int32_t sine_short_128[] =
 {
     FRAC_CONST(0.0061358846491544753),
     FRAC_CONST(0.01840672990580482),
@@ -2167,7 +2167,7 @@ extern "C" {
 };
 
 #ifdef ALLOW_SMALL_FRAMELENGTH
- static const real_t sine_short_120[] =
+ static const int32_t sine_short_120[] =
 {
     FRAC_CONST(0.0065449379673518581),
     FRAC_CONST(0.019633692460628301),
@@ -2293,7 +2293,7 @@ extern "C" {
 #endif
 
 #ifdef LD_DEC
- static const real_t sine_mid_512[] =
+ static const int32_t sine_mid_512[] =
 {
     FRAC_CONST(0.0015339801862847655),
     FRAC_CONST(0.0046019261204485705),
@@ -2810,7 +2810,7 @@ extern "C" {
 };
 
 #ifdef ALLOW_SMALL_FRAMELENGTH
- static const real_t sine_mid_480[] =
+ static const int32_t sine_mid_480[] =
 {
     FRAC_CONST(0.0016362454436240478),
     FRAC_CONST(0.00490871880799799),
@@ -3295,7 +3295,7 @@ extern "C" {
 };
 #endif
 
- static const real_t ld_mid_512[] =
+ static const int32_t ld_mid_512[] =
 {
     FRAC_CONST(0),
     FRAC_CONST(0),
@@ -3812,7 +3812,7 @@ extern "C" {
 };
 
 #ifdef ALLOW_SMALL_FRAMELENGTH
- static const real_t ld_mid_480[] =
+ static const int32_t ld_mid_480[] =
 {
     FRAC_CONST(0),
     FRAC_CONST(0),
