@@ -323,10 +323,7 @@ static void sbr_header(bitfile *ld, sbr_info *sbr)
 static uint8_t sbr_data(bitfile *ld, sbr_info *sbr)
 {
     uint8_t result;
-#if 0
-    sbr->bs_samplerate_mode = faad_get1bit(ld
-        DEBUGVAR(1,219,"sbr_data(): bs_samplerate_mode"));
-#endif
+
 
     sbr->rate = (sbr->bs_samplerate_mode) ? 2 : 1;
 

@@ -35,7 +35,6 @@
 extern "C" {
 #endif
 
-#define DEBUGVAR(A,B,C)
 
 
 

@@ -675,18 +675,18 @@ static uint8_t channel_pair_element(NeAACDecStruct *hDecoder, bitfile *ld,
     cpe.paired_channel = channels+1;
 
     cpe.element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG
-        DEBUGVAR(1,39,"channel_pair_element(): element_instance_tag"));
+);
     *tag = cpe.element_instance_tag;
 
     if ((cpe.common_window = faad_get1bit(ld
-        DEBUGVAR(1,40,"channel_pair_element(): common_window"))) & 1)
+)) & 1)
     {
         /* both channels have common ics information */
         if ((result = ics_info(hDecoder, ics1, ld, cpe.common_window)) > 0)
             return result;
 
         ics1->ms_mask_present = (uint8_t)faad_getbits(ld, 2
-            DEBUGVAR(1,41,"channel_pair_element(): ms_mask_present"));
+           );
         if (ics1->ms_mask_present == 3)
         {
             /* bitstream error */
@@ -700,7 +700,7 @@ static uint8_t channel_pair_element(NeAACDecStruct *hDecoder, bitfile *ld,
                 for (sfb = 0; sfb < ics1->max_sfb; sfb++)
                 {
                     ics1->ms_used[g][sfb] = faad_get1bit(ld
-                        DEBUGVAR(1,42,"channel_pair_element(): faad_get1bit"));
+                        );
                 }
             }
         }
@@ -712,7 +712,7 @@ static uint8_t channel_pair_element(NeAACDecStruct *hDecoder, bitfile *ld,
 #ifdef LTP_DEC
                 ics1->ltp.data_present =
 #endif
-                faad_get1bit(ld DEBUGVAR(1,50,"channel_pair_element(): ltp.data_present"))) & 1)
+                faad_get1bit(ld )) & 1)
             {
 #ifdef LTP_DEC
                 if ((result = ltp_data(hDecoder, ics1, &(ics1->ltp), ld)) > 0)
@@ -745,7 +745,7 @@ static uint8_t channel_pair_element(NeAACDecStruct *hDecoder, bitfile *ld,
 #ifdef LTP_DEC
             ics1->ltp2.data_present =
 #endif
-            faad_get1bit(ld DEBUGVAR(1,50,"channel_pair_element(): ltp.data_present"))) & 1)
+            faad_get1bit(ld )) & 1)
         {
 #ifdef LTP_DEC
             if ((result = ltp_data(hDecoder, ics1, &(ics1->ltp2), ld)) > 0)
@@ -798,13 +798,13 @@ static uint8_t ics_info(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld,
     uint8_t ics_reserved_bit;
 
     ics_reserved_bit = faad_get1bit(ld
-        DEBUGVAR(1,43,"ics_info(): ics_reserved_bit"));
+      );
     if (ics_reserved_bit != 0)
         return 32;
     ics->window_sequence = (uint8_t)faad_getbits(ld, 2
-        DEBUGVAR(1,44,"ics_info(): window_sequence"));
+   );
     ics->window_shape = faad_get1bit(ld
-        DEBUGVAR(1,45,"ics_info(): window_shape"));
+      );
 
 #ifdef LD_DEC
     /* No block switching in LD */
@@ -815,12 +815,12 @@ static uint8_t ics_info(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld,
     if (ics->window_sequence == EIGHT_SHORT_SEQUENCE)
     {
         ics->max_sfb = (uint8_t)faad_getbits(ld, 4
-            DEBUGVAR(1,46,"ics_info(): max_sfb (short)"));
+          );
         ics->scale_factor_grouping = (uint8_t)faad_getbits(ld, 7
-            DEBUGVAR(1,47,"ics_info(): scale_factor_grouping"));
+          );
     } else {
         ics->max_sfb = (uint8_t)faad_getbits(ld, 6
-            DEBUGVAR(1,48,"ics_info(): max_sfb (long)"));
+       );
     }
 
     /* get the grouping information */
@@ -836,7 +836,7 @@ static uint8_t ics_info(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld,
     if (ics->window_sequence != EIGHT_SHORT_SEQUENCE)
     {
         if ((ics->predictor_data_present = faad_get1bit(ld
-            DEBUGVAR(1,49,"ics_info(): predictor_data_present"))) & 1)
+          )) & 1)
         {
             if (hDecoder->object_type == MAIN) /* MPEG2 style AAC predictor */
             {
@@ -851,12 +851,12 @@ static uint8_t ics_info(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld,
 #ifdef MAIN_DEC
                     ics->pred.predictor_reset =
 #endif
-                    faad_get1bit(ld DEBUGVAR(1,53,"ics_info(): pred.predictor_reset"))) & 1)
+                    faad_get1bit(ld )) & 1)
                 {
 #ifdef MAIN_DEC
                     ics->pred.predictor_reset_group_number =
 #endif
-                        (uint8_t)faad_getbits(ld, 5 DEBUGVAR(1,54,"ics_info(): pred.predictor_reset_group_number"));
+                        (uint8_t)faad_getbits(ld, 5 );
                 }
 
                 for (sfb = 0; sfb < limit; sfb++)
@@ -864,7 +864,7 @@ static uint8_t ics_info(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld,
 #ifdef MAIN_DEC
                     ics->pred.prediction_used[sfb] =
 #endif
-                        faad_get1bit(ld DEBUGVAR(1,55,"ics_info(): pred.prediction_used"));
+                        faad_get1bit(ld );
                 }
             }
 #ifdef LTP_DEC
@@ -872,7 +872,7 @@ static uint8_t ics_info(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld,
                 if (hDecoder->object_type < ER_OBJECT_START)
                 {
                     if ((ics->ltp.data_present = faad_get1bit(ld
-                        DEBUGVAR(1,50,"ics_info(): ltp.data_present"))) & 1)
+                        )) & 1)
                     {
                         if ((retval = ltp_data(hDecoder, ics, &(ics->ltp), ld)) > 0)
                         {
@@ -882,7 +882,7 @@ static uint8_t ics_info(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld,
                     if (common_window)
                     {
                         if ((ics->ltp2.data_present = faad_get1bit(ld
-                            DEBUGVAR(1,51,"ics_info(): ltp2.data_present"))) & 1)
+                           )) & 1)
                         {
                             if ((retval = ltp_data(hDecoder, ics, &(ics->ltp2), ld)) > 0)
                             {
@@ -895,7 +895,7 @@ static uint8_t ics_info(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld,
                 if (!common_window && (hDecoder->object_type >= ER_OBJECT_START))
                 {
                     if ((ics->ltp.data_present = faad_get1bit(ld
-                        DEBUGVAR(1,50,"ics_info(): ltp.data_present"))) & 1)
+                      )) & 1)
                     {
                         if ((retval = ltp_data(hDecoder, ics, &(ics->ltp), ld)) > 0)
                         {
@@ -918,9 +918,9 @@ static uint8_t pulse_data(ic_stream *ics, pulse_info *pul, bitfile *ld)
     uint8_t i;
 
     pul->number_pulse = (uint8_t)faad_getbits(ld, 2
-        DEBUGVAR(1,56,"pulse_data(): number_pulse"));
+        );
     pul->pulse_start_sfb = (uint8_t)faad_getbits(ld, 6
-        DEBUGVAR(1,57,"pulse_data(): pulse_start_sfb"));
+      );
 
     /* check the range of pulse_start_sfb */
     if (pul->pulse_start_sfb > ics->num_swb)
@@ -929,12 +929,12 @@ static uint8_t pulse_data(ic_stream *ics, pulse_info *pul, bitfile *ld)
     for (i = 0; i < pul->number_pulse+1; i++)
     {
         pul->pulse_offset[i] = (uint8_t)faad_getbits(ld, 5
-            DEBUGVAR(1,58,"pulse_data(): pulse_offset"));
+         );
 #if 0
         printf("%d\n", pul->pulse_offset[i]);
 #endif
         pul->pulse_amp[i] = (uint8_t)faad_getbits(ld, 4
-            DEBUGVAR(1,59,"pulse_data(): pulse_amp"));
+         );
 #if 0
         printf("%d\n", pul->pulse_amp[i]);
 #endif
@@ -957,12 +957,12 @@ static uint8_t coupling_channel_element(NeAACDecStruct *hDecoder, bitfile *ld)
     int16_t sh_data[1024];
 
     c = faad_getbits(ld, LEN_TAG
-        DEBUGVAR(1,900,"coupling_channel_element(): element_instance_tag"));
+       );
 
     ind_sw_cce_flag = faad_get1bit(ld
-        DEBUGVAR(1,901,"coupling_channel_element(): ind_sw_cce_flag"));
+     );
     num_coupled_elements = faad_getbits(ld, 3
-        DEBUGVAR(1,902,"coupling_channel_element(): num_coupled_elements"));
+       );
 
     for (c = 0; c < num_coupled_elements + 1; c++)
     {
@@ -971,16 +971,16 @@ static uint8_t coupling_channel_element(NeAACDecStruct *hDecoder, bitfile *ld)
         num_gain_element_lists++;
 
         cc_target_is_cpe = faad_get1bit(ld
-            DEBUGVAR(1,903,"coupling_channel_element(): cc_target_is_cpe"));
+           );
         cc_target_tag_select = faad_getbits(ld, 4
-            DEBUGVAR(1,904,"coupling_channel_element(): cc_target_tag_select"));
+         );
 
         if (cc_target_is_cpe)
         {
             uint8_t cc_l = faad_get1bit(ld
-                DEBUGVAR(1,905,"coupling_channel_element(): cc_l"));
+                );
             uint8_t cc_r = faad_get1bit(ld
-                DEBUGVAR(1,906,"coupling_channel_element(): cc_r"));
+               );
 
             if (cc_l && cc_r)
                 num_gain_element_lists++;
@@ -988,11 +988,11 @@ static uint8_t coupling_channel_element(NeAACDecStruct *hDecoder, bitfile *ld)
     }
 
     faad_get1bit(ld
-        DEBUGVAR(1,907,"coupling_channel_element(): cc_domain"));
+        );
     faad_get1bit(ld
-        DEBUGVAR(1,908,"coupling_channel_element(): gain_element_sign"));
+        );
     faad_getbits(ld, 2
-        DEBUGVAR(1,909,"coupling_channel_element(): gain_element_scale"));
+);
 
     if ((result = individual_channel_stream(hDecoder, &el_empty, ld, &ics_empty,
         0, sh_data)) > 0)
@@ -1013,7 +1013,7 @@ static uint8_t coupling_channel_element(NeAACDecStruct *hDecoder, bitfile *ld)
             cge = 1;
         } else {
             cge = faad_get1bit(ld
-                DEBUGVAR(1,910,"coupling_channel_element(): common_gain_element_present"));
+               );
         }
 
         if (cge)
@@ -1044,15 +1044,15 @@ static uint16_t data_stream_element(NeAACDecStruct *hDecoder, bitfile *ld)
     uint16_t i, count;
 
     /* element_instance_tag = */ faad_getbits(ld, LEN_TAG
-        DEBUGVAR(1,60,"data_stream_element(): element_instance_tag"));
+       );
     byte_aligned = faad_get1bit(ld
-        DEBUGVAR(1,61,"data_stream_element(): byte_aligned"));
+      );
     count = (uint16_t)faad_getbits(ld, 8
-        DEBUGVAR(1,62,"data_stream_element(): count"));
+);
     if (count == 255)
     {
         count += (uint16_t)faad_getbits(ld, 8
-            DEBUGVAR(1,63,"data_stream_element(): extra count"));
+         );
     }
     if (byte_aligned)
         faad_byte_align(ld);
@@ -1060,7 +1060,7 @@ static uint16_t data_stream_element(NeAACDecStruct *hDecoder, bitfile *ld)
     for (i = 0; i < count; i++)
     {
         faad_getbits(ld, LEN_BYTE
-            DEBUGVAR(1,64,"data_stream_element(): data_stream_byte"));
+          );
     }
 
     return count;
@@ -1079,11 +1079,11 @@ static uint8_t fill_element(NeAACDecStruct *hDecoder, bitfile *ld, drc_info *drc
 #endif
 
     count = (uint16_t)faad_getbits(ld, 4
-        DEBUGVAR(1,65,"fill_element(): count"));
+       );
     if (count == 15)
     {
         count += (uint16_t)faad_getbits(ld, 8
-            DEBUGVAR(1,66,"fill_element(): extra count")) - 1;
+          ) - 1;
     }
 
     if (count > 0)
