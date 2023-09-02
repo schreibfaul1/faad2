@@ -31,6 +31,8 @@
 #ifndef __SYNTAX_H__
 #define __SYNTAX_H__
 
+#include "structs.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

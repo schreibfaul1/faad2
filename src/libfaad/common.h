@@ -43,11 +43,6 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#define STDC_HEADERS 1
-#define HAVE_STDLIB_H 1
-#define HAVE_STRING_H 1
-#define HAVE_INTTYPES_H 1
-
 #ifdef __cplusplus
 extern "C" {
 #endif

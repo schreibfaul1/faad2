@@ -32,10 +32,6 @@
 #include "structs.h"
 
 #include <stdlib.h>
-#ifdef ANALYSIS
-#include <stdio.h>
-#endif
-
 #include "bits.h"
 #include "huffman.h"
 #include "codebook/hcb.h"

@@ -31,6 +31,8 @@
 #ifndef __CFFT_H__
 #define __CFFT_H__
 
+#include "common.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

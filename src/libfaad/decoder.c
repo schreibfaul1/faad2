@@ -49,9 +49,7 @@
 #include "ssr.h"
 #endif
 
-#ifdef ANALYSIS
-uint16_t dbg_count;
-#endif
+
 
 #if (defined WIN32 || defined _WIN32 || defined WIN64 || defined _WIN64) && !defined(PACKAGE_VERSION)
 #include "win32_ver.h"
@@ -341,10 +339,8 @@ long NeAACDecInit(NeAACDecHandle hpDecoder,
 
         if (ld.error)
         {
-            faad_endbits(&ld);
             return -1;
         }
-        faad_endbits(&ld);
     }
 
     if (!*samplerate)
@@ -870,36 +866,6 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
     /* initialize the bitstream */
     faad_initbits(&ld, buffer, buffer_size);
 
-#if 0
-    {
-        int i;
-        for (i = 0; i < ((buffer_size+3)>>2); i++)
-        {
-            uint8_t *buf;
-            uint32_t temp = 0;
-            buf = faad_getbitbuffer(&ld, 32);
-            //temp = getdword((void*)buf);
-            temp = *((uint32_t*)buf);
-            printf("0x%.8X\n", temp);
-            free(buf);
-        }
-        faad_endbits(&ld);
-        faad_initbits(&ld, buffer, buffer_size);
-    }
-#endif
-
-#if 0
-    if(hDecoder->latm_header_present)
-    {
-        payload_bits = faad_latm_frame(&hDecoder->latm_config, &ld);
-        startbit = faad_get_processed_bits(&ld);
-        if(payload_bits == -1U)
-        {
-            hInfo->error = 1;
-            goto error;
-        }
-    }
-#endif
 
     if (hDecoder->adts_header_present)
     {
@@ -914,10 +880,6 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
          * so not needed to actually do it.
          */
     }
-
-#ifdef ANALYSIS
-    dbg_count = 0;
-#endif
 
     /* decode the complete bitstream */
 
@@ -958,8 +920,6 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
         hInfo->error = 14;
         goto error;
     }
-    faad_endbits(&ld);
-
 
     if (!hDecoder->adts_header_present && !hDecoder->adif_header_present
 #if 0
@@ -1128,11 +1088,6 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
     }
 #endif
 
-    /* cleanup */
-#ifdef ANALYSIS
-    fflush(stdout);
-#endif
-
 #ifdef PROFILE
     count = faad_get_ts() - count;
     hDecoder->cycles += count;
@@ -1160,14 +1115,6 @@ error:
             sbrReset(hDecoder->sbr[i]);
         }
     }
-#endif
-
-
-    faad_endbits(&ld);
-
-    /* cleanup */
-#ifdef ANALYSIS
-    fflush(stdout);
 #endif
 
     return NULL;

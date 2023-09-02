@@ -31,6 +31,9 @@
 #ifndef __RVLC_SCF_H__
 #define __RVLC_SCF_H__
 
+#include <stdint.h>
+#include "structs.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
