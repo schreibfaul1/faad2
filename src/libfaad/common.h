@@ -21,23 +21,7 @@
 
 #include "neaacdec.h"
 
-/* COMPILE TIME DEFINITIONS */
-#define PREFER_POINTERS
-//#define ERROR_RESILIENCE
-#define LTP_DEC  /* Allow decoding of LTP (long term prediction) profile AAC */
-#define LD_DEC   /* Allow decoding of LD (low delay) profile AAC */
-#define SBR_DEC  /* Allow decoding of SBR (spectral band replication) */
-#define PS_DEC   /* Allow decoding of PS (parametric stereo */
 
-/* LD can't do without LTP */
-#ifdef LD_DEC
-    #ifndef ERROR_RESILIENCE
-        #define ERROR_RESILIENCE
-    #endif
-    #ifndef LTP_DEC
-        #define LTP_DEC
-    #endif
-#endif
 
 
     #define DIV_R(A, B) (((int64_t)A << REAL_BITS) / B)
