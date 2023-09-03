@@ -37,15 +37,9 @@
 /* defines if an object type can be decoded by this library or not */
 static uint8_t ObjectTypesTable[32] = {
     0, /*  0 NULL */
-#ifdef MAIN_DEC
-    1, /*  1 AAC Main */
-#else
     0, /*  1 AAC Main */
-#endif
     1, /*  2 AAC LC */
-
     0, /*  3 AAC SSR */
-
 #ifdef LTP_DEC
     1, /*  4 AAC LTP */
 #else

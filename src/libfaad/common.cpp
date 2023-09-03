@@ -68,11 +68,7 @@ int8_t can_decode_ot(const uint8_t object_type) { /* Returns 0 if an object type
     switch(object_type) {
     case LC: return 0;
     case MAIN:
-#ifdef MAIN_DEC
-        return 0;
-#else
         return -1;
-#endif
     case SSR: return -1;
 
     case LTP:

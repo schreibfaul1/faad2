@@ -28,7 +28,6 @@ extern "C" {
 //#define BIG_IQ_TABLE
 #define PREFER_POINTERS
 //#define ERROR_RESILIENCE
-#define MAIN_DEC /* Allow decoding of MAIN profile AAC */
 #define LTP_DEC  /* Allow decoding of LTP profile AAC */
 #define LD_DEC   /* Allow decoding of LD profile AAC */
 #define SBR_DEC
@@ -50,17 +49,9 @@ extern "C" {
 #ifdef LC_ONLY_DECODER
     #undef LD_DEC
     #undef LTP_DEC
-    #undef MAIN_DEC
     #undef ALLOW_SMALL_FRAMELENGTH
     #undef ERROR_RESILIENCE
 #endif
-
-/* FIXED POINT: No MAIN decoding */
-#ifdef FIXED_POINT
-    #ifdef MAIN_DEC
-        #undef MAIN_DEC
-    #endif
-#endif // FIXED_POINT
 
 #ifdef FIXED_POINT
     #define DIV_R(A, B) (((int64_t)A << REAL_BITS) / B)
@@ -84,11 +75,6 @@ extern "C" {
 #endif
 
 typedef float float32_t;
-
-/* FIXED_POINT doesn't work with MAIN and SSR yet */
-#ifdef FIXED_POINT
-    #undef MAIN_DEC
-#endif
 
 #include "fixed.h"
 

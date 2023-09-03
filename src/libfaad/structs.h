@@ -197,16 +197,6 @@ typedef struct
 } ltp_info;
 #endif
 
-#ifdef MAIN_DEC
-typedef struct
-{
-    uint8_t limit;
-    uint8_t predictor_reset;
-    uint8_t predictor_reset_group_number;
-    uint8_t prediction_used[MAX_SFB];
-} pred_info;
-#endif
-
 typedef struct
 {
     uint8_t number_pulse;
@@ -265,9 +255,6 @@ typedef struct
 
     pulse_info pul;
     tns_info tns;
-#ifdef MAIN_DEC
-    pred_info pred;
-#endif
 #ifdef LTP_DEC
     ltp_info ltp;
     ltp_info ltp2;
@@ -383,12 +370,6 @@ typedef struct
 #if (defined(PS_DEC))
     uint8_t ps_used[MAX_SYNTAX_ELEMENTS];
     uint8_t ps_used_global;
-#endif
-
-
-
-#ifdef MAIN_DEC
-    pred_state *pred_stat[MAX_CHANNELS];
 #endif
 #ifdef LTP_DEC
     int16_t *lt_pred_stat[MAX_CHANNELS];

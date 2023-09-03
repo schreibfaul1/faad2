@@ -154,11 +154,6 @@ void pns_decode(ic_stream* ics_left, ic_stream* ics_right, int32_t* spec_left, i
                     ics_left->ltp.long_used[sfb] = 0;
                     ics_left->ltp2.long_used[sfb] = 0;
 #endif
-#ifdef MAIN_DEC
-                    /* For scalefactor bands coded using PNS the corresponding predictors are switched to "off".
-                    */
-                    ics_left->pred.prediction_used[sfb] = 0;
-#endif
                     offs = ics_left->swb_offset[sfb];
                     size = min(ics_left->swb_offset[sfb + 1], ics_left->swb_offset_max) - offs;
                     r1_dep = *__r1;
@@ -179,10 +174,6 @@ void pns_decode(ic_stream* ics_left, ic_stream* ics_right, int32_t* spec_left, i
                     /* See comment above. */
                     ics_right->ltp.long_used[sfb] = 0;
                     ics_right->ltp2.long_used[sfb] = 0;
-#endif
-#ifdef MAIN_DEC
-                    /* See comment above. */
-                    ics_right->pred.prediction_used[sfb] = 0;
 #endif
                     if(channel_pair && is_noise(ics_left, g, sfb) && (((ics_left->ms_mask_present == 1) && (ics_left->ms_used[g][sfb])) || (ics_left->ms_mask_present == 2))) {
                         /*uint16_t c;*/

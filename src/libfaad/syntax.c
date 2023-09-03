@@ -843,27 +843,18 @@ static uint8_t ics_info(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *ld,
                 uint8_t sfb;
 
                 uint8_t limit = min(ics->max_sfb, max_pred_sfb(hDecoder->sf_index));
-#ifdef MAIN_DEC
-                ics->pred.limit = limit;
-#endif
+
 
                 if ((
-#ifdef MAIN_DEC
-                    ics->pred.predictor_reset =
-#endif
+
                     faad_get1bit(ld )) & 1)
                 {
-#ifdef MAIN_DEC
-                    ics->pred.predictor_reset_group_number =
-#endif
                         (uint8_t)faad_getbits(ld, 5 );
                 }
 
                 for (sfb = 0; sfb < limit; sfb++)
                 {
-#ifdef MAIN_DEC
-                    ics->pred.prediction_used[sfb] =
-#endif
+
                         faad_get1bit(ld );
                 }
             }

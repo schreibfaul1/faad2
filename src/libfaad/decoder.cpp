@@ -74,9 +74,6 @@ const char* NeAACDecGetErrorMessage(unsigned const char errcode) {
 unsigned long NeAACDecGetCapabilities(void) {
     uint32_t cap = 0;
     cap += LC_DEC_CAP; /* can't do without it */
-#ifdef MAIN_DEC
-    cap += MAIN_DEC_CAP;
-#endif
 #ifdef LTP_DEC
     cap += LTP_DEC_CAP;
 #endif
@@ -123,9 +120,6 @@ NeAACDecHandle      NeAACDecOpen(void) {
         hDecoder->window_shape_prev[i] = 0;
         hDecoder->time_out[i] = NULL;
         hDecoder->fb_intermed[i] = NULL;
-#ifdef MAIN_DEC
-        hDecoder->pred_stat[i] = NULL;
-#endif
 #ifdef LTP_DEC
         hDecoder->ltp_lag[i] = 0;
         hDecoder->lt_pred_stat[i] = NULL;
@@ -337,9 +331,6 @@ void NeAACDecClose(NeAACDecHandle hpDecoder) {
     for(i = 0; i < MAX_CHANNELS; i++) {
         if(hDecoder->time_out[i]) faad_free(hDecoder->time_out[i]);
         if(hDecoder->fb_intermed[i]) faad_free(hDecoder->fb_intermed[i]);
-#ifdef MAIN_DEC
-        if(hDecoder->pred_stat[i]) faad_free(hDecoder->pred_stat[i]);
-#endif
 #ifdef LTP_DEC
         if(hDecoder->lt_pred_stat[i]) faad_free(hDecoder->lt_pred_stat[i]);
 #endif

@@ -63,15 +63,6 @@ void is_decode(ic_stream* ics, ic_stream* icsr, int32_t* l_spec, int32_t* r_spec
         for(b = 0; b < icsr->window_group_length[g]; b++) {
             for(sfb = 0; sfb < icsr->max_sfb; sfb++) {
                 if(is_intensity(icsr, g, sfb)) {
-#ifdef MAIN_DEC
-                    /* For scalefactor bands coded in intensity stereo the
-                       corresponding predictors in the right channel are
-                       switched to "off".
-                     */
-                    ics->pred.prediction_used[sfb] = 0;
-                    icsr->pred.prediction_used[sfb] = 0;
-#endif
-
 #ifndef FIXED_POINT
                     scale = (int32_t)pow(0.5, (0.25 * icsr->scale_factors[g][sfb]));
 #else
