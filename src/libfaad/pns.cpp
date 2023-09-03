@@ -35,7 +35,6 @@
 /* static function declarations */
 static void gen_rand_vector(int32_t* spec, int16_t scale_factor, uint16_t size, uint8_t sub, uint32_t* __r1, uint32_t* __r2);
 
-#ifdef FIXED_POINT
     #define DIV(A, B) (((int64_t)A << REAL_BITS) / B)
 
     #define step(shift)                                  \
@@ -72,27 +71,13 @@ int32_t fp_sqrt(int32_t value) {
 }
 
 static int32_t const pow2_table[] = {COEF_CONST(1.0), COEF_CONST(1.18920711500272), COEF_CONST(1.41421356237310), COEF_CONST(1.68179283050743)};
-#endif
+
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 /* The function gen_rand_vector(addr, size) generates a vector of length  <size> with signed random values of average energy MEAN_NRG per random
    value. A suitable random number generator can be realized using one multiplication/accumulation per random value.
 */
 static inline void gen_rand_vector(int32_t* spec, int16_t scale_factor, uint16_t size, uint8_t sub, uint32_t* __r1, uint32_t* __r2) {
-#ifndef FIXED_POINT
-    uint16_t i;
-    int32_t  energy = 0.0;
-
-    int32_t scale = (int32_t)1.0 / (int32_t)size;
-    for(i = 0; i < size; i++) {
-        int32_t tmp = scale * (int32_t)(int32_t)ne_rng(__r1, __r2);
-        spec[i] = tmp;
-        energy += tmp * tmp;
-    }
-    scale = (int32_t)1.0 / (int32_t)sqrt(energy);
-    scale *= (int32_t)pow(2.0, 0.25 * scale_factor);
-    for(i = 0; i < size; i++) { spec[i] *= scale; }
-#else
     uint16_t i;
     int32_t  energy = 0, scale;
     int32_t  exp, frac;
@@ -119,7 +104,7 @@ static inline void gen_rand_vector(int32_t* spec, int16_t scale_factor, uint16_t
         if(frac) scale = MUL_C(scale, pow2_table[frac]);
         for(i = 0; i < size; i++) { spec[i] = MUL_R(spec[i], scale); }
     }
-#endif
+
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -132,7 +117,7 @@ void pns_decode(ic_stream* ics_left, ic_stream* ics_right, int32_t* spec_left, i
     uint16_t nshort = frame_len >> 3;
     uint8_t sub = 0;
 
-#ifdef FIXED_POINT
+
     /* IMDCT scaling */
     if(object_type == LD) { sub = 9 /*9*/; }
     else {
@@ -140,7 +125,7 @@ void pns_decode(ic_stream* ics_left, ic_stream* ics_right, int32_t* spec_left, i
         else
             sub = 10 /*10*/;
     }
-#endif
+
     for(g = 0; g < ics_left->num_window_groups; g++) {
         /* Do perceptual noise substitution decoding */
         for(b = 0; b < ics_left->window_group_length[g]; b++) {

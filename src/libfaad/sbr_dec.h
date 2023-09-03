@@ -109,35 +109,22 @@ typedef struct
 
     int16_t E[2][64][MAX_L_E];
     int16_t E_prev[2][64];
-#ifndef FIXED_POINT
-    int32_t E_orig[2][64][MAX_L_E];
-#endif
     int32_t E_curr[2][64][MAX_L_E];
     int32_t Q[2][64][2];
-#ifndef FIXED_POINT
-    int32_t Q_div[2][64][2];
-    int32_t Q_div2[2][64][2];
-#endif
     int32_t Q_prev[2][64];
-
     int8_t l_A[2];
     int8_t l_A_prev[2];
-
     uint8_t bs_invf_mode[2][MAX_L_E];
     uint8_t bs_invf_mode_prev[2][MAX_L_E];
     int32_t bwArray[2][64];
     int32_t bwArray_prev[2][64];
-
     uint8_t noPatches;
     uint8_t patchNoSubbands[64];
     uint8_t patchStartSubband[64];
-
     uint8_t bs_add_harmonic[2][64];
     uint8_t bs_add_harmonic_prev[2][64];
-
     uint16_t index_noise_prev[2];
     uint8_t psi_is_prev[2];
-
     uint8_t bs_start_freq_prev;
     uint8_t bs_stop_freq_prev;
     uint8_t bs_xover_band_prev;

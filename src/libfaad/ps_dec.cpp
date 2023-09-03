@@ -708,9 +708,9 @@ static void ps_decorrelate(ps_info* ps, qmf_t X_left[38][64], qmf_t X_right[38][
         maxsb = (gr < ps->num_hybrid_groups) ? ps->group_border[gr] + 1 : ps->group_border[gr + 1];
         for(sb = ps->group_border[gr]; sb < maxsb; sb++) {
             for(n = ps->border_position[0]; n < ps->border_position[ps->num_env]; n++) {
-    #ifdef FIXED_POINT
+
                 uint32_t in_re, in_im;
-    #endif
+
                 /* input from hybrid subbands or QMF subbands */
                 if(gr < ps->num_hybrid_groups) {
                     RE(inputLeft) = QMF_RE(X_hybrid_left[n][sb]);
@@ -721,16 +721,14 @@ static void ps_decorrelate(ps_info* ps, qmf_t X_left[38][64], qmf_t X_right[38][
                     IM(inputLeft) = QMF_IM(X_left[n][sb]);
                 }
                 /* accumulate energy */
-    #ifdef FIXED_POINT
+
                 /* NOTE: all input is scaled by 2^(-5) because of fixed point QMF
                  * meaning that P will be scaled by 2^(-10) compared to floating point version
                  */
                 in_re = ((abs(RE(inputLeft)) + (1 << (REAL_BITS - 1))) >> REAL_BITS);
                 in_im = ((abs(IM(inputLeft)) + (1 << (REAL_BITS - 1))) >> REAL_BITS);
                 P[n][bk] += in_re * in_re + in_im * in_im;
-    #else
-                P[n][bk] += MUL_R(RE(inputLeft), RE(inputLeft)) + MUL_R(IM(inputLeft), IM(inputLeft));
-    #endif
+
             }
         }
     }
@@ -906,7 +904,6 @@ static void ps_decorrelate(ps_info* ps, qmf_t X_left[38][64], qmf_t X_right[38][
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-    #ifdef FIXED_POINT
         #define step(shift)                                  \
             if((0x40000000l >> shift) + root <= value) {     \
                 value -= (0x40000000l >> shift) + root;      \
@@ -940,9 +937,7 @@ static int32_t ps_sqrt(int32_t value) {
 
     return root;
 }
-    #else
-        #define ps_sqrt(A) sqrt(A)
-    #endif
+
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 static const int32_t ipdopd_cos_tab[] = {FRAC_CONST(1.000000000000000),  FRAC_CONST(0.707106781186548),  FRAC_CONST(0.000000000000000), FRAC_CONST(-0.707106781186547), FRAC_CONST(-1.000000000000000),
@@ -952,7 +947,7 @@ static const int32_t ipdopd_sin_tab[] = {FRAC_CONST(0.000000000000000),  FRAC_CO
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 static int32_t magnitude_c(complex_t c) {
-    #ifdef FIXED_POINT
+
         #define ps_abs(A) (((A) > 0) ? (A) : (-(A)))
         #define ALPHA     FRAC_CONST(0.948059448969)
         #define BETA      FRAC_CONST(0.392699081699)
@@ -961,9 +956,7 @@ static int32_t magnitude_c(complex_t c) {
     int32_t abs_quadrature = ps_abs(IM(c));
     if(abs_inphase > abs_quadrature) { return MUL_F(abs_inphase, ALPHA) + MUL_F(abs_quadrature, BETA); }
     else { return MUL_F(abs_quadrature, ALPHA) + MUL_F(abs_inphase, BETA); }
-    #else
-    return sqrt(RE(c) * RE(c) + IM(c) * IM(c));
-    #endif
+
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1139,18 +1132,12 @@ static void ps_mix_phase(ps_info* ps, qmf_t X_left[38][64], qmf_t X_right[38][64
                 i = ps->phase_hist;
 
                 /* previous value */
-    #ifdef FIXED_POINT
-                /* divide by 4, shift right 2 bits */
+                 /* divide by 4, shift right 2 bits */
                 RE(tempLeft) = RE(ps->ipd_prev[bk][i]) >> 2;
                 IM(tempLeft) = IM(ps->ipd_prev[bk][i]) >> 2;
                 RE(tempRight) = RE(ps->opd_prev[bk][i]) >> 2;
                 IM(tempRight) = IM(ps->opd_prev[bk][i]) >> 2;
-    #else
-                RE(tempLeft) = MUL_F(RE(ps->ipd_prev[bk][i]), FRAC_CONST(0.25));
-                IM(tempLeft) = MUL_F(IM(ps->ipd_prev[bk][i]), FRAC_CONST(0.25));
-                RE(tempRight) = MUL_F(RE(ps->opd_prev[bk][i]), FRAC_CONST(0.25));
-                IM(tempRight) = MUL_F(IM(ps->opd_prev[bk][i]), FRAC_CONST(0.25));
-    #endif
+
 
                 /* save current value */
                 RE(ps->ipd_prev[bk][i]) = ipdopd_cos_tab[abs(ps->ipd_index[env][bk])];
@@ -1169,18 +1156,12 @@ static void ps_mix_phase(ps_info* ps, qmf_t X_left[38][64], qmf_t X_right[38][64
                 i--;
 
                 /* get value before previous */
-    #ifdef FIXED_POINT
-                /* dividing by 2, shift right 1 bit */
+                 /* dividing by 2, shift right 1 bit */
                 RE(tempLeft) += (RE(ps->ipd_prev[bk][i]) >> 1);
                 IM(tempLeft) += (IM(ps->ipd_prev[bk][i]) >> 1);
                 RE(tempRight) += (RE(ps->opd_prev[bk][i]) >> 1);
                 IM(tempRight) += (IM(ps->opd_prev[bk][i]) >> 1);
-    #else
-                RE(tempLeft) += MUL_F(RE(ps->ipd_prev[bk][i]), FRAC_CONST(0.5));
-                IM(tempLeft) += MUL_F(IM(ps->ipd_prev[bk][i]), FRAC_CONST(0.5));
-                RE(tempRight) += MUL_F(RE(ps->opd_prev[bk][i]), FRAC_CONST(0.5));
-                IM(tempRight) += MUL_F(IM(ps->opd_prev[bk][i]), FRAC_CONST(0.5));
-    #endif
+
 
     #if 0 /* original code */
                 ipd = (float)atan2(IM(tempLeft), RE(tempLeft));

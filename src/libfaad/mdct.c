@@ -109,9 +109,7 @@ void faad_imdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out) {
     uint16_t k;
     complex_t x;
 #ifdef ALLOW_SMALL_FRAMELENGTH
-    #ifdef FIXED_POINT
     int32_t scale, b_scale = 0;
-    #endif
 #endif
     complex_t  Z1[512];
     complex_t* sincos = mdct->sincos;
@@ -126,7 +124,7 @@ void faad_imdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out) {
 #endif
 
 #ifdef ALLOW_SMALL_FRAMELENGTH
-    #ifdef FIXED_POINT
+
     /* detect non-power of 2 */
     if(N & (N - 1)) {
         /* adjust scale for non-power of 2 MDCT */
@@ -134,7 +132,7 @@ void faad_imdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out) {
         b_scale = 1;
         scale = COEF_CONST(1.0666666666666667);
     }
-    #endif
+
 #endif
 
     /* pre-IFFT complex multiplication */
@@ -158,13 +156,13 @@ void faad_imdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out) {
         ComplexMult(&IM(Z1[k]), &RE(Z1[k]), IM(x), RE(x), RE(sincos[k]), IM(sincos[k]));
 
 #ifdef ALLOW_SMALL_FRAMELENGTH
-    #ifdef FIXED_POINT
+
         /* non-power of 2 MDCT scaling */
         if(b_scale) {
             RE(Z1[k]) = MUL_C(RE(Z1[k]), scale);
             IM(Z1[k]) = MUL_C(IM(Z1[k]), scale);
         }
-    #endif
+
 #endif
     }
 
@@ -206,21 +204,18 @@ void faad_mdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out) {
     uint16_t N4 = N >> 2;
     uint16_t N8 = N >> 3;
 
-    #ifndef FIXED_POINT
-    int32_t scale = REAL_CONST(N);
-    #else
-    int32_t scale = REAL_CONST(4.0 / N);
-    #endif
+     int32_t scale = REAL_CONST(4.0 / N);
+
 
     #ifdef ALLOW_SMALL_FRAMELENGTH
-        #ifdef FIXED_POINT
+
     /* detect non-power of 2 */
     if(N & (N - 1)) {
         /* adjust scale for non-power of 2 MDCT */
         /* *= sqrt(2048/1920) */
         scale = MUL_C(scale, COEF_CONST(1.0327955589886444));
     }
-        #endif
+
     #endif
 
     /* pre-FFT complex multiplication */
