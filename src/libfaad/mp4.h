@@ -32,8 +32,6 @@
 #define __MP4_H__
 #include "neaacdec.h"
 
-
-#include "bits.h"
 #include "neaacdec.h"
 #include "structs.h"
 

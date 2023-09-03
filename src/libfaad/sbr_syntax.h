@@ -30,7 +30,6 @@
 
 #ifndef __SBR_SYNTAX_H__
 #define __SBR_SYNTAX_H__
-#include "bits.h"
 #include "neaacdec.h"
 
 #define T_HFGEN           8

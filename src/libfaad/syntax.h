@@ -33,7 +33,6 @@
 
 
 #include "neaacdec.h"
-#include "bits.h"
 #include "structs.h"
 
 

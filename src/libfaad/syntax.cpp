@@ -34,7 +34,6 @@
 
 #include "neaacdec.h"
 #include "syntax.h"
-#include "bits.h"
 #include "common.h"
 #include "drc.h"
 #include "huffman.h"

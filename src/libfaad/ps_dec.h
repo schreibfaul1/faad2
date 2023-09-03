@@ -30,7 +30,6 @@
 
 #ifndef __PS_DEC_H__
 #define __PS_DEC_H__
-#include "bits.h"
 #include "neaacdec.h"
 
 #define EXTENSION_ID_PS 2

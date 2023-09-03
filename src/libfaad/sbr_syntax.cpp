@@ -33,7 +33,6 @@
 
 #ifdef SBR_DEC
 
-    #include "bits.h"
     #include "sbr_e_nf.h"
     #include "sbr_fbt.h"
     #include "sbr_huff.h"

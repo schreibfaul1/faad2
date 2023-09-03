@@ -32,7 +32,6 @@
 
 #ifdef PS_DEC
 
-    #include "bits.h"
     #include "ps_dec.h"
 
 /* type definitaions */
