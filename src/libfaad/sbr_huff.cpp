@@ -116,6 +116,7 @@ static const int8_t t_huffman_noise_bal_3_0dB[24][2] = {{-64, 1},   {-65, 2}, {-
                                                         {-74, -73}, {10, 17}, {11, 14}, {12, 13},   {-72, -71}, {-70, -69}, {15, 16},   {-68, -67},
                                                         {-61, -60}, {18, 21}, {19, 20}, {-59, -58}, {-57, -56}, {22, 23},   {-55, -54}, {-53, -52}};
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 static inline int16_t sbr_huff_dec(bitfile* ld, sbr_huff_tab t_huff) {
     uint8_t bit;
     int16_t index = 0;
@@ -124,10 +125,10 @@ static inline int16_t sbr_huff_dec(bitfile* ld, sbr_huff_tab t_huff) {
         bit = (uint8_t)faad_get1bit(ld);
         index = t_huff[index][bit];
     }
-
     return index + 64;
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 /* table 10 */
 void sbr_envelope(bitfile* ld, sbr_info* sbr, uint8_t ch) {
     uint8_t      env, band;
@@ -171,17 +172,16 @@ void sbr_envelope(bitfile* ld, sbr_info* sbr, uint8_t ch) {
                 if(sbr->amp_res[ch]) { sbr->E[ch][0][env] = (uint16_t)(faad_getbits(ld, 6) << delta); }
                 else { sbr->E[ch][0][env] = (uint16_t)(faad_getbits(ld, 7) << delta); }
             }
-
             for(band = 1; band < sbr->n[sbr->f[ch][env]]; band++) { sbr->E[ch][band][env] = (sbr_huff_dec(ld, f_huff) << delta); }
         }
         else {
             for(band = 0; band < sbr->n[sbr->f[ch][env]]; band++) { sbr->E[ch][band][env] = (sbr_huff_dec(ld, t_huff) << delta); }
         }
     }
-
     extract_envelope_data(sbr, ch);
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 /* table 11 */
 void sbr_noise(bitfile* ld, sbr_info* sbr, uint8_t ch) {
     uint8_t      noise, band;
@@ -198,7 +198,6 @@ void sbr_noise(bitfile* ld, sbr_info* sbr, uint8_t ch) {
         t_huff = t_huffman_noise_3_0dB;
         f_huff = f_huffman_env_3_0dB;
     }
-
     for(noise = 0; noise < sbr->L_Q[ch]; noise++) {
         if(sbr->bs_df_noise[ch][noise] == 0) {
             if((sbr->bs_coupling == 1) && (ch == 1)) { sbr->Q[ch][0][noise] = (faad_getbits(ld, 5) << delta); }
@@ -209,7 +208,6 @@ void sbr_noise(bitfile* ld, sbr_info* sbr, uint8_t ch) {
             for(band = 0; band < sbr->N_Q; band++) { sbr->Q[ch][band][noise] = (sbr_huff_dec(ld, t_huff) << delta); }
         }
     }
-
     extract_noise_floor_data(sbr, ch);
 }
 

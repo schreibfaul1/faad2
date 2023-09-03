@@ -54,7 +54,6 @@ extern "C" {
 #define REAL_CONST(A) (((A) >= 0) ? ((int32_t)((A)*(REAL_PRECISION)+0.5)) : ((int32_t)((A)*(REAL_PRECISION)-0.5)))
 #define COEF_CONST(A) (((A) >= 0) ? ((int32_t)((A)*(COEF_PRECISION)+0.5)) : ((int32_t)((A)*(COEF_PRECISION)-0.5)))
 #define FRAC_CONST(A) (((A) == 1.00) ? ((int32_t)FRAC_MAX) : (((A) >= 0) ? ((int32_t)((A)*(FRAC_PRECISION)+0.5)) : ((int32_t)((A)*(FRAC_PRECISION)-0.5))))
-//#define FRAC_CONST(A) (((A) >= 0) ? ((int32_t)((A)*(FRAC_PRECISION)+0.5)) : ((int32_t)((A)*(FRAC_PRECISION)-0.5)))
 
 #define Q2_BITS 22
 #define Q2_PRECISION (1 << Q2_BITS)
