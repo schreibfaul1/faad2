@@ -427,14 +427,13 @@ uint8_t window_grouping_info(NeAACDecStruct *hDecoder, ic_stream *ics)
 /**/
 static inline int32_t iquant(int16_t q, const int32_t *tab, uint8_t *error)
 {
-#ifdef FIXED_POINT
-/* For FIXED_POINT the iq_table is prescaled by 3 bits (iq_table[]/8) */
     static const int32_t errcorr[] = {
         REAL_CONST(0), REAL_CONST(1.0/8.0), REAL_CONST(2.0/8.0), REAL_CONST(3.0/8.0),
         REAL_CONST(4.0/8.0),  REAL_CONST(5.0/8.0), REAL_CONST(6.0/8.0), REAL_CONST(7.0/8.0),
         REAL_CONST(0)
     };
     int32_t x1, x2;
+
     int16_t sgn = 1;
 
     if (q < 0)
@@ -465,51 +464,10 @@ static inline int32_t iquant(int16_t q, const int32_t *tab, uint8_t *error)
     return sgn * 16 * (MUL_R(errcorr[q&7],(x2-x1)) + x1);
 
 
-#else
-    if (q < 0)
-    {
-        /* tab contains a value for all possible q [0,8192] */
-        if (-q < IQ_TABLE_SIZE)
-            return -tab[-q];
 
-        *error = 17;
-        return 0;
-    } else {
-        /* tab contains a value for all possible q [0,8192] */
-        if (q < IQ_TABLE_SIZE)
-            return tab[q];
-
-        *error = 17;
-        return 0;
-    }
-#endif
 }
 
-#ifndef FIXED_POINT
- static const double pow2sf_tab[] = {
-    2.9802322387695313E-008, 5.9604644775390625E-008, 1.1920928955078125E-007,
-    2.384185791015625E-007, 4.76837158203125E-007, 9.5367431640625E-007,
-    1.9073486328125E-006, 3.814697265625E-006, 7.62939453125E-006,
-    1.52587890625E-005, 3.0517578125E-005, 6.103515625E-005,
-    0.0001220703125, 0.000244140625, 0.00048828125,
-    0.0009765625, 0.001953125, 0.00390625,
-    0.0078125, 0.015625, 0.03125,
-    0.0625, 0.125, 0.25,
-    0.5, 1.0, 2.0,
-    4.0, 8.0, 16.0, 32.0,
-    64.0, 128.0, 256.0,
-    512.0, 1024.0, 2048.0,
-    4096.0, 8192.0, 16384.0,
-    32768.0, 65536.0, 131072.0,
-    262144.0, 524288.0, 1048576.0,
-    2097152.0, 4194304.0, 8388608.0,
-    16777216.0, 33554432.0, 67108864.0,
-    134217728.0, 268435456.0, 536870912.0,
-    1073741824.0, 2147483648.0, 4294967296.0,
-    8589934592.0, 17179869184.0, 34359738368.0,
-    68719476736.0, 137438953472.0, 274877906944.0
-};
-#endif
+
 
 /* quant_to_spec: perform dequantisation and scaling
  * and in case of short block it also does the deinterleaving
@@ -550,9 +508,7 @@ static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
     uint8_t g, sfb, win;
     uint16_t width, bin, k, gindex, wa, wb;
     uint8_t error = 0; /* Init error flag */
-#ifndef FIXED_POINT
-    int32_t scf;
-#endif
+
 
     k = 0;
     gindex = 0;
@@ -582,7 +538,7 @@ static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
                 frac = (ics->scale_factors[g][sfb] /* - 100 */) & 3;
             }
 
-#ifdef FIXED_POINT
+
             exp -= 25;
             /* IMDCT pre-scaling */
             if (hDecoder->object_type == LD)
@@ -594,27 +550,17 @@ static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
                 else
                     exp -= 7 /*10*/;
             }
-#endif
+
 
             wa = gindex + j;
 
-#ifndef FIXED_POINT
-            scf = pow2sf_tab[exp/*+25*/] * pow2_table[frac];
-#endif
+
 
             for (win = 0; win < ics->window_group_length[g]; win++)
             {
                 for (bin = 0; bin < width; bin += 4)
                 {
-#ifndef FIXED_POINT
-                    wb = wa + bin;
 
-                    spec_data[wb+0] = iquant(quant_data[k+0], tab, &error) * scf;
-                    spec_data[wb+1] = iquant(quant_data[k+1], tab, &error) * scf;
-                    spec_data[wb+2] = iquant(quant_data[k+2], tab, &error) * scf;
-                    spec_data[wb+3] = iquant(quant_data[k+3], tab, &error) * scf;
-
-#else
                     int32_t iq0 = iquant(quant_data[k+0], tab, &error);
                     int32_t iq1 = iquant(quant_data[k+1], tab, &error);
                     int32_t iq2 = iquant(quant_data[k+2], tab, &error);
@@ -653,7 +599,7 @@ static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
                     //printf("0x%.8X\n", spec_data[gindex+(win*win_inc)+j+bin+2]);
                     //printf("0x%.8X\n", spec_data[gindex+(win*win_inc)+j+bin+3]);
 #endif
-#endif
+
 
                     gincrease += 4;
                     k += 4;
@@ -672,6 +618,22 @@ static uint8_t allocate_single_channel(NeAACDecStruct *hDecoder, uint8_t channel
                                        uint8_t output_channels)
 {
     int mul = 1;
+
+#ifdef MAIN_DEC
+    /* MAIN object type prediction */
+    if (hDecoder->object_type == MAIN)
+    {
+        /* allocate the state only when needed */
+        if (hDecoder->pred_stat[channel] != NULL)
+        {
+            faad_free(hDecoder->pred_stat[channel]);
+            hDecoder->pred_stat[channel] = NULL;
+        }
+
+        hDecoder->pred_stat[channel] = (pred_state*)faad_malloc(hDecoder->frameLength * sizeof(pred_state));
+        reset_all_predictors(hDecoder->pred_stat[channel], hDecoder->frameLength);
+    }
+#endif
 
 #ifdef LTP_DEC
     if (is_ltp_ot(hDecoder->object_type))
@@ -741,6 +703,24 @@ static uint8_t allocate_channel_pair(NeAACDecStruct *hDecoder,
                                      uint8_t channel, uint8_t paired_channel)
 {
     int mul = 1;
+
+#ifdef MAIN_DEC
+    /* MAIN object type prediction */
+    if (hDecoder->object_type == MAIN)
+    {
+        /* allocate the state only when needed */
+        if (hDecoder->pred_stat[channel] == NULL)
+        {
+            hDecoder->pred_stat[channel] = (pred_state*)faad_malloc(hDecoder->frameLength * sizeof(pred_state));
+            reset_all_predictors(hDecoder->pred_stat[channel], hDecoder->frameLength);
+        }
+        if (hDecoder->pred_stat[paired_channel] == NULL)
+        {
+            hDecoder->pred_stat[paired_channel] = (pred_state*)faad_malloc(hDecoder->frameLength * sizeof(pred_state));
+            reset_all_predictors(hDecoder->pred_stat[paired_channel], hDecoder->frameLength);
+        }
+    }
+#endif
 
 #ifdef LTP_DEC
     if (is_ltp_ot(hDecoder->object_type))
@@ -866,6 +846,25 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
     /* pns decoding */
     pns_decode(ics, NULL, spec_coef, NULL, hDecoder->frameLength, 0, hDecoder->object_type,
         &(hDecoder->__r1), &(hDecoder->__r2));
+
+#ifdef MAIN_DEC
+    /* MAIN object type prediction */
+    if (hDecoder->object_type == MAIN)
+    {
+		if (!hDecoder->pred_stat[sce->channel])
+			return 33;
+
+        /* intra channel prediction */
+        ic_prediction(ics, spec_coef, hDecoder->pred_stat[sce->channel], hDecoder->frameLength,
+            hDecoder->sf_index);
+
+        /* In addition, for scalefactor bands coded by perceptual
+           noise substitution the predictors belonging to the
+           corresponding spectral coefficients are reset.
+        */
+        pns_reset_pred_state(ics, hDecoder->pred_stat[sce->channel]);
+    }
+#endif
 
 #ifdef LTP_DEC
     if (is_ltp_ot(hDecoder->object_type))
@@ -1067,6 +1066,25 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_s
             printf("%d\n", spec_coef2[i]);
             //printf("0x%.8X\n", spec_coef2[i]);
         }
+    }
+#endif
+
+#ifdef MAIN_DEC
+    /* MAIN object type prediction */
+    if (hDecoder->object_type == MAIN)
+    {
+        /* intra channel prediction */
+        ic_prediction(ics1, spec_coef1, hDecoder->pred_stat[cpe->channel], hDecoder->frameLength,
+            hDecoder->sf_index);
+        ic_prediction(ics2, spec_coef2, hDecoder->pred_stat[cpe->paired_channel], hDecoder->frameLength,
+            hDecoder->sf_index);
+
+        /* In addition, for scalefactor bands coded by perceptual
+           noise substitution the predictors belonging to the
+           corresponding spectral coefficients are reset.
+        */
+        pns_reset_pred_state(ics1, hDecoder->pred_stat[cpe->channel]);
+        pns_reset_pred_state(ics2, hDecoder->pred_stat[cpe->paired_channel]);
     }
 #endif
 

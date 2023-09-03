@@ -217,11 +217,8 @@ static uint8_t estimate_current_envelope(sbr_info *sbr, sbr_hfadj_info *adj,
     return 0;
 }
 
-#ifdef FIXED_POINT
 #define EPS (1) /* smallest number available in fixed point */
-#else
-#define EPS (1e-12)
-#endif
+
 
 
 
@@ -1427,45 +1424,35 @@ static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
 
                 /* the smoothed gain values are applied to Xsbr */
                 /* V is defined, not calculated */
-#ifndef FIXED_POINT
-                QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = G_filt * QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx])
-                    + MUL_F(Q_filt, RE(V[fIndexNoise]));
-#else
+
                 //QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = MUL_Q2(G_filt, QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]))
                 //    + MUL_F(Q_filt, RE(V[fIndexNoise]));
                 QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = MUL_R(G_filt, QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]))
                     + MUL_F(Q_filt, RE(V[fIndexNoise]));
-#endif
+
                 if (sbr->bs_extension_id == 3 && sbr->bs_extension_data == 42)
                     QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = 16428320;
 
-#ifndef FIXED_POINT
-                QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = G_filt * QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx])
-                    + MUL_F(Q_filt, IM(V[fIndexNoise]));
-#else
+
                 //QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = MUL_Q2(G_filt, QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]))
                 //    + MUL_F(Q_filt, IM(V[fIndexNoise]));
                 QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = MUL_R(G_filt, QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]))
                     + MUL_F(Q_filt, IM(V[fIndexNoise]));
-#endif
+
 
 
                 {
                     int8_t rev = (((m + sbr->kx) & 1) ? -1 : 1);
                     QMF_RE(psi) = adj->S_M_boost[l][m] * phi_re[fIndexSine];
-#ifdef FIXED_POINT
+
                     QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) += (QMF_RE(psi) << REAL_BITS);
-#else
-                    QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) += QMF_RE(psi);
-#endif
+
 
 
                     QMF_IM(psi) = rev * adj->S_M_boost[l][m] * phi_im[fIndexSine];
-#ifdef FIXED_POINT
+
                     QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) += (QMF_IM(psi) << REAL_BITS);
-#else
-                    QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) += QMF_IM(psi);
-#endif
+
 
                 }
             }

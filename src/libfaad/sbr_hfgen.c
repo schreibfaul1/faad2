@@ -171,17 +171,13 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t buffer[MAX_NTS
 {
     int32_t r01r = 0, r01i = 0, r02r = 0, r02i = 0, r11r = 0;
     int32_t temp1_r, temp1_i, temp2_r, temp2_i, temp3_r, temp3_i, temp4_r, temp4_i, temp5_r, temp5_i;
-#ifdef FIXED_POINT
     const int32_t rel = FRAC_CONST(0.999999); // 1 / (1 + 1e-6f);
     uint32_t mask, exp;
     int32_t pow2_to_exp;
-#else
-    const int32_t rel = 1 / (1 + 1e-6f);
-#endif
+
     int8_t j;
     uint8_t offset = sbr->tHFAdj;
 
-#ifdef FIXED_POINT
     mask = 0;
 
     for (j = (offset-2); j < (len + offset); j++)
@@ -248,56 +244,7 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t buffer[MAX_NTS
         (MUL_R(temp2_r, temp2_r) + MUL_R(temp2_i, temp2_i)) +
         (MUL_R(temp4_r, temp4_r) + MUL_R(temp4_i, temp4_i));
 
-#else
 
-    temp2_r = QMF_RE(buffer[offset-2][bd]);
-    temp2_i = QMF_IM(buffer[offset-2][bd]);
-    temp3_r = QMF_RE(buffer[offset-1][bd]);
-    temp3_i = QMF_IM(buffer[offset-1][bd]);
-    // Save these because they are needed after loop
-    temp4_r = temp2_r;
-    temp4_i = temp2_i;
-    temp5_r = temp3_r;
-    temp5_i = temp3_i;
-
-    for (j = offset; j < len + offset; j++)
-    {
-    	temp1_r = temp2_r; // temp1_r = QMF_RE(buffer[j-2][bd];
-    	temp1_i = temp2_i; // temp1_i = QMF_IM(buffer[j-2][bd];
-    	temp2_r = temp3_r; // temp2_r = QMF_RE(buffer[j-1][bd];
-    	temp2_i = temp3_i; // temp2_i = QMF_IM(buffer[j-1][bd];
-        temp3_r = QMF_RE(buffer[j][bd]);
-        temp3_i = QMF_IM(buffer[j][bd]);
-        r01r += temp3_r * temp2_r + temp3_i * temp2_i;
-        r01i += temp3_i * temp2_r - temp3_r * temp2_i;
-        r02r += temp3_r * temp1_r + temp3_i * temp1_i;
-        r02i += temp3_i * temp1_r - temp3_r * temp1_i;
-        r11r += temp2_r * temp2_r + temp2_i * temp2_i;
-    }
-
-    // These are actual values in temporary variable at this point
-    // temp1_r = QMF_RE(buffer[len+offset-1-2][bd];
-    // temp1_i = QMF_IM(buffer[len+offset-1-2][bd];
-    // temp2_r = QMF_RE(buffer[len+offset-1-1][bd];
-    // temp2_i = QMF_IM(buffer[len+offset-1-1][bd];
-    // temp3_r = QMF_RE(buffer[len+offset-1][bd]);
-    // temp3_i = QMF_IM(buffer[len+offset-1][bd]);
-    // temp4_r = QMF_RE(buffer[offset-2][bd]);
-    // temp4_i = QMF_IM(buffer[offset-2][bd]);
-    // temp5_r = QMF_RE(buffer[offset-1][bd]);
-    // temp5_i = QMF_IM(buffer[offset-1][bd]);
-
-    RE(ac->r12) = r01r -
-        (temp3_r * temp2_r + temp3_i * temp2_i) +
-        (temp5_r * temp4_r + temp5_i * temp4_i);
-    IM(ac->r12) = r01i -
-        (temp3_i * temp2_r - temp3_r * temp2_i) +
-        (temp5_i * temp4_r - temp5_r * temp4_i);
-    RE(ac->r22) = r11r -
-        (temp2_r * temp2_r + temp2_i * temp2_i) +
-        (temp4_r * temp4_r + temp4_i * temp4_i);
-
-#endif
 
     RE(ac->r01) = r01r;
     IM(ac->r01) = r01i;
@@ -324,16 +271,10 @@ static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
         RE(alpha_1[k]) = 0;
         IM(alpha_1[k]) = 0;
     } else {
-#ifdef FIXED_POINT
         tmp = (MUL_R(RE(ac.r01), RE(ac.r12)) - MUL_R(IM(ac.r01), IM(ac.r12)) - MUL_R(RE(ac.r02), RE(ac.r11)));
         RE(alpha_1[k]) = DIV_R(tmp, ac.det);
         tmp = (MUL_R(IM(ac.r01), RE(ac.r12)) + MUL_R(RE(ac.r01), IM(ac.r12)) - MUL_R(IM(ac.r02), RE(ac.r11)));
         IM(alpha_1[k]) = DIV_R(tmp, ac.det);
-#else
-        tmp = REAL_CONST(1.0) / ac.det;
-        RE(alpha_1[k]) = (MUL_R(RE(ac.r01), RE(ac.r12)) - MUL_R(IM(ac.r01), IM(ac.r12)) - MUL_R(RE(ac.r02), RE(ac.r11))) * tmp;
-        IM(alpha_1[k]) = (MUL_R(IM(ac.r01), RE(ac.r12)) + MUL_R(RE(ac.r01), IM(ac.r12)) - MUL_R(IM(ac.r02), RE(ac.r11))) * tmp;
-#endif
     }
 
     if (RE(ac.r11) == 0)
@@ -341,16 +282,10 @@ static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
         RE(alpha_0[k]) = 0;
         IM(alpha_0[k]) = 0;
     } else {
-#ifdef FIXED_POINT
         tmp = -(RE(ac.r01) + MUL_R(RE(alpha_1[k]), RE(ac.r12)) + MUL_R(IM(alpha_1[k]), IM(ac.r12)));
         RE(alpha_0[k]) = DIV_R(tmp, RE(ac.r11));
         tmp = -(IM(ac.r01) + MUL_R(IM(alpha_1[k]), RE(ac.r12)) - MUL_R(RE(alpha_1[k]), IM(ac.r12)));
         IM(alpha_0[k]) = DIV_R(tmp, RE(ac.r11));
-#else
-        tmp = 1.0f / RE(ac.r11);
-        RE(alpha_0[k]) = -(RE(ac.r01) + MUL_R(RE(alpha_1[k]), RE(ac.r12)) + MUL_R(IM(alpha_1[k]), IM(ac.r12))) * tmp;
-        IM(alpha_0[k]) = -(IM(ac.r01) + MUL_R(IM(alpha_1[k]), RE(ac.r12)) - MUL_R(RE(alpha_1[k]), IM(ac.r12))) * tmp;
-#endif
     }
 
     if ((MUL_R(RE(alpha_0[k]),RE(alpha_0[k])) + MUL_R(IM(alpha_0[k]),IM(alpha_0[k])) >= REAL_CONST(16)) ||

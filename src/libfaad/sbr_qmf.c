@@ -88,11 +88,8 @@ void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const int32_t *input,
         /* add new samples to input buffer x */
         for (n = 32 - 1; n >= 0; n--)
         {
-#ifdef FIXED_POINT
             qmfa->x[qmfa->x_index + n] = qmfa->x[qmfa->x_index + n + 320] = (input[in++]) >> 4;
-#else
-            qmfa->x[qmfa->x_index + n] = qmfa->x[qmfa->x_index + n + 320] = input[in++];
-#endif
+
         }
 
         /* window and summation to create array u */
@@ -130,27 +127,17 @@ void sbr_qmf_analysis_32(sbr_info *sbr, qmfa_info *qmfa, const int32_t *input,
         // Reordering of data moved from DCT_IV to here
         for (n = 0; n < 16; n++) {
             if (2*n+1 < kx) {
-#ifdef FIXED_POINT
+
                 QMF_RE(X[l + offset][2*n])   = out_real[n];
                 QMF_IM(X[l + offset][2*n])   = out_imag[n];
                 QMF_RE(X[l + offset][2*n+1]) = -out_imag[31-n];
                 QMF_IM(X[l + offset][2*n+1]) = -out_real[31-n];
-#else
-                QMF_RE(X[l + offset][2*n])   = 2. * out_real[n];
-                QMF_IM(X[l + offset][2*n])   = 2. * out_imag[n];
-                QMF_RE(X[l + offset][2*n+1]) = -2. * out_imag[31-n];
-                QMF_IM(X[l + offset][2*n+1]) = -2. * out_real[31-n];
-#endif
+
             } else {
                 if (2*n < kx) {
-#ifdef FIXED_POINT
                     QMF_RE(X[l + offset][2*n])   = out_real[n];
                     QMF_IM(X[l + offset][2*n])   = out_imag[n];
-#else
-                    QMF_RE(X[l + offset][2*n])   = 2. * out_real[n];
-                    QMF_IM(X[l + offset][2*n])   = 2. * out_imag[n];
-#endif
-                }
+        }
                 else {
                     QMF_RE(X[l + offset][2*n]) = 0;
                     QMF_IM(X[l + offset][2*n]) = 0;
@@ -227,10 +214,7 @@ void qmfs_end(qmfs_info *qmfs)
 void sbr_qmf_synthesis_32(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][64],
                           int32_t *output)
 {
-     int32_t x1[32], x2[32];
-#ifndef FIXED_POINT
-    int32_t scale = 1.f/64.f;
-#endif
+    int32_t x1[32], x2[32];
     int32_t n, k, out = 0;
     uint8_t l;
 
@@ -249,13 +233,9 @@ void sbr_qmf_synthesis_32(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
             x1[k] = MUL_F(QMF_RE(X[l][k]), RE(qmf32_pre_twiddle[k])) - MUL_F(QMF_IM(X[l][k]), IM(qmf32_pre_twiddle[k]));
             x2[k] = MUL_F(QMF_IM(X[l][k]), RE(qmf32_pre_twiddle[k])) + MUL_F(QMF_RE(X[l][k]), IM(qmf32_pre_twiddle[k]));
 
-#ifndef FIXED_POINT
-            x1[k] *= scale;
-            x2[k] *= scale;
-#else
             x1[k] >>= 1;
             x2[k] >>= 1;
-#endif
+
         }
 
         /* transform */
@@ -311,9 +291,6 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
     const int32_t * pqmf_c_5, * pqmf_c_6, * pqmf_c_7, * pqmf_c_8;
     const int32_t * pqmf_c_9, * pqmf_c_10;
 #endif // #ifdef PREFER_POINTERS
-#ifndef FIXED_POINT
-    int32_t scale = 1.f/64.f;
-#endif
     int32_t n, k, out = 0;
     uint8_t l;
 
@@ -326,28 +303,6 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
 		//memmove(qmfs->v + 128, qmfs->v, (1280-128)*sizeof(int32_t));
 
         /* calculate 128 samples */
-#ifndef FIXED_POINT
-
-        pX = X[l];
-
-        in_imag1[31] = scale*QMF_RE(pX[1]);
-        in_real1[0]  = scale*QMF_RE(pX[0]);
-        in_imag2[31] = scale*QMF_IM(pX[63-1]);
-        in_real2[0]  = scale*QMF_IM(pX[63-0]);
-        for (k = 1; k < 31; k++)
-        {
-            in_imag1[31 - k] = scale*QMF_RE(pX[2*k + 1]);
-            in_real1[     k] = scale*QMF_RE(pX[2*k    ]);
-            in_imag2[31 - k] = scale*QMF_IM(pX[63 - (2*k + 1)]);
-            in_real2[     k] = scale*QMF_IM(pX[63 - (2*k    )]);
-        }
-        in_imag1[0]  = scale*QMF_RE(pX[63]);
-        in_real1[31] = scale*QMF_RE(pX[62]);
-        in_imag2[0]  = scale*QMF_IM(pX[63-63]);
-        in_real2[31] = scale*QMF_IM(pX[63-62]);
-
-#else
-
         pX = X[l];
 
         in_imag1[31] = QMF_RE(pX[1]) >> 1;
@@ -366,7 +321,7 @@ void sbr_qmf_synthesis_64(sbr_info *sbr, qmfs_info *qmfs, qmf_t X[MAX_NTSRHFG][6
         in_imag2[0]  = QMF_IM(pX[0]) >> 1;
         in_real2[31] = QMF_IM(pX[1]) >> 1;
 
-#endif
+
 
 
         // dct4_kernel is DCT_IV without reordering which is done before and after FFT
