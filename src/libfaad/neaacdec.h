@@ -31,7 +31,6 @@
 #ifndef __NEAACDEC_H__
 #define __NEAACDEC_H__
 
-#include "common.h"
 #include <inttypes.h>
 #include <math.h>
 #include <memory.h>
@@ -149,8 +148,53 @@
    so at least so much bytes per channel should be available in this stream */
 #define FAAD_MIN_STREAMSIZE 768 /* 6144 bits/channel */
 
-typedef void* NeAACDecHandle;
+#define COEF_BITS      28
+#define COEF_PRECISION (1 << COEF_BITS)
+#define REAL_BITS      14 // MAXIMUM OF 14 FOR FIXED POINT SBR
+#define REAL_PRECISION (1 << REAL_BITS)
+#define FRAC_SIZE      32 /* frac is a 32 bit integer */
+#define FRAC_BITS      31
+#define FRAC_PRECISION ((uint32_t)(1 << FRAC_BITS))
+#define FRAC_MAX       0x7FFFFFFF
+#define REAL_CONST(A)  (((A) >= 0) ? ((int32_t)((A) * (REAL_PRECISION) + 0.5)) : ((int32_t)((A) * (REAL_PRECISION)-0.5)))
+#define LOG2_MIN_INF   REAL_CONST(-10000)
+#define COEF_CONST(A)  (((A) >= 0) ? ((int32_t)((A) * (COEF_PRECISION) + 0.5)) : ((int32_t)((A) * (COEF_PRECISION)-0.5)))
+#define FRAC_CONST(A) \
+    (((A) == 1.00) ? ((int32_t)FRAC_MAX) : (((A) >= 0) ? ((int32_t)((A) * (FRAC_PRECISION) + 0.5)) : ((int32_t)((A) * (FRAC_PRECISION)-0.5))))
+#define Q2_BITS           22
+#define Q2_PRECISION      (1 << Q2_BITS)
+#define Q2_CONST(A)       (((A) >= 0) ? ((int32_t)((A) * (Q2_PRECISION) + 0.5)) : ((int32_t)((A) * (Q2_PRECISION)-0.5)))
+#define MUL_R(A, B)       (int32_t)(((int64_t)(A) * (int64_t)(B) + (1 << (REAL_BITS - 1))) >> REAL_BITS) /* multiply with real shift */
+#define MUL_C(A, B)       (int32_t)(((int64_t)(A) * (int64_t)(B) + (1 << (COEF_BITS - 1))) >> COEF_BITS) /* multiply with coef shift */
+#define _MulHigh(A, B)    (int32_t)(((int64_t)(A) * (int64_t)(B) + (1 << (FRAC_SIZE - 1))) >> FRAC_SIZE) /* multiply with fractional shift */
+#define MUL_F(A, B)       (int32_t)(((int64_t)(A) * (int64_t)(B) + (1 << (FRAC_BITS - 1))) >> FRAC_BITS)
+#define MUL_Q2(A, B)      (int32_t)(((int64_t)(A) * (int64_t)(B) + (1 << (Q2_BITS - 1))) >> Q2_BITS)
+#define MUL_SHIFT6(A, B)  (int32_t)(((int64_t)(A) * (int64_t)(B) + (1 << (6 - 1))) >> 6)
+#define MUL_SHIFT23(A, B) (int32_t)(((int64_t)(A) * (int64_t)(B) + (1 << (23 - 1))) >> 23)
+#define RE(A) A[0]
+#define IM(A) A[1]
+#define DIV_R(A, B) (((int64_t)A << REAL_BITS) / B)
+#define DIV_C(A, B) (((int64_t)A << COEF_BITS) / B)
+#define qmf_t       complex_t
+#define QMF_RE(A)   RE(A)
+#define QMF_IM(A)   IM(A)
 
+#ifndef max
+    #define max(a, b) (((a) > (b)) ? (a) : (b))
+#endif
+#ifndef min
+    #define min(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
+#ifndef M_PI_2 /* PI/2 */
+    #define M_PI_2 1.57079632679489661923
+#endif
+
+typedef void* NeAACDecHandle;
+#include "common.h"
 typedef struct mp4AudioSpecificConfig {
     unsigned char  objectTypeIndex; /* Audio Specific Info */
     unsigned char  samplingFrequencyIndex;
@@ -217,16 +261,16 @@ unsigned long            NeAACDecGetCapabilities(void);
 NeAACDecHandle           NeAACDecOpen(void);
 NeAACDecConfigurationPtr NeAACDecGetCurrentConfiguration(NeAACDecHandle hDecoder);
 unsigned char            NeAACDecSetConfiguration(NeAACDecHandle hDecoder, NeAACDecConfigurationPtr config);
-long  NeAACDecInit(NeAACDecHandle hDecoder, unsigned char* buffer, unsigned long buffer_size, unsigned long* samplerate, unsigned char* channels);
-char  NeAACDecInit2(NeAACDecHandle hDecoder, unsigned char* pBuffer, unsigned long SizeOfDecoderSpecificInfo, unsigned long* samplerate,
-                    unsigned char* channels);
-void  NeAACDecPostSeekReset(NeAACDecHandle hDecoder, long frame);
-void  NeAACDecClose(NeAACDecHandle hDecoder);
-void* NeAACDecDecode(NeAACDecHandle hDecoder, NeAACDecFrameInfo* hInfo, unsigned char* buffer, unsigned long buffer_size);
-void* NeAACDecDecode2(NeAACDecHandle hDecoder, NeAACDecFrameInfo* hInfo, unsigned char* buffer, unsigned long buffer_size, void** sample_buffer,
-                      unsigned long sample_buffer_size);
-char  NeAACDecAudioSpecificConfig(unsigned char* pBuffer, unsigned long buffer_size, mp4AudioSpecificConfig* mp4ASC);
-int   NeAACDecGetVersion(const char** faad_id_string, const char** faad_copyright_string);
+long     NeAACDecInit(NeAACDecHandle hDecoder, unsigned char* buffer, unsigned long buffer_size, unsigned long* samplerate, unsigned char* channels);
+char     NeAACDecInit2(NeAACDecHandle hDecoder, unsigned char* pBuffer, unsigned long SizeOfDecoderSpecificInfo, unsigned long* samplerate,
+                       unsigned char* channels);
+void     NeAACDecPostSeekReset(NeAACDecHandle hDecoder, long frame);
+void     NeAACDecClose(NeAACDecHandle hDecoder);
+void*    NeAACDecDecode(NeAACDecHandle hDecoder, NeAACDecFrameInfo* hInfo, unsigned char* buffer, unsigned long buffer_size);
+void*    NeAACDecDecode2(NeAACDecHandle hDecoder, NeAACDecFrameInfo* hInfo, unsigned char* buffer, unsigned long buffer_size, void** sample_buffer,
+                         unsigned long sample_buffer_size);
+char     NeAACDecAudioSpecificConfig(unsigned char* pBuffer, unsigned long buffer_size, mp4AudioSpecificConfig* mp4ASC);
+int      NeAACDecGetVersion(const char** faad_id_string, const char** faad_copyright_string);
 void     faad_initbits(bitfile* ld, const void* buffer, const uint32_t buffer_size);
 void     faad_initbits_rev(bitfile* ld, void* buffer, uint32_t bits_in_buffer);
 uint8_t  faad_byte_align(bitfile* ld);
@@ -235,6 +279,20 @@ void     faad_flushbits_ex(bitfile* ld, uint32_t bits);
 void     faad_rewindbits(bitfile* ld);
 void     faad_resetbits(bitfile* ld, int bits);
 uint8_t* faad_getbitbuffer(bitfile* ld, uint32_t bits);
+uint32_t ne_rng(uint32_t* __r1, uint32_t* __r2);
+uint32_t wl_min_lzc(uint32_t x);
+
+int32_t  log2_int(uint32_t val);
+int32_t  log2_fix(uint32_t val);
+int32_t  pow2_int(int32_t val);
+int32_t  pow2_fix(int32_t val);
+uint8_t  get_sr_index(const uint32_t samplerate);
+uint8_t  max_pred_sfb(const uint8_t sr_index);
+uint8_t  max_tns_sfb(const uint8_t sr_index, const uint8_t object_type, const uint8_t is_short);
+uint32_t get_sample_rate(const uint8_t sr_index);
+int8_t   can_decode_ot(const uint8_t object_type);
+void*    faad_malloc(size_t size);
+void     faad_free(void* b);
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //                                              I N L I N E S
@@ -415,9 +473,5 @@ static inline int8_t get1bit_hcr(bits_t* ld, uint8_t* result) {
 }
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #endif // ERROR_RESILIENCE
-
-
-
-
 
 #endif

@@ -3,7 +3,9 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+#include "neaacdec.h"
 #include <inttypes.h>
+#include <math.h>
 #include <memory.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -14,60 +16,23 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <math.h>
-#include "neaacdec.h"
 
 
+typedef float float32_t;
+typedef int32_t complex_t[2];
 
-
-    #define DIV_R(A, B) (((int64_t)A << REAL_BITS) / B)
-    #define DIV_C(A, B) (((int64_t)A << COEF_BITS) / B)
-
-
-#define qmf_t     complex_t
-#define QMF_RE(A) RE(A)
-#define QMF_IM(A) IM(A)
 
 /* END COMPILE TIME DEFINITIONS */
 
-#ifndef max
-    #define max(a, b) (((a) > (b)) ? (a) : (b))
-#endif
-#ifndef min
-    #define min(a, b) (((a) < (b)) ? (a) : (b))
-#endif
 
-typedef float float32_t;
 
 #include "fixed.h"
 
-typedef int32_t complex_t[2];
-#define RE(A) A[0]
-#define IM(A) A[1]
+
 
 /* common functions */
-uint32_t ne_rng(uint32_t* __r1, uint32_t* __r2);
-uint32_t wl_min_lzc(uint32_t x);
-    #define LOG2_MIN_INF REAL_CONST(-10000)
-int32_t log2_int(uint32_t val);
-int32_t log2_fix(uint32_t val);
-int32_t pow2_int(int32_t val);
-int32_t pow2_fix(int32_t val);
 
-uint8_t  get_sr_index(const uint32_t samplerate);
-uint8_t  max_pred_sfb(const uint8_t sr_index);
-uint8_t  max_tns_sfb(const uint8_t sr_index, const uint8_t object_type, const uint8_t is_short);
-uint32_t get_sample_rate(const uint8_t sr_index);
-int8_t   can_decode_ot(const uint8_t object_type);
 
-void* faad_malloc(size_t size);
-void  faad_free(void* b);
 
-#ifndef M_PI
-    #define M_PI 3.14159265358979323846
-#endif
-#ifndef M_PI_2 /* PI/2 */
-    #define M_PI_2 1.57079632679489661923
-#endif
 
 #endif
