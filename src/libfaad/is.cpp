@@ -45,14 +45,11 @@ static int32_t pow05_table[] = {
     COEF_CONST(0.59460355750136)  /* 0.5^(+3/4) */
 };
 
-
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 void is_decode(ic_stream* ics, ic_stream* icsr, int32_t* l_spec, int32_t* r_spec, uint16_t frame_len) {
     uint8_t  g, sfb, b;
     uint16_t i;
-
     int32_t exp, frac;
-
-
     uint16_t nshort = frame_len / 8;
     uint8_t  group = 0;
 
@@ -61,15 +58,11 @@ void is_decode(ic_stream* ics, ic_stream* icsr, int32_t* l_spec, int32_t* r_spec
         for(b = 0; b < icsr->window_group_length[g]; b++) {
             for(sfb = 0; sfb < icsr->max_sfb; sfb++) {
                 if(is_intensity(icsr, g, sfb)) {
-
                     exp = icsr->scale_factors[g][sfb] >> 2;
                     frac = icsr->scale_factors[g][sfb] & 3;
-
-
                     /* Scale from left to right channel,
                        do not touch left channel */
                     for(i = icsr->swb_offset[sfb]; i < min(icsr->swb_offset[sfb + 1], ics->swb_offset_max); i++) {
-
                         if(exp < 0) r_spec[(group * nshort) + i] = l_spec[(group * nshort) + i] << -exp;
                         else
                             r_spec[(group * nshort) + i] = l_spec[(group * nshort) + i] >> exp;

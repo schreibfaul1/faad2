@@ -31,10 +31,6 @@
 #ifndef __FIXED_H__
 #define __FIXED_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define COEF_BITS      28
 #define COEF_PRECISION (1 << COEF_BITS)
 #define REAL_BITS      14 // MAXIMUM OF 14 FOR FIXED POINT SBR
@@ -64,7 +60,4 @@ static inline void ComplexMult(int32_t* y1, int32_t* y2, int32_t x1, int32_t x2,
     *y2 = (_MulHigh(x2, c1) - _MulHigh(x1, c2)) << (FRAC_SIZE - FRAC_BITS);
 }
 
-#ifdef __cplusplus
-}
-#endif
 #endif

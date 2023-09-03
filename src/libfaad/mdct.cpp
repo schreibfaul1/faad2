@@ -113,7 +113,6 @@ void faad_imdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out) {
 #endif
     complex_t  Z1[512];
     complex_t* sincos = mdct->sincos;
-
     uint16_t N = mdct->N;
     uint16_t N2 = N >> 1;
     uint16_t N4 = N >> 2;
@@ -124,7 +123,6 @@ void faad_imdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out) {
 #endif
 
 #ifdef ALLOW_SMALL_FRAMELENGTH
-
     /* detect non-power of 2 */
     if(N & (N - 1)) {
         /* adjust scale for non-power of 2 MDCT */
@@ -132,9 +130,7 @@ void faad_imdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out) {
         b_scale = 1;
         scale = COEF_CONST(1.0666666666666667);
     }
-
 #endif
-
     /* pre-IFFT complex multiplication */
     for(k = 0; k < N4; k++) { ComplexMult(&IM(Z1[k]), &RE(Z1[k]), X_in[2 * k], X_in[N2 - 1 - 2 * k], RE(sincos[k]), IM(sincos[k])); }
 
@@ -148,24 +144,19 @@ void faad_imdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out) {
 #ifdef PROFILE
     count1 = faad_get_ts() - count1;
 #endif
-
     /* post-IFFT complex multiplication */
     for(k = 0; k < N4; k++) {
         RE(x) = RE(Z1[k]);
         IM(x) = IM(Z1[k]);
         ComplexMult(&IM(Z1[k]), &RE(Z1[k]), IM(x), RE(x), RE(sincos[k]), IM(sincos[k]));
-
 #ifdef ALLOW_SMALL_FRAMELENGTH
-
         /* non-power of 2 MDCT scaling */
         if(b_scale) {
             RE(Z1[k]) = MUL_C(RE(Z1[k]), scale);
             IM(Z1[k]) = MUL_C(IM(Z1[k]), scale);
         }
-
 #endif
     }
-
     /* reordering */
     for(k = 0; k < N8; k += 2) {
         X_out[2 * k] = IM(Z1[N8 + k]);
@@ -205,19 +196,14 @@ void faad_mdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out) {
     uint16_t N8 = N >> 3;
 
      int32_t scale = REAL_CONST(4.0 / N);
-
-
     #ifdef ALLOW_SMALL_FRAMELENGTH
-
     /* detect non-power of 2 */
     if(N & (N - 1)) {
         /* adjust scale for non-power of 2 MDCT */
         /* *= sqrt(2048/1920) */
         scale = MUL_C(scale, COEF_CONST(1.0327955589886444));
     }
-
     #endif
-
     /* pre-FFT complex multiplication */
     for(k = 0; k < N8; k++) {
         uint16_t n = k << 1;
@@ -232,10 +218,8 @@ void faad_mdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out) {
         RE(Z1[k + N8]) = MUL_R(RE(Z1[k + N8]), scale);
         IM(Z1[k + N8]) = MUL_R(IM(Z1[k + N8]), scale);
     }
-
     /* complex FFT, any non-scaling FFT can be used here  */
     cfftf(mdct->cfft, Z1);
-
     /* post-FFT complex multiplication */
     for(k = 0; k < N4; k++) {
         uint16_t n = k << 1;

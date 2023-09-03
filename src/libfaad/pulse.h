@@ -30,7 +30,7 @@
 
 #ifndef __PULSE_H__
 #define __PULSE_H__
-
+#include "structs.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
