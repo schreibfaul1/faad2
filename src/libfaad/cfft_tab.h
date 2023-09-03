@@ -31,9 +31,6 @@
 #ifndef __CFFT_TAB_H__
 #define __CFFT_TAB_H__
 #include "common.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 static const complex_t cfft_tab_512[] = {
     {FRAC_CONST(1.000000000000000), FRAC_CONST(0.000000000000000)},   {FRAC_CONST(0.999924719333649), FRAC_CONST(0.012271538376808)},
@@ -929,7 +926,4 @@ static const complex_t cfft_tab_128[] = {
     {FRAC_CONST(1.000000000000000), FRAC_CONST(0.000000000000000)},   {FRAC_CONST(1.000000000000000), FRAC_CONST(0.000000000000000)},
     {FRAC_CONST(1.000000000000000), FRAC_CONST(0.000000000000000)},   {FRAC_CONST(0.000000011924881), FRAC_CONST(-1.000000000000000)}};
 
-#ifdef __cplusplus
-}
-#endif
 #endif

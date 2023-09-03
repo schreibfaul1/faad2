@@ -34,7 +34,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "neaacdec.h"
 #include "common.h"
 
 #define BYTE_NUMBIT    8

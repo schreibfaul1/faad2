@@ -52,45 +52,31 @@
 
 #ifdef ERROR_RESILIENCE
 
-// #define PRINT_RVLC
-
 /* static function declarations */
 static uint8_t rvlc_decode_sf_forward(ic_stream* ics, bitfile* ld_sf, bitfile* ld_esc, uint8_t* is_used);
-    #if 0
-static uint8_t rvlc_decode_sf_reverse(ic_stream *ics,
-                                      bitfile *ld_sf,
-                                      bitfile *ld_esc,
-                                      uint8_t is_used);
-    #endif
 static int8_t rvlc_huffman_sf(bitfile* ld_sf, bitfile* ld_esc, int8_t direction);
 static int8_t rvlc_huffman_esc(bitfile* ld_esc, int8_t direction);
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t rvlc_scale_factor_data(ic_stream* ics, bitfile* ld) {
     uint8_t bits = 9;
 
     ics->sf_concealment = faad_get1bit(ld);
     ics->rev_global_gain = (uint8_t)faad_getbits(ld, 8);
-
     if(ics->window_sequence == EIGHT_SHORT_SEQUENCE) bits = 11;
-
     /* the number of bits used for the huffman codewords */
     ics->length_of_rvlc_sf = (uint16_t)faad_getbits(ld, bits);
-
     if(ics->noise_used) {
         ics->dpcm_noise_nrg = (uint16_t)faad_getbits(ld, 9);
-
         ics->length_of_rvlc_sf -= 9;
     }
-
     ics->sf_escapes_present = faad_get1bit(ld);
-
     if(ics->sf_escapes_present) { ics->length_of_rvlc_escapes = (uint8_t)faad_getbits(ld, 8); }
-
     if(ics->noise_used) { ics->dpcm_noise_last_position = (uint16_t)faad_getbits(ld, 9); }
-
     return 0;
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t rvlc_decode_scale_factors(ic_stream* ics, bitfile* ld) {
     uint8_t  result;
     uint8_t  intensity_used = 0;
@@ -100,11 +86,8 @@ uint8_t rvlc_decode_scale_factors(ic_stream* ics, bitfile* ld) {
     //    bitfile ld_rvlc_sf_rev, ld_rvlc_esc_rev;
 
     if(ics->length_of_rvlc_sf > 0) {
-        /* We read length_of_rvlc_sf bits here to put it in a
-           seperate bitfile.
-        */
+        /* We read length_of_rvlc_sf bits here to put it in a seperate bitfile. */
         rvlc_sf_buffer = faad_getbitbuffer(ld, ics->length_of_rvlc_sf);
-
         faad_initbits(&ld_rvlc_sf, (void*)rvlc_sf_buffer, bit2byte(ics->length_of_rvlc_sf));
         //        faad_initbits_rev(&ld_rvlc_sf_rev, (void*)rvlc_sf_buffer,
         //            ics->length_of_rvlc_sf);
@@ -128,25 +111,20 @@ uint8_t rvlc_decode_scale_factors(ic_stream* ics, bitfile* ld) {
 
     if(rvlc_esc_buffer) faad_free(rvlc_esc_buffer);
     if(rvlc_sf_buffer) faad_free(rvlc_sf_buffer);
-
     if(ics->length_of_rvlc_sf > 0)
         if(ics->sf_escapes_present) return result;
     return 0;
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 static uint8_t rvlc_decode_sf_forward(ic_stream* ics, bitfile* ld_sf, bitfile* ld_esc, uint8_t* intensity_used) {
     int8_t g, sfb;
     int8_t t = 0;
     int8_t error = 0;
     int8_t noise_pcm_flag = 1;
-
     int16_t scale_factor = ics->global_gain;
     int16_t is_position = 0;
     int16_t noise_energy = ics->global_gain - 90 - 256;
-
-    #ifdef PRINT_RVLC
-    printf("\nglobal_gain: %d\n", ics->global_gain);
-    #endif
 
     for(g = 0; g < ics->num_window_groups; g++) {
         for(sfb = 0; sfb < ics->max_sfb; sfb++) {
@@ -156,18 +134,13 @@ static uint8_t rvlc_decode_sf_forward(ic_stream* ics, bitfile* ld_sf, bitfile* l
                 case ZERO_HCB: /* zero book */ ics->scale_factors[g][sfb] = 0; break;
                 case INTENSITY_HCB: /* intensity books */
                 case INTENSITY_HCB2:
-
                     *intensity_used = 1;
-
                     /* decode intensity position */
                     t = rvlc_huffman_sf(ld_sf, ld_esc, +1);
-
                     is_position += t;
                     ics->scale_factors[g][sfb] = is_position;
-
                     break;
                 case NOISE_HCB: /* noise books */
-
                     /* decode noise energy */
                     if(noise_pcm_flag) {
                         int16_t n = ics->dpcm_noise_nrg;
@@ -178,36 +151,24 @@ static uint8_t rvlc_decode_sf_forward(ic_stream* ics, bitfile* ld_sf, bitfile* l
                         t = rvlc_huffman_sf(ld_sf, ld_esc, +1);
                         noise_energy += t;
                     }
-
                     ics->scale_factors[g][sfb] = noise_energy;
-
                     break;
                 default: /* spectral books */
-
                     /* decode scale factor */
                     t = rvlc_huffman_sf(ld_sf, ld_esc, +1);
-
                     scale_factor += t;
                     if(scale_factor < 0) return 4;
-
                     ics->scale_factors[g][sfb] = scale_factor;
-
                     break;
                 }
-    #ifdef PRINT_RVLC
-                printf("%3d:%4d%4d\n", sfb, ics->sfb_cb[g][sfb], ics->scale_factors[g][sfb]);
-    #endif
                 if(t == 99) { error = 1; }
             }
         }
     }
-    #ifdef PRINT_RVLC
-    printf("\n\n");
-    #endif
-
     return 0;
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 /* index == 99 means not allowed codeword */
 static rvlc_huff_table book_rvlc[] = {
     /*index  length  codeword */
@@ -237,6 +198,7 @@ static rvlc_huff_table book_rvlc[] = {
     {99, 10, 0}   /* Shouldn't come this far */
 };
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 static rvlc_huff_table book_escape[] =
     {
         /*index  length  codeword */
@@ -250,6 +212,7 @@ static rvlc_huff_table book_escape[] =
         {44, 20, 473499}, {45, 20, 473500}, {46, 20, 473501}, {47, 20, 473502}, {48, 20, 473503}, {99, 21, 0} /* Shouldn't come this far */
 };
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 static int8_t rvlc_huffman_sf(bitfile* ld_sf, bitfile* ld_esc, int8_t direction) {
     uint8_t          i, j;
     int8_t           index;
@@ -270,29 +233,21 @@ static int8_t rvlc_huffman_sf(bitfile* ld_sf, bitfile* ld_esc, int8_t direction)
         else
             cw |= faad_getbits_rev(ld_sf, j);
     }
-
     index = h->index;
-
     if(index == +ESC_VAL) {
         int8_t esc = rvlc_huffman_esc(ld_esc, direction);
         if(esc == 99) return 99;
         index += esc;
-    #ifdef PRINT_RVLC
-        printf("esc: %d - ", esc);
-    #endif
     }
     if(index == -ESC_VAL) {
         int8_t esc = rvlc_huffman_esc(ld_esc, direction);
         if(esc == 99) return 99;
         index -= esc;
-    #ifdef PRINT_RVLC
-        printf("esc: %d - ", esc);
-    #endif
     }
-
     return index;
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 static int8_t rvlc_huffman_esc(bitfile* ld, int8_t direction) {
     uint8_t          i, j;
     uint32_t         cw;
@@ -302,7 +257,6 @@ static int8_t rvlc_huffman_esc(bitfile* ld, int8_t direction) {
     if(direction > 0) cw = faad_getbits(ld, i);
     else
         cw = faad_getbits_rev(ld, i);
-
     while((cw != h->cw) && (i < 21)) {
         h++;
         j = h->len - i;
@@ -312,7 +266,6 @@ static int8_t rvlc_huffman_esc(bitfile* ld, int8_t direction) {
         else
             cw |= faad_getbits_rev(ld, j);
     }
-
     return h->index;
 }
 

@@ -32,9 +32,6 @@
 #define __DRC_H__
 
 #include "structs.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #define DRC_REF_LEVEL 20*4 /* -20 dB */
 
@@ -43,8 +40,4 @@ drc_info *drc_init(int32_t cut, int32_t boost);
 void drc_end(drc_info *drc);
 void drc_decode(drc_info *drc, int32_t *spec);
 
-
-#ifdef __cplusplus
-}
-#endif
 #endif

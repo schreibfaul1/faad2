@@ -3,10 +3,6 @@
 #ifndef __HCB_H__
 #define __HCB_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
  *  Optimal huffman decoding for AAC taken from:
  *  "SELECTING AN OPTIMAL HUFFMAN DECODER FOR AAC" by
@@ -418,7 +414,4 @@ static uint8_t hcb_sf[][2] = {
     {9, 0},   {10, 0},  {5, 0},   {103, 0}, {120, 0}, {119, 0}, {4, 0},   {7, 0},   {15, 0},  {16, 0},  {18, 0},  {20, 0},  {17, 0},  {11, 0},
     {12, 0},  {14, 0},  {13, 0}};
 
-#ifdef __cplusplus
-}
-#endif
 #endif
