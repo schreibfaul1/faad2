@@ -56,12 +56,9 @@ uint8_t qmf_start_channel(uint8_t bs_start_freq, uint8_t bs_samplerate_mode, uin
     uint8_t startMin = startMinTable[get_sr_index(sample_rate)];
     uint8_t offsetIndex = offsetIndexTable[get_sr_index(sample_rate)];
 
-    if(bs_samplerate_mode) {
-        return startMin + offset[offsetIndex][bs_start_freq];
-    }
+    if(bs_samplerate_mode) { return startMin + offset[offsetIndex][bs_start_freq]; }
     else { return startMin + offset[6][bs_start_freq]; }
 }
-
 
 static int longcmp(const void* a, const void* b) { return ((int)(*(int32_t*)a - *(int32_t*)b)); }
 
@@ -125,7 +122,7 @@ uint8_t master_frequency_table_fs0(sbr_info* sbr, uint8_t k0, uint8_t k2, uint8_
     for(k = 1; k <= nrBands; k++) sbr->f_master[k] = (uint8_t)(sbr->f_master[k - 1] + vDk[k - 1]);
     sbr->N_master = (uint8_t)nrBands;
     sbr->N_master = (min(sbr->N_master, 64));
-     return 0;
+    return 0;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -212,8 +209,7 @@ uint8_t master_frequency_table(sbr_info* sbr, uint8_t k0, uint8_t k2, uint8_t bs
     bands = temp1[bs_freq_scale - 1];
     rk0 = (int32_t)k0 << REAL_BITS;
     rk2 = (int32_t)k2 << REAL_BITS;
-    if(rk2 > MUL_C(rk0, COEF_CONST(2.2449)))
-    {
+    if(rk2 > MUL_C(rk0, COEF_CONST(2.2449))) {
         twoRegions = 1;
         k1 = k0 << 1;
     }
@@ -362,12 +358,10 @@ void limiter_frequency_table(sbr_info* sbr) {
         if(k <= nrLim) {
             int32_t nOctaves;
 
-            if(limTable[k - 1] != 0)
-                nOctaves = DIV_R((limTable[k] << REAL_BITS), REAL_CONST(limTable[k - 1]));
+            if(limTable[k - 1] != 0) nOctaves = DIV_R((limTable[k] << REAL_BITS), REAL_CONST(limTable[k - 1]));
             else
                 nOctaves = 0;
-              if(nOctaves < limiterBandsCompare[s - 1])
-            {
+            if(nOctaves < limiterBandsCompare[s - 1]) {
                 uint8_t i;
                 if(limTable[k] != limTable[k - 1]) {
                     uint8_t found = 0, found2 = 0;
