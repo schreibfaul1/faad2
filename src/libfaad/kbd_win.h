@@ -31,6 +31,7 @@
 #ifndef __KBD_WIN_H__
 #define __KBD_WIN_H__
 
+#include "neaacdec.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -30,7 +30,7 @@
 
 #ifndef __SBR_E_NF_H__
 #define __SBR_E_NF_H__
-
+#include "neaacdec.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

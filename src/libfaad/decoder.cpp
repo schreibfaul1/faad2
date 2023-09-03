@@ -39,11 +39,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "neaacdec.h"
 #ifdef SBR_DEC
     #include "sbr_dec.h"
     #include "sbr_syntax.h"
 #endif
-#include "neaacdec.h"
+
 
 
 /* static function declarations */

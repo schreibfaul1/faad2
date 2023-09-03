@@ -27,7 +27,7 @@
 **
 ** $Id: sbr_huff.c,v 1.21 2007/11/01 12:33:35 menno Exp $
 **/
-
+#include "neaacdec.h"
 #include "common.h"
 #include "structs.h"
 

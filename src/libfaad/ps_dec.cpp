@@ -27,6 +27,7 @@
 **
 ** $Id: ps_dec.c,v 1.16 2009/01/26 22:32:31 menno Exp $
 **/
+#include "neaacdec.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "common.h"

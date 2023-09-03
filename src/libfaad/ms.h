@@ -30,7 +30,7 @@
 
 #ifndef __MS_H__
 #define __MS_H__
-
+#include "neaacdec.h"
 #include "structs.h"
 #ifdef __cplusplus
 extern "C" {

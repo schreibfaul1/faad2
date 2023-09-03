@@ -32,7 +32,7 @@
 
 #include "common.h"
 #include "structs.h"
-
+#include "neaacdec.h"
 #ifdef SBR_DEC
 
     #include "sbr_hfadj.h"

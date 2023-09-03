@@ -27,7 +27,7 @@
 **
 ** $Id: sbr_e_nf.c,v 1.22 2008/03/23 23:03:29 menno Exp $
 **/
-
+#include "neaacdec.h"
 #include "common.h"
 #include "structs.h"
 

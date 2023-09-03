@@ -31,6 +31,8 @@
 #ifndef __SYNTAX_H__
 #define __SYNTAX_H__
 
+
+#include "neaacdec.h"
 #include "bits.h"
 #include "structs.h"
 

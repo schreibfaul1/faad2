@@ -30,7 +30,7 @@
 
 #ifndef __FILTBANK_H__
 #define __FILTBANK_H__
-
+#include "neaacdec.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

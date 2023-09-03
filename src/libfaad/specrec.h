@@ -31,6 +31,7 @@
 #ifndef __SPECREC_H__
 #define __SPECREC_H__
 #include "neaacdec.h"
+#include "neaacdec.h"
 #include "syntax.h"
 uint8_t allocate_single_channel(NeAACDecStruct* hDecoder, uint8_t channel, uint8_t output_channels);
 uint8_t window_grouping_info(NeAACDecStruct* hDecoder, ic_stream* ics);

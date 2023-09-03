@@ -30,6 +30,8 @@
 
 #ifndef __CFFT_TAB_H__
 #define __CFFT_TAB_H__
+
+#include "neaacdec.h"
 #include "common.h"
 
 static const complex_t cfft_tab_512[] = {

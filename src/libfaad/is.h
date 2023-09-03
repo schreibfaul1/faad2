@@ -31,6 +31,7 @@
 #ifndef __IS_H__
 #define __IS_H__
 
+#include "neaacdec.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

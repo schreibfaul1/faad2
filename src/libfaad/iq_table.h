@@ -31,6 +31,7 @@
 #ifndef IQ_TABLE_H__
 #define IQ_TABLE_H__
 
+#include "neaacdec.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

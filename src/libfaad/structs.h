@@ -30,7 +30,7 @@
 
 #ifndef __STRUCTS_H__
 #define __STRUCTS_H__
-
+#include "neaacdec.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

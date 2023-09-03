@@ -28,6 +28,7 @@
 ** $Id: huffman.c,v 1.26 2007/11/01 12:33:30 menno Exp $
 **/
 
+#include "neaacdec.h"
 #include "huffman.h"
 #include "bits.h"
 #include "common.h"

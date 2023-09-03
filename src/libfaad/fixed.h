@@ -30,6 +30,8 @@
 
 #ifndef __FIXED_H__
 #define __FIXED_H__
+#include "neaacdec.h"
+
 
 #define COEF_BITS      28
 #define COEF_PRECISION (1 << COEF_BITS)

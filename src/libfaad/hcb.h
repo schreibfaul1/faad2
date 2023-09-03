@@ -35,6 +35,8 @@
  *    HCB_SF     Binary
  *
  */
+#include "neaacdec.h"
+
 
 #define ZERO_HCB       0
 #define FIRST_PAIR_HCB 5

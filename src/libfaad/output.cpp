@@ -27,7 +27,7 @@
 **
 ** $Id: output.c,v 1.47 2009/01/26 23:51:15 menno Exp $
 **/
-
+#include "neaacdec.h"
 #include "output.h"
 #include "common.h"
 #include "structs.h"

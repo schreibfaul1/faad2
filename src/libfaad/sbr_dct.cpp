@@ -31,7 +31,7 @@
 /* Most of the DCT/DST codes here are generated using Spiral which is GPL
  * For more info see: http://www.spiral.net/
  */
-
+#include "neaacdec.h"
 #include "common.h"
 
 #ifdef SBR_DEC

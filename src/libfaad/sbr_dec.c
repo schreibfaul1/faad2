@@ -28,7 +28,7 @@
 ** $Id: sbr_dec.c,v 1.44 2009/01/26 22:32:31 menno Exp $
 **/
 
-
+#include "neaacdec.h"
 #include "common.h"
 #include "structs.h"
 

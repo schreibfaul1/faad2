@@ -32,7 +32,7 @@
 
 #ifndef __LT_PREDICT_H__
 #define __LT_PREDICT_H__
-
+#include "neaacdec.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

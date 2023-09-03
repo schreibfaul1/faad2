@@ -30,7 +30,7 @@
 
 #ifndef __MP4_H__
 #define __MP4_H__
-
+#include "neaacdec.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

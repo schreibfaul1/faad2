@@ -28,6 +28,7 @@
 ** $Id: ic_predict.c,v 1.28 2007/11/01 12:33:31 menno Exp $
 **/
 
+#include "neaacdec.h"
 #include "common.h"
 #include "structs.h"
 

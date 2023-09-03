@@ -27,7 +27,7 @@
 **
 ** $Id: ms.c,v 1.21 2007/11/01 12:33:32 menno Exp $
 **/
-
+#include "neaacdec.h"
 #include "ms.h"
 #include "common.h"
 #include "is.h"

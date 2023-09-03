@@ -30,7 +30,7 @@
 
 #ifndef __SINE_WIN_H__
 #define __SINE_WIN_H__
-
+#include "neaacdec.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

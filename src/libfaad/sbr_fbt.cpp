@@ -29,7 +29,7 @@
 **/
 
 /* Calculate frequency band tables */
-
+#include "neaacdec.h"
 #include "common.h"
 #include "structs.h"
 

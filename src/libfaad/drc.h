@@ -30,7 +30,7 @@
 
 #ifndef __DRC_H__
 #define __DRC_H__
-
+#include "neaacdec.h"
 #include "structs.h"
 
 #define DRC_REF_LEVEL 20*4 /* -20 dB */

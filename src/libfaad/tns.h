@@ -30,7 +30,7 @@
 
 #ifndef __TNS_H__
 #define __TNS_H__
-
+#include "neaacdec.h"
 #include "structs.h"
 
 #define TNS_MAX_ORDER 20

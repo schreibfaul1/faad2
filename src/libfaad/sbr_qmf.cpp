@@ -27,7 +27,7 @@
 **
 ** $Id: sbr_qmf.c,v 1.32 2007/11/01 12:33:36 menno Exp $
 **/
-
+#include "neaacdec.h"
 #include "common.h"
 #include "structs.h"
 

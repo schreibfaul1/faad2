@@ -30,6 +30,7 @@
 
 #ifndef __MDCT_TAB_H__
 #define __MDCT_TAB_H__
+#include "neaacdec.h"
 #include "structs.h"
 #ifdef __cplusplus
 extern "C" {

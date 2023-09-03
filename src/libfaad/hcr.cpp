@@ -28,6 +28,7 @@
 ** $Id: hcr.c,v 1.26 2009/01/26 23:51:15 menno Exp $
 **/
 
+#include "neaacdec.h"
 #include "common.h"
 #include "huffman.h"
 #include "specrec.h"

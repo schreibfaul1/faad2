@@ -30,7 +30,7 @@
 
 #ifndef __PS_DEC_H__
 #define __PS_DEC_H__
-
+#include "neaacdec.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

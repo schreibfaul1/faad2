@@ -34,7 +34,7 @@
    - inverse quantization
    - applying scalefactors
 */
-
+#include "neaacdec.h"
 #include "specrec.h"
 #include "common.h"
 #include "drc.h"

@@ -30,7 +30,7 @@
 
 #ifndef __PS_TABLES_H__
 #define __PS_TABLES_H__
-
+#include "neaacdec.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

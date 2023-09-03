@@ -29,7 +29,7 @@
 **/
 
 /* High Frequency generation */
-
+#include "neaacdec.h"
 #include "common.h"
 #include "structs.h"
 

@@ -27,7 +27,7 @@
 **
 ** $Id: filtbank.c,v 1.46 2009/01/26 23:51:15 menno Exp $
 **/
-
+#include "neaacdec.h"
 #include "common.h"
 #include "structs.h"
 #include <stdlib.h>

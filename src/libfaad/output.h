@@ -30,7 +30,7 @@
 
 #ifndef __OUTPUT_H__
 #define __OUTPUT_H__
-
+#include "neaacdec.h"
 #include "structs.h"
 
 #ifdef __cplusplus

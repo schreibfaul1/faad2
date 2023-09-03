@@ -5,6 +5,7 @@
         "math.h": "c",
         "memory.h": "c",
         "fixed.h": "c",
-        "unistd.h": "c"
+        "unistd.h": "c",
+        "neaacdec.h": "c"
     }
 }
