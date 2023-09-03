@@ -41,12 +41,14 @@
  * decoding from the other end of the data, to find all but 1 scalefactor.
  */
 
+
 #include "rvlc.h"
 #include "bits.h"
 #include "common.h"
 #include "structs.h"
 #include "syntax.h"
 #include <stdlib.h>
+
 
 #ifdef ERROR_RESILIENCE
 

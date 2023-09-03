@@ -42,22 +42,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <math.h>
+#include "common.h"
 
-
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
-
-
-
-
-
-
-
-#define NEAACDECAPI __attribute__((visibility("default")))
 
 /* object types for AAC */
 #define MAIN   1
@@ -160,22 +147,20 @@ typedef struct NeAACDecFrameInfo {
     unsigned char ps; /* PS: 0: off, 1: on */
 } NeAACDecFrameInfo;
 
-NEAACDECAPI const char*              NeAACDecGetErrorMessage(unsigned char errcode);
-NEAACDECAPI unsigned long            NeAACDecGetCapabilities(void);
-NEAACDECAPI NeAACDecHandle           NeAACDecOpen(void);
-NEAACDECAPI NeAACDecConfigurationPtr NeAACDecGetCurrentConfiguration(NeAACDecHandle hDecoder);
-NEAACDECAPI unsigned char            NeAACDecSetConfiguration(NeAACDecHandle hDecoder, NeAACDecConfigurationPtr config);
-NEAACDECAPI long                     NeAACDecInit(NeAACDecHandle hDecoder, unsigned char* buffer, unsigned long buffer_size, unsigned long* samplerate, unsigned char* channels);
-NEAACDECAPI char                     NeAACDecInit2(NeAACDecHandle hDecoder, unsigned char* pBuffer, unsigned long SizeOfDecoderSpecificInfo, unsigned long* samplerate, unsigned char* channels);
-NEAACDECAPI void                     NeAACDecPostSeekReset(NeAACDecHandle hDecoder, long frame);
-NEAACDECAPI void                     NeAACDecClose(NeAACDecHandle hDecoder);
-NEAACDECAPI void*                    NeAACDecDecode(NeAACDecHandle hDecoder, NeAACDecFrameInfo* hInfo, unsigned char* buffer, unsigned long buffer_size);
-NEAACDECAPI void*                    NeAACDecDecode2(NeAACDecHandle hDecoder, NeAACDecFrameInfo* hInfo, unsigned char* buffer, unsigned long buffer_size, void** sample_buffer, unsigned long sample_buffer_size);
-NEAACDECAPI char                     NeAACDecAudioSpecificConfig(unsigned char* pBuffer, unsigned long buffer_size, mp4AudioSpecificConfig* mp4ASC);
-NEAACDECAPI int                      NeAACDecGetVersion(const char** faad_id_string, const char** faad_copyright_string);
+const char*              NeAACDecGetErrorMessage(unsigned char errcode);
+unsigned long            NeAACDecGetCapabilities(void);
+NeAACDecHandle           NeAACDecOpen(void);
+NeAACDecConfigurationPtr NeAACDecGetCurrentConfiguration(NeAACDecHandle hDecoder);
+unsigned char            NeAACDecSetConfiguration(NeAACDecHandle hDecoder, NeAACDecConfigurationPtr config);
+long                     NeAACDecInit(NeAACDecHandle hDecoder, unsigned char* buffer, unsigned long buffer_size, unsigned long* samplerate, unsigned char* channels);
+char                     NeAACDecInit2(NeAACDecHandle hDecoder, unsigned char* pBuffer, unsigned long SizeOfDecoderSpecificInfo, unsigned long* samplerate, unsigned char* channels);
+void                     NeAACDecPostSeekReset(NeAACDecHandle hDecoder, long frame);
+void                     NeAACDecClose(NeAACDecHandle hDecoder);
+void*                    NeAACDecDecode(NeAACDecHandle hDecoder, NeAACDecFrameInfo* hInfo, unsigned char* buffer, unsigned long buffer_size);
+void*                    NeAACDecDecode2(NeAACDecHandle hDecoder, NeAACDecFrameInfo* hInfo, unsigned char* buffer, unsigned long buffer_size, void** sample_buffer, unsigned long sample_buffer_size);
+char                     NeAACDecAudioSpecificConfig(unsigned char* pBuffer, unsigned long buffer_size, mp4AudioSpecificConfig* mp4ASC);
+int                      NeAACDecGetVersion(const char** faad_id_string, const char** faad_copyright_string);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+
 
 #endif

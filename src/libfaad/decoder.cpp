@@ -43,6 +43,7 @@
     #include "sbr_dec.h"
     #include "sbr_syntax.h"
 #endif
+#include "neaacdec.h"
 
 #if(defined WIN32 || defined _WIN32 || defined WIN64 || defined _WIN64) && !defined(PACKAGE_VERSION)
     #include "win32_ver.h"

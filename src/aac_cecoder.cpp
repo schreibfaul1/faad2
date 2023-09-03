@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "libfaad/common.h"
 #include "libfaad/neaacdec.h"
 
 // Declaration of the required global variables
