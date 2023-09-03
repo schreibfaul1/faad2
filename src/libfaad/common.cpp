@@ -355,34 +355,19 @@ int32_t log2_fix(uint32_t val) {
     uint32_t x1, x2;
     uint32_t errcorr;
 
-    /* error */
-    if(val == 0) return -100000;
-
+    if(val == 0) return -100000; /* error */
     exp = floor_log2(val);
     exp -= REAL_BITS;
-
-    /* frac = [1..2] */
-    if(exp >= 0) frac = val >> exp;
-    else
-        frac = val << -exp;
-
-    /* index in the log2 table */
-    index = frac >> (REAL_BITS - TABLE_BITS);
-
-    /* leftover part for linear interpolation */
-    index_frac = frac & ((1 << (REAL_BITS - TABLE_BITS)) - 1);
-
-    /* leave INTERP_BITS bits */
-    index_frac = index_frac >> (REAL_BITS - TABLE_BITS - INTERP_BITS);
-
+    if(exp >= 0) frac = val >> exp; /* frac = [1..2] */
+    else { frac = val << -exp; }
+    index = frac >> (REAL_BITS - TABLE_BITS);  /* index in the log2 table */
+    index_frac = frac & ((1 << (REAL_BITS - TABLE_BITS)) - 1); /* leftover part for linear interpolation */
+    index_frac = index_frac >> (REAL_BITS - TABLE_BITS - INTERP_BITS); /* leave INTERP_BITS bits */
     x1 = log2_tab[index & ((1 << TABLE_BITS) - 1)];
     x2 = log2_tab[(index & ((1 << TABLE_BITS) - 1)) + 1];
-
     /* linear interpolation */
     /* retval = exp + ((index_frac)*x2 + (1-index_frac)*x1) */
-
     errcorr = (index_frac * (x2 - x1)) >> INTERP_BITS;
-
     return (exp << REAL_BITS) + errcorr + x1;
 }
 #endif
