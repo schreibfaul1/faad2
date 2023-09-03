@@ -37,6 +37,7 @@
 
 /* isign is +1 for backward and -1 for forward transforms */
 
+#include "neaacdec.h"
 #include "cfft.h"
 #include "cfft_tab.h"
 #include "common.h"

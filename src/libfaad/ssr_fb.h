@@ -34,7 +34,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "structs.h"
 fb_info *ssr_filter_bank_init(uint16_t frame_len);
 void ssr_filter_bank_end(fb_info *fb);
 

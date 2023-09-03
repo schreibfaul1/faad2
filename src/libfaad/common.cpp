@@ -100,8 +100,7 @@ int8_t can_decode_ot(const uint8_t object_type) { /* Returns 0 if an object type
 void* faad_malloc(size_t size) { return malloc(size); }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-/* common free function */
-void faad_free(void* b) { free(b); }
+
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 static const uint8_t Parity[256] = { // parity
