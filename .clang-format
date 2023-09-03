@@ -1,6 +1,6 @@
 ---
 AccessModifierOffset: -2
-ColumnLimit: 250
+ColumnLimit: 150
 IndentWidth: 4
 ReflowComments: true
 PointerAlignment: Left

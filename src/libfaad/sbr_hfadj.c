@@ -1129,7 +1129,7 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 
 static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 {
-    static int32_t limGain[] = { 0.5, 1.0, 2.0, 1e10 };
+    static double limGain[] = { 0.5, 1.0, 2.0, 1e10 };
     uint8_t m, l, k;
 
     uint8_t current_t_noise_band = 0;

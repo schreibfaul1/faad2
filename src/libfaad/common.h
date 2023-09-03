@@ -14,7 +14,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-
+#include <math.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -23,11 +23,11 @@ extern "C" {
 
 /* COMPILE TIME DEFINITIONS */
 
-#define USE_DOUBLE_PRECISION /* use double precision */
+//#define USE_DOUBLE_PRECISION /* use double precision */
 #define FIXED_POINT
-#define BIG_IQ_TABLE
+//#define BIG_IQ_TABLE
 #define PREFER_POINTERS
-#define ERROR_RESILIENCE
+//#define ERROR_RESILIENCE
 #define MAIN_DEC /* Allow decoding of MAIN profile AAC */
 #define LTP_DEC  /* Allow decoding of LTP profile AAC */
 #define LD_DEC   /* Allow decoding of LD profile AAC */

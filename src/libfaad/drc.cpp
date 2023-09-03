@@ -27,13 +27,13 @@
 **
 ** $Id: drc.c,v 1.29 2015/02/22 10:09:29 knik Exp $
 **/
-
+#include <stdlib.h>
+#include <string.h>
 #include "drc.h"
 #include "common.h"
 #include "structs.h"
 #include "syntax.h"
-#include <stdlib.h>
-#include <string.h>
+
 
 //----------------------------------------------------------------------------------------------------------------------
 drc_info* drc_init(int32_t cut, int32_t boost) {

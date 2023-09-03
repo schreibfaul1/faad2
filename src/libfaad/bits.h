@@ -35,7 +35,6 @@
 extern "C" {
 #endif
 
-
 #include "common.h"
 
 #define BYTE_NUMBIT    8

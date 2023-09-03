@@ -495,7 +495,7 @@ static inline int32_t iquant(int16_t q, const int32_t *tab, uint8_t *error)
 }
 
 #ifndef FIXED_POINT
- static const int32_t pow2sf_tab[] = {
+ static const double pow2sf_tab[] = {
     2.9802322387695313E-008, 5.9604644775390625E-008, 1.1920928955078125E-007,
     2.384185791015625E-007, 4.76837158203125E-007, 9.5367431640625E-007,
     1.9073486328125E-006, 3.814697265625E-006, 7.62939453125E-006,

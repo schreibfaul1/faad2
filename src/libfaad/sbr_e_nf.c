@@ -381,7 +381,7 @@ static int32_t calc_Q_div2(sbr_info *sbr, uint8_t ch, uint8_t m, uint8_t l)
     }
 }
 
-static const int32_t E_deq_tab[64] = {
+static const float E_deq_tab[64] = {
     64.0f, 128.0f, 256.0f, 512.0f, 1024.0f, 2048.0f, 4096.0f, 8192.0f,
     16384.0f, 32768.0f, 65536.0f, 131072.0f, 262144.0f, 524288.0f, 1.04858E+006f, 2.09715E+006f,
     4.1943E+006f, 8.38861E+006f, 1.67772E+007f, 3.35544E+007f, 6.71089E+007f, 1.34218E+008f, 2.68435E+008f, 5.36871E+008f,
