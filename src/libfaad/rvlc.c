@@ -41,7 +41,7 @@
  * decoding from the other end of the data, to find all but 1 scalefactor.
  */
 
-
+#include "neaacdec.h"
 #include "rvlc.h"
 #include "bits.h"
 #include "common.h"

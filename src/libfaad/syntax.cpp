@@ -32,6 +32,7 @@
    Reads the AAC bitstream as defined in 14496-3 (MPEG-4 Audio)
 */
 
+#include "neaacdec.h"
 #include "syntax.h"
 #include "bits.h"
 #include "common.h"

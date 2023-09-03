@@ -15,9 +15,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <math.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
+// #ifdef __cplusplus
+// extern "C" {
+// #endif
 
 #include "neaacdec.h"
 
@@ -90,8 +90,8 @@ void  faad_free(void* b);
     #define M_PI_2 1.57079632679489661923
 #endif
 
-#ifdef __cplusplus
-}
-#endif
+// #ifdef __cplusplus
+// }
+// #endif
 
 #endif

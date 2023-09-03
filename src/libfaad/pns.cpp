@@ -28,6 +28,7 @@
 ** $Id: pns.c,v 1.39 2010/06/04 20:47:56 menno Exp $
 **/
 
+#include "neaacdec.h"
 #include "pns.h"
 #include "common.h"
 #include "structs.h"

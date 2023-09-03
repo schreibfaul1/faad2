@@ -28,6 +28,7 @@
 ** $Id: bits.c,v 1.44 2007/11/01 12:33:29 menno Exp $
 **/
 
+#include "neaacdec.h"
 #include "bits.h"
 #include "common.h"
 #include "structs.h"

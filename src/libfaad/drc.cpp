@@ -27,6 +27,7 @@
 **
 ** $Id: drc.c,v 1.29 2015/02/22 10:09:29 knik Exp $
 **/
+#include "neaacdec.h"
 #include <stdlib.h>
 #include <string.h>
 #include "drc.h"

@@ -45,9 +45,6 @@
 #endif
 #include "neaacdec.h"
 
-#if(defined WIN32 || defined _WIN32 || defined WIN64 || defined _WIN64) && !defined(PACKAGE_VERSION)
-    #include "win32_ver.h"
-#endif
 
 /* static function declarations */
 static void* aac_frame_decode(NeAACDecStruct* hDecoder, NeAACDecFrameInfo* hInfo, unsigned char* buffer, unsigned long buffer_size, void** sample_buffer2, unsigned long sample_buffer_size);

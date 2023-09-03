@@ -28,6 +28,7 @@
 ** $Id: tns.c,v 1.40 2007/11/01 12:33:40 menno Exp $
 **/
 
+#include "neaacdec.h"
 #include "tns.h"
 #include "common.h"
 #include "structs.h"

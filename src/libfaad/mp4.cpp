@@ -28,6 +28,7 @@
 ** $Id: mp4.c,v 1.41 2016/11/11 11:25:58 knik Exp $
 **/
 
+#include "neaacdec.h"
 #include "mp4.h"
 #include "common.h"
 #include "structs.h"

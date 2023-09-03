@@ -1,9 +1,9 @@
-
+#include "neaacdec.h"
 #include "common.h"
 #include "structs.h"
 #include "syntax.h"
 #include <stdlib.h>
-#include "neaacdec.h"
+
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t get_sr_index(const uint32_t samplerate) { /* Returns the sample rate index based on the samplerate */
