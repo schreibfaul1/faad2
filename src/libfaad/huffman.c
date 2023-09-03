@@ -30,7 +30,7 @@
 
 #include "huffman.h"
 #include "bits.h"
-#include "codebook/hcb.h"
+#include "hcb.h"
 #include "common.h"
 #include "structs.h"
 #include <stdlib.h>
