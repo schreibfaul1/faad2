@@ -22,35 +22,22 @@ extern "C" {
 #include "neaacdec.h"
 
 /* COMPILE TIME DEFINITIONS */
-
-//#define USE_DOUBLE_PRECISION /* use double precision */
 #define FIXED_POINT
-//#define BIG_IQ_TABLE
 #define PREFER_POINTERS
 //#define ERROR_RESILIENCE
-#define LTP_DEC  /* Allow decoding of LTP profile AAC */
-#define LD_DEC   /* Allow decoding of LD profile AAC */
-#define SBR_DEC
-#define PS_DEC
+#define LTP_DEC  /* Allow decoding of LTP (long term prediction) profile AAC */
+#define LD_DEC   /* Allow decoding of LD (low delay) profile AAC */
+#define SBR_DEC  /* Allow decoding of SBR (spectral band replication) */
+#define PS_DEC   /* Allow decoding of PS (parametric stereo */
 
 /* LD can't do without LTP */
 #ifdef LD_DEC
     #ifndef ERROR_RESILIENCE
         #define ERROR_RESILIENCE
     #endif
-
     #ifndef LTP_DEC
         #define LTP_DEC
     #endif
-#endif
-
-// Define LC_ONLY_DECODER if you want a pure AAC LC decoder (independant of SBR_DEC and PS_DEC)
-// #define LC_ONLY_DECODER
-#ifdef LC_ONLY_DECODER
-    #undef LD_DEC
-    #undef LTP_DEC
-    #undef ALLOW_SMALL_FRAMELENGTH
-    #undef ERROR_RESILIENCE
 #endif
 
 #ifdef FIXED_POINT
@@ -83,7 +70,6 @@ typedef int32_t complex_t[2];
 #define IM(A) A[1]
 
 /* common functions */
-uint8_t  cpu_has_sse(void);
 uint32_t ne_rng(uint32_t* __r1, uint32_t* __r2);
 uint32_t wl_min_lzc(uint32_t x);
 #ifdef FIXED_POINT

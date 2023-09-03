@@ -429,17 +429,12 @@ static inline int32_t iquant(int16_t q, const int32_t *tab, uint8_t *error)
 {
 #ifdef FIXED_POINT
 /* For FIXED_POINT the iq_table is prescaled by 3 bits (iq_table[]/8) */
-/* BIG_IQ_TABLE allows you to use the full 8192 value table, if this is not
- * defined a 1026 value table and interpolation will be used
- */
-#ifndef BIG_IQ_TABLE
     static const int32_t errcorr[] = {
         REAL_CONST(0), REAL_CONST(1.0/8.0), REAL_CONST(2.0/8.0), REAL_CONST(3.0/8.0),
         REAL_CONST(4.0/8.0),  REAL_CONST(5.0/8.0), REAL_CONST(6.0/8.0), REAL_CONST(7.0/8.0),
         REAL_CONST(0)
     };
     int32_t x1, x2;
-#endif
     int16_t sgn = 1;
 
     if (q < 0)
@@ -458,7 +453,6 @@ static inline int32_t iquant(int16_t q, const int32_t *tab, uint8_t *error)
         return sgn * tab[q];
     }
 
-#ifndef BIG_IQ_TABLE
     if (q >= 8192)
     {
         *error = 17;
@@ -469,10 +463,7 @@ static inline int32_t iquant(int16_t q, const int32_t *tab, uint8_t *error)
     x1 = tab[q>>3];
     x2 = tab[(q>>3) + 1];
     return sgn * 16 * (MUL_R(errcorr[q&7],(x2-x1)) + x1);
-#else
-    *error = 17;
-    return 0;
-#endif
+
 
 #else
     if (q < 0)
