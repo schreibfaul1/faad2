@@ -32,9 +32,7 @@
 #define __MDCT_TAB_H__
 #include "neaacdec.h"
 #include "structs.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 
 /* 256 (N/4) complex twiddle factors */
 static const complex_t mdct_tab_2048[] = {
@@ -866,7 +864,5 @@ static const complex_t mdct_tab_240[] = {
     {FRAC_CONST(0.049067674327418), FRAC_CONST(0.998795456205172)}, {FRAC_CONST(0.022905443033697), FRAC_CONST(0.999737635922260)}};
 #endif // ALLOW_SMALL_FRAMELENGTH
 
-#ifdef __cplusplus
-}
-#endif
+
 #endif

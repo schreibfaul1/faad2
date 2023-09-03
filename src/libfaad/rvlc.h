@@ -31,29 +31,18 @@
 #ifndef __RVLC_SCF_H__
 #define __RVLC_SCF_H__
 #include "neaacdec.h"
-#include <stdint.h>
 #include "structs.h"
+#include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct
-{
-    int8_t index;
-    uint8_t len;
+typedef struct {
+    int8_t   index;
+    uint8_t  len;
     uint32_t cw;
 } rvlc_huff_table;
 
-
 #define ESC_VAL 7
 
+uint8_t rvlc_scale_factor_data(ic_stream* ics, bitfile* ld);
+uint8_t rvlc_decode_scale_factors(ic_stream* ics, bitfile* ld);
 
-uint8_t rvlc_scale_factor_data(ic_stream *ics, bitfile *ld);
-uint8_t rvlc_decode_scale_factors(ic_stream *ics, bitfile *ld);
-
-
-#ifdef __cplusplus
-}
-#endif
 #endif

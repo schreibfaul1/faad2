@@ -31,17 +31,7 @@
 #ifndef __SBR_HFGEN_H__
 #define __SBR_HFGEN_H__
 #include "neaacdec.h"
-#ifdef __cplusplus
-extern "C" {
+
+void hf_generation(sbr_info* sbr, qmf_t Xlow[MAX_NTSRHFG][64], qmf_t Xhigh[MAX_NTSRHFG][64], uint8_t ch);
+
 #endif
-
-void hf_generation(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
-                   qmf_t Xhigh[MAX_NTSRHFG][64]
-
-                   ,uint8_t ch);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-

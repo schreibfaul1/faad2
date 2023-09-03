@@ -31,9 +31,7 @@
 #ifndef __SBR_HFADJ_H__
 #define __SBR_HFADJ_H__
 #include "neaacdec.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 
 typedef struct
 {
@@ -43,13 +41,9 @@ typedef struct
 } sbr_hfadj_info;
 
 
-uint8_t hf_adjustment(sbr_info *sbr, qmf_t Xsbr[MAX_NTSRHFG][64]
-
-                      ,uint8_t ch);
+uint8_t hf_adjustment(sbr_info *sbr, qmf_t Xsbr[MAX_NTSRHFG][64], uint8_t ch);
 
 
-#ifdef __cplusplus
-}
-#endif
+
 #endif
 

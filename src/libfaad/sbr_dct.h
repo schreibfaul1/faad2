@@ -31,12 +31,9 @@
 #ifndef __SBR_DCT_H__
 #define __SBR_DCT_H__
 #include "neaacdec.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 
 void dct4_kernel(int32_t * in_real, int32_t * in_imag, int32_t * out_real, int32_t * out_imag);
-
 void DCT3_32_unscaled(int32_t *y, int32_t *x);
 void DCT4_32(int32_t *y, int32_t *x);
 void DST4_32(int32_t *y, int32_t *x);
@@ -45,8 +42,6 @@ void DCT4_16(int32_t *y, int32_t *x);
 void DCT2_16_unscaled(int32_t *y, int32_t *x);
 
 
-#ifdef __cplusplus
-}
-#endif
+
 #endif
 
