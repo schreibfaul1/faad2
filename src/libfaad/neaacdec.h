@@ -31,9 +31,31 @@
 #ifndef __NEAACDEC_H__
 #define __NEAACDEC_H__
 
+#include <inttypes.h>
+#include <memory.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
+
+
+
+
+
+
+
 
 #define NEAACDECAPI __attribute__((visibility("default")))
 

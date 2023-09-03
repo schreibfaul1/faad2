@@ -4,6 +4,7 @@
 #include "syntax.h"
 #include <stdlib.h>
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t get_sr_index(const uint32_t samplerate) { /* Returns the sample rate index based on the samplerate */
     if(92017 <= samplerate) return 0;
     if(75132 <= samplerate) return 1;
@@ -20,18 +21,21 @@ uint8_t get_sr_index(const uint32_t samplerate) { /* Returns the sample rate ind
     return 11;
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 uint32_t get_sample_rate(const uint8_t sr_index) { /* Returns the sample rate based on the sample rate index */
     static const uint32_t sample_rates[] = {96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000};
     if(sr_index < 12) return sample_rates[sr_index];
     return 0;
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t max_pred_sfb(const uint8_t sr_index) {
     static const uint8_t pred_sfb_max[] = {33, 33, 38, 40, 40, 40, 41, 41, 37, 37, 37, 34};
     if(sr_index < 12) return pred_sfb_max[sr_index];
     return 0;
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t max_tns_sfb(const uint8_t sr_index, const uint8_t object_type, const uint8_t is_short) {
     /* entry for each sampling rate
      * 1    Main/LC long window
@@ -54,12 +58,12 @@ uint8_t max_tns_sfb(const uint8_t sr_index, const uint8_t object_type, const uin
                                              {39, 14, 19, 7}, /*  7350 */
                                              {0, 0, 0, 0},    {0, 0, 0, 0}, {0, 0, 0, 0}};
     uint8_t              i = 0;
-
     if(is_short) i++;
     if(object_type == SSR) i += 2;
     return tns_sbf_max[sr_index][i];
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 int8_t can_decode_ot(const uint8_t object_type) { /* Returns 0 if an object type is decodable, otherwise returns -1 */
     switch(object_type) {
     case LC: return 0;
@@ -96,16 +100,14 @@ int8_t can_decode_ot(const uint8_t object_type) { /* Returns 0 if an object type
     return -1;
 }
 
-void* faad_malloc(size_t size) {
-    return malloc(size);
-}
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+void* faad_malloc(size_t size) { return malloc(size); }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 /* common free function */
-void faad_free(void* b) {
-    free(b);
-}
+void faad_free(void* b) { free(b); }
 
-
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 static const uint8_t Parity[256] = { // parity
     0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
     1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
@@ -156,6 +158,7 @@ uint32_t ne_rng(uint32_t* __r1, uint32_t* __r2) {
     return (*__r1 = (t3 >> 1) | t1) ^ (*__r2 = (t4 + t4) | t2);
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 static uint32_t ones32(uint32_t x) {
     x -= ((x >> 1) & 0x55555555);
     x = (((x >> 2) & 0x33333333) + (x & 0x33333333));
@@ -166,6 +169,7 @@ static uint32_t ones32(uint32_t x) {
     return (x & 0x0000003f);
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 static uint32_t floor_log2(uint32_t x) {
 #if 1
     x |= (x >> 1);
@@ -176,14 +180,15 @@ static uint32_t floor_log2(uint32_t x) {
 
     return (ones32(x) - 1);
 #else
-        uint32_t count = 0;
+    uint32_t count = 0;
 
-        while(x >>= 1) count++;
+    while(x >>= 1) count++;
 
-        return count;
+    return count;
 #endif
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 /* returns position of first bit that is not 0 from msb,
  * starting count at lsb */
 uint32_t wl_min_lzc(uint32_t x) {
@@ -196,14 +201,11 @@ uint32_t wl_min_lzc(uint32_t x) {
 
     return (ones32(x));
 #else
-        uint32_t count = 0;
-
-        while(x >>= 1) count++;
-
-        return (count + 1);
+    uint32_t count = 0;
+    while(x >>= 1) count++;
+    return (count + 1);
 #endif
 }
-
 #ifdef FIXED_POINT
 
     #define TABLE_BITS 6
@@ -234,6 +236,7 @@ static const int32_t log2_tab[] = {REAL_CONST(0.000000000000000), REAL_CONST(0.0
                                    REAL_CONST(0.882643049361841), REAL_CONST(0.894817763307943), REAL_CONST(0.906890595608519), REAL_CONST(0.918863237274595), REAL_CONST(0.930737337562886), REAL_CONST(0.942514505339240),
                                    REAL_CONST(0.954196310386875), REAL_CONST(0.965784284662087), REAL_CONST(0.977279923499917), REAL_CONST(0.988684686772166), REAL_CONST(1.000000000000000)};
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 int32_t pow2_fix(int32_t val) {
     uint32_t x1, x2;
     uint32_t errcorr;
@@ -266,6 +269,7 @@ int32_t pow2_fix(int32_t val) {
     return retval;
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 int32_t pow2_int(int32_t val) {
     uint32_t x1, x2;
     uint32_t errcorr;
@@ -298,6 +302,7 @@ int32_t pow2_int(int32_t val) {
     return retval;
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 /* ld(x) = ld(x*y/y) = ld(x/y) + ld(y), with y=2^N and [1 <= (x/y) < 2] */
 int32_t log2_int(uint32_t val) {
     uint32_t frac;
@@ -339,6 +344,7 @@ int32_t log2_int(uint32_t val) {
     return ((exp + REAL_BITS) << REAL_BITS) + errcorr + x1;
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 /* ld(x) = ld(x*y/y) = ld(x/y) + ld(y), with y=2^N and [1 <= (x/y) < 2] */
 int32_t log2_fix(uint32_t val) {
     uint32_t frac;

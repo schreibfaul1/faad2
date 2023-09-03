@@ -31,6 +31,8 @@
 #ifndef __OUTPUT_H__
 #define __OUTPUT_H__
 
+#include "structs.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
