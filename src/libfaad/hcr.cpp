@@ -80,8 +80,8 @@ typedef struct {
     bits_t   bits;
 } codeword_t;
 
-/* rewind and reverse */
-/* 32 bit version */
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+/* rewind and reverse - 32 bit version */
 static uint32_t rewrev_word(uint32_t v, const uint8_t len) {
     /* 32 bit reverse */
     v = ((v >> S[0]) & B[0]) | ((v << S[0]) & ~B[0]);
@@ -95,6 +95,7 @@ static uint32_t rewrev_word(uint32_t v, const uint8_t len) {
 
     return v;
 }
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 
 /* 64 bit version */
 static void rewrev_lword(uint32_t* hi, uint32_t* lo, const uint8_t len) {
@@ -125,21 +126,21 @@ static void rewrev_lword(uint32_t* hi, uint32_t* lo, const uint8_t len) {
     }
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 /* bits_t version */
 static void rewrev_bits(bits_t* bits) {
     if(bits->len == 0) return;
     rewrev_lword(&bits->bufb, &bits->bufa, bits->len);
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 /* merge bits of a to b */
 static void concat_bits(bits_t* b, bits_t* a) {
     uint32_t bl, bh, al, ah;
 
     if(a->len == 0) return;
-
     al = a->bufa;
     ah = a->bufb;
-
     if(b->len > 32) {
         /* maskoff superfluous high b bits */
         bl = b->bufa;
@@ -154,14 +155,13 @@ static void concat_bits(bits_t* b, bits_t* a) {
         ah = (ah << (b->len)) | (al >> (32 - b->len));
         al = al << b->len;
     }
-
     /* merge */
     b->bufa = bl | al;
     b->bufb = bh | ah;
-
     b->len += a->len;
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 static uint8_t is_good_cb(uint8_t this_CB, uint8_t this_sec_CB) {
     /* only want spectral data CB's */
     if((this_sec_CB > ZERO_HCB && this_sec_CB <= ESC_HCB) || (this_sec_CB >= VCB11_FIRST && this_sec_CB <= VCB11_LAST)) {
@@ -177,6 +177,7 @@ static uint8_t is_good_cb(uint8_t this_CB, uint8_t this_sec_CB) {
     return 0;
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 static void read_segment(bits_t* segment, uint8_t segwidth, bitfile* ld) {
     segment->len = segwidth;
 
@@ -190,6 +191,7 @@ static void read_segment(bits_t* segment, uint8_t segwidth, bitfile* ld) {
     }
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 static void fill_in_codeword(codeword_t* codeword, uint16_t index, uint16_t sp, uint8_t cb) {
     codeword[index].sp_offset = sp;
     codeword[index].cb = cb;
@@ -197,13 +199,14 @@ static void fill_in_codeword(codeword_t* codeword, uint16_t index, uint16_t sp, 
     codeword[index].bits.len = 0;
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t reordered_spectral_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* ld, int16_t* spectral_data) {
-    uint16_t PCWs_done;
-    uint16_t numberOfSegments, numberOfSets, numberOfCodewords;
+    uint16_t   PCWs_done;
+    uint16_t   numberOfSegments, numberOfSets, numberOfCodewords;
     codeword_t codeword[512];
     bits_t     segment[512];
-    uint16_t sp_offset[8];
-    uint16_t g, i, sortloop, set, bitsread;
+    uint16_t   sp_offset[8];
+    uint16_t   g, i, sortloop, set, bitsread;
     /*uint16_t bitsleft, codewordsleft*/;
     uint8_t w_idx, sfb, this_CB, last_CB, this_sec_CB;
 
