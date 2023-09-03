@@ -135,6 +135,12 @@
 #define INTENSITY_HCB2       14
 #define INTENSITY_HCB        15
 #define INVALID_SBR_ELEMENT  255
+#define MAX_CHANNELS         64
+#define MAX_SYNTAX_ELEMENTS  48
+#define MAX_WINDOW_GROUPS    8
+#define MAX_SFB              51
+#define MAX_LTP_SFB          40
+#define MAX_LTP_SFB_S        8
 
 /* A decode call can eat up to FAAD_MIN_STREAMSIZE bytes per decoded channel,
    so at least so much bytes per channel should be available in this stream */
