@@ -35,7 +35,7 @@
 extern "C" {
 #endif
 
-#include "analysis.h"
+
 #include "common.h"
 
 #define BYTE_NUMBIT    8
