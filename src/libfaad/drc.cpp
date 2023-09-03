@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+//----------------------------------------------------------------------------------------------------------------------
 drc_info* drc_init(int32_t cut, int32_t boost) {
     drc_info* drc = (drc_info*)faad_malloc(sizeof(drc_info));
     memset(drc, 0, sizeof(drc_info));
@@ -50,10 +51,12 @@ drc_info* drc_init(int32_t cut, int32_t boost) {
     return drc;
 }
 
+//----------------------------------------------------------------------------------------------------------------------
 void drc_end(drc_info* drc) {
     if(drc) faad_free(drc);
 }
 
+//----------------------------------------------------------------------------------------------------------------------
 #ifdef FIXED_POINT
 static int32_t drc_pow2_table[] = {COEF_CONST(0.5146511183), COEF_CONST(0.5297315472), COEF_CONST(0.5452538663), COEF_CONST(0.5612310242), COEF_CONST(0.5776763484), COEF_CONST(0.5946035575), COEF_CONST(0.6120267717), COEF_CONST(0.6299605249),
                                    COEF_CONST(0.6484197773), COEF_CONST(0.6674199271), COEF_CONST(0.6869768237), COEF_CONST(0.7071067812), COEF_CONST(0.7278265914), COEF_CONST(0.7491535384), COEF_CONST(0.7711054127), COEF_CONST(0.7937005260),
@@ -63,6 +66,7 @@ static int32_t drc_pow2_table[] = {COEF_CONST(0.5146511183), COEF_CONST(0.529731
                                    COEF_CONST(1.6339154532), COEF_CONST(1.6817928305), COEF_CONST(1.7310731220), COEF_CONST(1.7817974363), COEF_CONST(1.8340080864), COEF_CONST(1.8877486254), COEF_CONST(1.9430638823)};
 #endif
 
+//----------------------------------------------------------------------------------------------------------------------
 void drc_decode(drc_info* drc, int32_t* spec) {
     uint16_t i, bd, top;
 #ifdef FIXED_POINT
