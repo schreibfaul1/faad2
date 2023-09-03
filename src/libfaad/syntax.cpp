@@ -34,7 +34,7 @@
 
 #include "neaacdec.h"
 #include "syntax.h"
-#include "common.h"
+
 #include "drc.h"
 #include "huffman.h"
 #include "pulse.h"

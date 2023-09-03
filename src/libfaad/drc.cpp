@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "drc.h"
-#include "common.h"
+
 #include "structs.h"
 #include "syntax.h"
 

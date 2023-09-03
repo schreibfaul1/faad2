@@ -30,7 +30,7 @@
 
 /* High Frequency adjustment */
 
-#include "common.h"
+
 #include "structs.h"
 #include "neaacdec.h"
 #ifdef SBR_DEC
@@ -40,12 +40,12 @@
     #include "sbr_syntax.h"
 
 /* static function declarations */
-static uint8_t estimate_current_envelope(sbr_info* sbr, sbr_hfadj_info* adj, qmf_t Xsbr[MAX_NTSRHFG][64], uint8_t ch);
+static uint8_t estimate_current_envelope(sbr_info* sbr, sbr_hfadj_info* adj, complex_t Xsbr[MAX_NTSRHFG][64], uint8_t ch);
 static void    calculate_gain(sbr_info* sbr, sbr_hfadj_info* adj, uint8_t ch);
-static void    hf_assembly(sbr_info* sbr, sbr_hfadj_info* adj, qmf_t Xsbr[MAX_NTSRHFG][64], uint8_t ch);
+static void    hf_assembly(sbr_info* sbr, sbr_hfadj_info* adj, complex_t Xsbr[MAX_NTSRHFG][64], uint8_t ch);
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-uint8_t hf_adjustment(sbr_info* sbr, qmf_t Xsbr[MAX_NTSRHFG][64], uint8_t ch) {
+uint8_t hf_adjustment(sbr_info* sbr, complex_t Xsbr[MAX_NTSRHFG][64], uint8_t ch) {
     sbr_hfadj_info adj = {{{0}}};
     uint8_t        ret = 0;
 
@@ -97,7 +97,7 @@ static uint8_t get_S_mapped(sbr_info* sbr, uint8_t ch, uint8_t l, uint8_t curren
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-static uint8_t estimate_current_envelope(sbr_info* sbr, sbr_hfadj_info* adj, qmf_t Xsbr[MAX_NTSRHFG][64], uint8_t ch) {
+static uint8_t estimate_current_envelope(sbr_info* sbr, sbr_hfadj_info* adj, complex_t Xsbr[MAX_NTSRHFG][64], uint8_t ch) {
     uint8_t m, l, j, k, k_l, k_h, p;
     int32_t nrg, div;
 
@@ -605,7 +605,7 @@ static void calculate_gain(sbr_info* sbr, sbr_hfadj_info* adj, uint8_t ch) {
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-static void hf_assembly(sbr_info* sbr, sbr_hfadj_info* adj, qmf_t Xsbr[MAX_NTSRHFG][64], uint8_t ch) {
+static void hf_assembly(sbr_info* sbr, sbr_hfadj_info* adj, complex_t Xsbr[MAX_NTSRHFG][64], uint8_t ch) {
     static int32_t h_smooth[] = {FRAC_CONST(0.03183050093751), FRAC_CONST(0.11516383427084), FRAC_CONST(0.21816949906249),
                                  FRAC_CONST(0.30150283239582), FRAC_CONST(0.33333333333333)};
     static int8_t  phi_re[] = {1, 0, -1, 0};
@@ -642,7 +642,7 @@ static void hf_assembly(sbr_info* sbr, sbr_hfadj_info* adj, qmf_t Xsbr[MAX_NTSRH
             memcpy(sbr->G_temp_prev[ch][sbr->GQ_ringbuf_index[ch]], adj->G_lim_boost[l], sbr->M * sizeof(int32_t));
             memcpy(sbr->Q_temp_prev[ch][sbr->GQ_ringbuf_index[ch]], adj->Q_M_lim_boost[l], sbr->M * sizeof(int32_t));
             for(m = 0; m < sbr->M; m++) {
-                qmf_t psi;
+                complex_t psi;
                 G_filt = 0;
                 Q_filt = 0;
                 if(h_SL != 0) {

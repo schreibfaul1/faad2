@@ -32,6 +32,6 @@
 #define __SBR_HFGEN_H__
 #include "neaacdec.h"
 
-void hf_generation(sbr_info* sbr, qmf_t Xlow[MAX_NTSRHFG][64], qmf_t Xhigh[MAX_NTSRHFG][64], uint8_t ch);
+void hf_generation(sbr_info* sbr, complex_t Xlow[MAX_NTSRHFG][64], complex_t Xhigh[MAX_NTSRHFG][64], uint8_t ch);
 
 #endif

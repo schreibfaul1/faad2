@@ -143,22 +143,18 @@
 #define BYTE_NUMBIT          8
 #define BYTE_NUMBIT_LD       3
 #define bit2byte(a)          ((a + 7) >> BYTE_NUMBIT_LD)
-
-/* A decode call can eat up to FAAD_MIN_STREAMSIZE bytes per decoded channel,
-   so at least so much bytes per channel should be available in this stream */
-#define FAAD_MIN_STREAMSIZE 768 /* 6144 bits/channel */
-
-#define COEF_BITS      28
-#define COEF_PRECISION (1 << COEF_BITS)
-#define REAL_BITS      14 // MAXIMUM OF 14 FOR FIXED POINT SBR
-#define REAL_PRECISION (1 << REAL_BITS)
-#define FRAC_SIZE      32 /* frac is a 32 bit integer */
-#define FRAC_BITS      31
-#define FRAC_PRECISION ((uint32_t)(1 << FRAC_BITS))
-#define FRAC_MAX       0x7FFFFFFF
-#define REAL_CONST(A)  (((A) >= 0) ? ((int32_t)((A) * (REAL_PRECISION) + 0.5)) : ((int32_t)((A) * (REAL_PRECISION)-0.5)))
-#define LOG2_MIN_INF   REAL_CONST(-10000)
-#define COEF_CONST(A)  (((A) >= 0) ? ((int32_t)((A) * (COEF_PRECISION) + 0.5)) : ((int32_t)((A) * (COEF_PRECISION)-0.5)))
+#define FAAD_MIN_STREAMSIZE  768 /* 6144 bits/channel */
+#define COEF_BITS            28
+#define COEF_PRECISION       (1 << COEF_BITS)
+#define REAL_BITS            14 // MAXIMUM OF 14 FOR FIXED POINT SBR
+#define REAL_PRECISION       (1 << REAL_BITS)
+#define FRAC_SIZE            32 /* frac is a 32 bit integer */
+#define FRAC_BITS            31
+#define FRAC_PRECISION       ((uint32_t)(1 << FRAC_BITS))
+#define FRAC_MAX             0x7FFFFFFF
+#define REAL_CONST(A)        (((A) >= 0) ? ((int32_t)((A) * (REAL_PRECISION) + 0.5)) : ((int32_t)((A) * (REAL_PRECISION)-0.5)))
+#define LOG2_MIN_INF         REAL_CONST(-10000)
+#define COEF_CONST(A)        (((A) >= 0) ? ((int32_t)((A) * (COEF_PRECISION) + 0.5)) : ((int32_t)((A) * (COEF_PRECISION)-0.5)))
 #define FRAC_CONST(A) \
     (((A) == 1.00) ? ((int32_t)FRAC_MAX) : (((A) >= 0) ? ((int32_t)((A) * (FRAC_PRECISION) + 0.5)) : ((int32_t)((A) * (FRAC_PRECISION)-0.5))))
 #define Q2_BITS           22
@@ -171,13 +167,12 @@
 #define MUL_Q2(A, B)      (int32_t)(((int64_t)(A) * (int64_t)(B) + (1 << (Q2_BITS - 1))) >> Q2_BITS)
 #define MUL_SHIFT6(A, B)  (int32_t)(((int64_t)(A) * (int64_t)(B) + (1 << (6 - 1))) >> 6)
 #define MUL_SHIFT23(A, B) (int32_t)(((int64_t)(A) * (int64_t)(B) + (1 << (23 - 1))) >> 23)
-#define RE(A) A[0]
-#define IM(A) A[1]
-#define DIV_R(A, B) (((int64_t)A << REAL_BITS) / B)
-#define DIV_C(A, B) (((int64_t)A << COEF_BITS) / B)
-#define qmf_t       complex_t
-#define QMF_RE(A)   RE(A)
-#define QMF_IM(A)   IM(A)
+#define RE(A)             A[0]
+#define IM(A)             A[1]
+#define DIV_R(A, B)       (((int64_t)A << REAL_BITS) / B)
+#define DIV_C(A, B)       (((int64_t)A << COEF_BITS) / B)
+#define QMF_RE(A)         RE(A)
+#define QMF_IM(A)         IM(A)
 
 #ifndef max
     #define max(a, b) (((a) > (b)) ? (a) : (b))
@@ -194,7 +189,9 @@
 #endif
 
 typedef void* NeAACDecHandle;
-#include "common.h"
+
+
+typedef int32_t complex_t[2];
 typedef struct mp4AudioSpecificConfig {
     unsigned char  objectTypeIndex; /* Audio Specific Info */
     unsigned char  samplingFrequencyIndex;

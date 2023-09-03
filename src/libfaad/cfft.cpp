@@ -40,7 +40,7 @@
 #include "neaacdec.h"
 #include "cfft.h"
 #include "cfft_tab.h"
-#include "common.h"
+#include "fixed.h"
 #include "structs.h"
 #include <stdlib.h>
 

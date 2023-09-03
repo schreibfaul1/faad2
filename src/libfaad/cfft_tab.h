@@ -32,7 +32,7 @@
 #define __CFFT_TAB_H__
 
 #include "neaacdec.h"
-#include "common.h"
+
 
 static const complex_t cfft_tab_512[] = {
     {FRAC_CONST(1.000000000000000), FRAC_CONST(0.000000000000000)},   {FRAC_CONST(0.999924719333649), FRAC_CONST(0.012271538376808)},

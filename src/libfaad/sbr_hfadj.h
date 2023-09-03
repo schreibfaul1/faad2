@@ -41,7 +41,7 @@ typedef struct
 } sbr_hfadj_info;
 
 
-uint8_t hf_adjustment(sbr_info *sbr, qmf_t Xsbr[MAX_NTSRHFG][64], uint8_t ch);
+uint8_t hf_adjustment(sbr_info *sbr, complex_t Xsbr[MAX_NTSRHFG][64], uint8_t ch);
 
 
 

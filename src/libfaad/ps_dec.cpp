@@ -30,14 +30,14 @@
 #include "neaacdec.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "common.h"
+#include "fixed.h"
 
 #ifdef PS_DEC
 
     #include "ps_dec.h"
     #include "ps_tables.h"
 
- 
+
     /* constants */
     #define NEGATE_IPD_MASK (0x1000)
     #define DECAY_SLOPE     FRAC_CONST(0.05)
@@ -75,26 +75,26 @@ typedef struct {
     uint8_t frame_len;
     uint8_t resolution20[3];
     uint8_t resolution34[5];
-    qmf_t*  work;
-    qmf_t** buffer;
-    qmf_t** temp;
+    complex_t*  work;
+    complex_t** buffer;
+    complex_t** temp;
 } hyb_info;
 
 /* static function declarations */
 static void      ps_data_decode(ps_info* ps);
 static hyb_info* hybrid_init(uint8_t numTimeSlotsRate);
-static void      channel_filter2(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, qmf_t* buffer, qmf_t** X_hybrid);
+static void      channel_filter2(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, complex_t* buffer, complex_t** X_hybrid);
 static void inline DCT3_4_unscaled(int32_t* y, int32_t* x);
-static void   channel_filter8(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, qmf_t* buffer, qmf_t** X_hybrid);
-static void   hybrid_analysis(hyb_info* hyb, qmf_t X[32][64], qmf_t X_hybrid[32][32], uint8_t use34, uint8_t numTimeSlotsRate);
-static void   hybrid_synthesis(hyb_info* hyb, qmf_t X[32][64], qmf_t X_hybrid[32][32], uint8_t use34, uint8_t numTimeSlotsRate);
+static void   channel_filter8(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, complex_t* buffer, complex_t** X_hybrid);
+static void   hybrid_analysis(hyb_info* hyb, complex_t X[32][64], complex_t X_hybrid[32][32], uint8_t use34, uint8_t numTimeSlotsRate);
+static void   hybrid_synthesis(hyb_info* hyb, complex_t X[32][64], complex_t X_hybrid[32][32], uint8_t use34, uint8_t numTimeSlotsRate);
 static int8_t delta_clip(int8_t i, int8_t min, int8_t max);
 static void   delta_decode(uint8_t enable, int8_t* index, int8_t* index_prev, uint8_t dt_flag, uint8_t nr_par, uint8_t stride, int8_t min_index, int8_t max_index);
 static void   delta_modulo_decode(uint8_t enable, int8_t* index, int8_t* index_prev, uint8_t dt_flag, uint8_t nr_par, uint8_t stride, int8_t and_modulo);
 static void   map20indexto34(int8_t* index, uint8_t bins);
 static void   ps_data_decode(ps_info* ps);
-static void   ps_decorrelate(ps_info* ps, qmf_t X_left[38][64], qmf_t X_right[38][64], qmf_t X_hybrid_left[32][32], qmf_t X_hybrid_right[32][32]);
-static void   ps_mix_phase(ps_info* ps, qmf_t X_left[38][64], qmf_t X_right[38][64], qmf_t X_hybrid_left[32][32], qmf_t X_hybrid_right[32][32]);
+static void   ps_decorrelate(ps_info* ps, complex_t X_left[38][64], complex_t X_right[38][64], complex_t X_hybrid_left[32][32], complex_t X_hybrid_right[32][32]);
+static void   ps_mix_phase(ps_info* ps, complex_t X_left[38][64], complex_t X_right[38][64], complex_t X_hybrid_left[32][32], complex_t X_hybrid_right[32][32]);
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 static hyb_info* hybrid_init(uint8_t numTimeSlotsRate) {
@@ -109,16 +109,16 @@ static hyb_info* hybrid_init(uint8_t numTimeSlotsRate) {
     hyb->resolution20[1] = 2;
     hyb->resolution20[2] = 2;
     hyb->frame_len = numTimeSlotsRate;
-    hyb->work = (qmf_t*)faad_malloc((hyb->frame_len + 12) * sizeof(qmf_t));
-    memset(hyb->work, 0, (hyb->frame_len + 12) * sizeof(qmf_t));
+    hyb->work = (complex_t*)faad_malloc((hyb->frame_len + 12) * sizeof(complex_t));
+    memset(hyb->work, 0, (hyb->frame_len + 12) * sizeof(complex_t));
 
-    hyb->buffer = (qmf_t**)faad_malloc(5 * sizeof(qmf_t*));
+    hyb->buffer = (complex_t**)faad_malloc(5 * sizeof(complex_t*));
     for(i = 0; i < 5; i++) {
-        hyb->buffer[i] = (qmf_t*)faad_malloc(hyb->frame_len * sizeof(qmf_t));
-        memset(hyb->buffer[i], 0, hyb->frame_len * sizeof(qmf_t));
+        hyb->buffer[i] = (complex_t*)faad_malloc(hyb->frame_len * sizeof(complex_t));
+        memset(hyb->buffer[i], 0, hyb->frame_len * sizeof(complex_t));
     }
-    hyb->temp = (qmf_t**)faad_malloc(hyb->frame_len * sizeof(qmf_t*));
-    for(i = 0; i < hyb->frame_len; i++) { hyb->temp[i] = (qmf_t*)faad_malloc(12 /*max*/ * sizeof(qmf_t)); }
+    hyb->temp = (complex_t**)faad_malloc(hyb->frame_len * sizeof(complex_t*));
+    for(i = 0; i < hyb->frame_len; i++) { hyb->temp[i] = (complex_t*)faad_malloc(12 /*max*/ * sizeof(complex_t)); }
     return hyb;
 }
 
@@ -141,7 +141,7 @@ static void hybrid_free(hyb_info* hyb) {
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 /* real filter, size 2 */
-static void channel_filter2(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, qmf_t* buffer, qmf_t** X_hybrid) {
+static void channel_filter2(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, complex_t* buffer, complex_t** X_hybrid) {
     uint8_t i;
 
     for(i = 0; i < frame_len; i++) {
@@ -172,7 +172,7 @@ static void channel_filter2(hyb_info* hyb, uint8_t frame_len, const int32_t* fil
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 /* complex filter, size 4 */
-static void channel_filter4(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, qmf_t* buffer, qmf_t** X_hybrid) {
+static void channel_filter4(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, complex_t* buffer, complex_t** X_hybrid) {
     uint8_t i;
     int32_t input_re1[2], input_re2[2], input_im1[2], input_im2[2];
 
@@ -225,7 +225,7 @@ static void inline DCT3_4_unscaled(int32_t* y, int32_t* x) {
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 /* complex filter, size 8 */
-static void channel_filter8(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, qmf_t* buffer, qmf_t** X_hybrid) {
+static void channel_filter8(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, complex_t* buffer, complex_t** X_hybrid) {
     uint8_t i, n;
     int32_t input_re1[4], input_re2[4], input_im1[4], input_im2[4];
     int32_t x[4];
@@ -300,7 +300,7 @@ static void inline DCT3_6_unscaled(int32_t* y, int32_t* x) {
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 /* complex filter, size 12 */
-static void channel_filter12(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, qmf_t* buffer, qmf_t** X_hybrid) {
+static void channel_filter12(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, complex_t* buffer, complex_t** X_hybrid) {
     uint8_t i, n;
     int32_t input_re1[6], input_re2[6], input_im1[6], input_im2[6];
     int32_t out_re1[6], out_re2[6], out_im1[6], out_im2[6];
@@ -341,7 +341,7 @@ static void channel_filter12(hyb_info* hyb, uint8_t frame_len, const int32_t* fi
 /* Hybrid analysis: further split up QMF subbands
  * to improve frequency resolution
  */
-static void hybrid_analysis(hyb_info* hyb, qmf_t X[32][64], qmf_t X_hybrid[32][32], uint8_t use34, uint8_t numTimeSlotsRate) {
+static void hybrid_analysis(hyb_info* hyb, complex_t X[32][64], complex_t X_hybrid[32][32], uint8_t use34, uint8_t numTimeSlotsRate) {
     uint8_t  k, n, band;
     uint8_t  offset = 0;
     uint8_t  qmf_bands = (use34) ? 5 : 3;
@@ -349,14 +349,14 @@ static void hybrid_analysis(hyb_info* hyb, qmf_t X[32][64], qmf_t X_hybrid[32][3
 
     for(band = 0; band < qmf_bands; band++) {
         /* build working buffer */
-        memcpy(hyb->work, hyb->buffer[band], 12 * sizeof(qmf_t));
+        memcpy(hyb->work, hyb->buffer[band], 12 * sizeof(complex_t));
         /* add new samples */
         for(n = 0; n < hyb->frame_len; n++) {
             QMF_RE(hyb->work[12 + n]) = QMF_RE(X[n + 6 /*delay*/][band]);
             QMF_IM(hyb->work[12 + n]) = QMF_IM(X[n + 6 /*delay*/][band]);
         }
         /* store samples */
-        memcpy(hyb->buffer[band], hyb->work + hyb->frame_len, 12 * sizeof(qmf_t));
+        memcpy(hyb->buffer[band], hyb->work + hyb->frame_len, 12 * sizeof(complex_t));
         switch(resolution[band]) {
         case 2:
             /* Type B real filter, Q[p] = 2 */
@@ -400,7 +400,7 @@ static void hybrid_analysis(hyb_info* hyb, qmf_t X[32][64], qmf_t X_hybrid[32][3
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-static void hybrid_synthesis(hyb_info* hyb, qmf_t X[32][64], qmf_t X_hybrid[32][32], uint8_t use34, uint8_t numTimeSlotsRate) {
+static void hybrid_synthesis(hyb_info* hyb, complex_t X[32][64], complex_t X_hybrid[32][32], uint8_t use34, uint8_t numTimeSlotsRate) {
     uint8_t  k, n, band;
     uint8_t  offset = 0;
     uint8_t  qmf_bands = (use34) ? 5 : 3;
@@ -683,7 +683,7 @@ static void ps_data_decode(ps_info* ps) {
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 /* decorrelate the mono signal using an allpass filter */
-static void ps_decorrelate(ps_info* ps, qmf_t X_left[38][64], qmf_t X_right[38][64], qmf_t X_hybrid_left[32][32], qmf_t X_hybrid_right[32][32]) {
+static void ps_decorrelate(ps_info* ps, complex_t X_left[38][64], complex_t X_right[38][64], complex_t X_hybrid_left[32][32], complex_t X_hybrid_right[32][32]) {
     uint8_t          gr, n, m, bk;
     uint8_t          temp_delay;
     uint8_t          sb, maxsb;
@@ -961,7 +961,7 @@ static int32_t magnitude_c(complex_t c) {
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-static void ps_mix_phase(ps_info* ps, qmf_t X_left[38][64], qmf_t X_right[38][64], qmf_t X_hybrid_left[32][32], qmf_t X_hybrid_right[32][32]) {
+static void ps_mix_phase(ps_info* ps, complex_t X_left[38][64], complex_t X_right[38][64], complex_t X_hybrid_left[32][32], complex_t X_hybrid_right[32][32]) {
     uint8_t        n;
     uint8_t        gr;
     uint8_t        bk = 0;
@@ -1408,9 +1408,9 @@ ps_info* ps_init(uint8_t sr_index, uint8_t numTimeSlotsRate) {
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 /* main Parametric Stereo decoding function */
-uint8_t ps_decode(ps_info* ps, qmf_t X_left[38][64], qmf_t X_right[38][64]) {
-    qmf_t X_hybrid_left[32][32] = {{0}};
-    qmf_t X_hybrid_right[32][32] = {{0}};
+uint8_t ps_decode(ps_info* ps, complex_t X_left[38][64], complex_t X_right[38][64]) {
+    complex_t X_hybrid_left[32][32] = {{0}};
+    complex_t X_hybrid_right[32][32] = {{0}};
 
     /* delta decoding of the bitstream data */
     ps_data_decode(ps);

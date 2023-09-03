@@ -45,7 +45,7 @@
  */
 
 #include "neaacdec.h"
-#include "common.h"
+
 #include "structs.h"
 #include <stdlib.h>
 #ifdef _WIN32_WCE
@@ -53,7 +53,7 @@
 #else
     #include <assert.h>
 #endif
-
+#include "fixed.h"
 #include "cfft.h"
 #include "mdct.h"
 #include "mdct_tab.h"

@@ -37,8 +37,8 @@ void       qmfa_end(qmfa_info* qmfa);
 qmfs_info* qmfs_init(uint8_t channels);
 void       qmfs_end(qmfs_info* qmfs);
 
-void sbr_qmf_analysis_32(sbr_info* sbr, qmfa_info* qmfa, const int32_t* input, qmf_t X[MAX_NTSRHFG][64], uint8_t offset, uint8_t kx);
-void sbr_qmf_synthesis_32(sbr_info* sbr, qmfs_info* qmfs, qmf_t X[MAX_NTSRHFG][64], int32_t* output);
-void sbr_qmf_synthesis_64(sbr_info* sbr, qmfs_info* qmfs, qmf_t X[MAX_NTSRHFG][64], int32_t* output);
+void sbr_qmf_analysis_32(sbr_info* sbr, qmfa_info* qmfa, const int32_t* input, complex_t X[MAX_NTSRHFG][64], uint8_t offset, uint8_t kx);
+void sbr_qmf_synthesis_32(sbr_info* sbr, qmfs_info* qmfs, complex_t X[MAX_NTSRHFG][64], int32_t* output);
+void sbr_qmf_synthesis_64(sbr_info* sbr, qmfs_info* qmfs, complex_t X[MAX_NTSRHFG][64], int32_t* output);
 
 #endif

@@ -32,7 +32,7 @@
  * For more info see: http://www.spiral.net/
  */
 #include "neaacdec.h"
-#include "common.h"
+
 
 #ifdef SBR_DEC
 

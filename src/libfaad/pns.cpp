@@ -30,7 +30,7 @@
 
 #include "neaacdec.h"
 #include "pns.h"
-#include "common.h"
+
 #include "structs.h"
 
 /* static function declarations */

@@ -29,7 +29,7 @@
 **/
 
 #include "neaacdec.h"
-#include "common.h"
+
 #include "structs.h"
 
 #ifdef SBR_DEC
@@ -123,8 +123,8 @@ sbr_info *sbrDecodeInit(uint16_t framelength, uint8_t id_aac,
             sbr->Q_temp_prev[1][j] = (int32_t*)faad_malloc(64*sizeof(int32_t));
         }
 
-        memset(sbr->Xsbr[0], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*64 * sizeof(qmf_t));
-        memset(sbr->Xsbr[1], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*64 * sizeof(qmf_t));
+        memset(sbr->Xsbr[0], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*64 * sizeof(complex_t));
+        memset(sbr->Xsbr[1], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*64 * sizeof(complex_t));
     } else {
         /* mono */
         uint8_t j;
@@ -138,7 +138,7 @@ sbr_info *sbrDecodeInit(uint16_t framelength, uint8_t id_aac,
             sbr->Q_temp_prev[0][j] = (int32_t*)faad_malloc(64*sizeof(int32_t));
         }
 
-        memset(sbr->Xsbr[0], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*64 * sizeof(qmf_t));
+        memset(sbr->Xsbr[0], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*64 * sizeof(complex_t));
     }
 
     return sbr;
@@ -201,8 +201,8 @@ void sbrReset(sbr_info *sbr)
             memset(sbr->Q_temp_prev[1][j], 0, 64*sizeof(int32_t));
     }
 
-    memset(sbr->Xsbr[0], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*64 * sizeof(qmf_t));
-    memset(sbr->Xsbr[1], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*64 * sizeof(qmf_t));
+    memset(sbr->Xsbr[0], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*64 * sizeof(complex_t));
+    memset(sbr->Xsbr[1], 0, (sbr->numTimeSlotsRate+sbr->tHFGen)*64 * sizeof(complex_t));
 
     sbr->GQ_ringbuf_index[0] = 0;
     sbr->GQ_ringbuf_index[1] = 0;
@@ -285,15 +285,15 @@ static void sbr_save_matrix(sbr_info *sbr, uint8_t ch)
 
     for (i = 0; i < sbr->tHFGen; i++)
     {
-        memmove(sbr->Xsbr[ch][i], sbr->Xsbr[ch][i+sbr->numTimeSlotsRate], 64 * sizeof(qmf_t));
+        memmove(sbr->Xsbr[ch][i], sbr->Xsbr[ch][i+sbr->numTimeSlotsRate], 64 * sizeof(complex_t));
     }
     for (i = sbr->tHFGen; i < MAX_NTSRHFG; i++)
     {
-        memset(sbr->Xsbr[ch][i], 0, 64 * sizeof(qmf_t));
+        memset(sbr->Xsbr[ch][i], 0, 64 * sizeof(complex_t));
     }
 }
 
-static uint8_t sbr_process_channel(sbr_info *sbr, int32_t *channel_buf, qmf_t X[MAX_NTSR][64],
+static uint8_t sbr_process_channel(sbr_info *sbr, int32_t *channel_buf, complex_t X[MAX_NTSR][64],
                                    uint8_t ch, uint8_t dont_process,
                                    const uint8_t downSampledSBR)
 {
@@ -410,7 +410,7 @@ uint8_t sbrDecodeCoupleFrame(sbr_info *sbr, int32_t *left_chan, int32_t *right_c
 {
     uint8_t dont_process = 0;
     uint8_t ret = 0;
-     qmf_t X[MAX_NTSR][64];
+     complex_t X[MAX_NTSR][64];
 
     if (sbr == NULL)
         return 20;
@@ -493,7 +493,7 @@ uint8_t sbrDecodeSingleFrame(sbr_info *sbr, int32_t *channel,
 {
     uint8_t dont_process = 0;
     uint8_t ret = 0;
-     qmf_t X[MAX_NTSR][64];
+     complex_t X[MAX_NTSR][64];
 
     if (sbr == NULL)
         return 20;
@@ -562,8 +562,8 @@ uint8_t sbrDecodeSingleFramePS(sbr_info *sbr, int32_t *left_channel, int32_t *ri
     uint8_t l, k;
     uint8_t dont_process = 0;
     uint8_t ret = 0;
-     qmf_t X_left[38][64] = {{0}};
-     qmf_t X_right[38][64] = {{0}}; /* must set this to 0 */
+     complex_t X_left[38][64] = {{0}};
+     complex_t X_right[38][64] = {{0}}; /* must set this to 0 */
 
     if (sbr == NULL)
         return 20;

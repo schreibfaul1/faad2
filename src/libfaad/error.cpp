@@ -29,7 +29,7 @@
 **/
 #include "neaacdec.h"
 #include "error.h"
-#include "common.h"
+
 
 const char* err_msg[] = {"No error",
                          "Gain control not yet implemented",

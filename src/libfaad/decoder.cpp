@@ -28,7 +28,7 @@
 ** $Id: decoder.c,v 1.119 2015/01/24 14:21:05 knik Exp $
 **/
 
-#include "common.h"
+
 #include "drc.h"
 #include "error.h"
 #include "filtbank.h"
@@ -683,7 +683,7 @@ static void* aac_frame_decode(NeAACDecStruct* hDecoder, NeAACDecFrameInfo* hInfo
     }
     /* allocate the buffer for the final samples */
     if((hDecoder->sample_buffer == NULL) || (hDecoder->alloced_channels != output_channels)) {
-        static const uint8_t str[] = {sizeof(int16_t), sizeof(int32_t), sizeof(int32_t), sizeof(float32_t), sizeof(double), sizeof(int16_t), sizeof(int16_t), sizeof(int16_t), sizeof(int16_t), 0, 0, 0};
+        static const uint8_t str[] = {sizeof(int16_t), sizeof(int32_t), sizeof(int32_t), sizeof(float), sizeof(double), sizeof(int16_t), sizeof(int16_t), sizeof(int16_t), sizeof(int16_t), 0, 0, 0};
         uint8_t              stride = str[hDecoder->config.outputFormat - 1];
 #ifdef SBR_DEC
         if(((hDecoder->sbr_present_flag == 1) && (!hDecoder->downSampledSBR)) || (hDecoder->forceUpSampling == 1)) { stride = 2 * stride; }

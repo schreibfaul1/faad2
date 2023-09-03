@@ -28,7 +28,7 @@
 ** $Id: sbr_qmf.c,v 1.32 2007/11/01 12:33:36 menno Exp $
 **/
 #include "neaacdec.h"
-#include "common.h"
+
 #include "structs.h"
 
 #ifdef SBR_DEC
@@ -61,7 +61,7 @@ void qmfa_end(qmfa_info* qmfa) {
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-void sbr_qmf_analysis_32(sbr_info* sbr, qmfa_info* qmfa, const int32_t* input, qmf_t X[MAX_NTSRHFG][64], uint8_t offset, uint8_t kx) {
+void sbr_qmf_analysis_32(sbr_info* sbr, qmfa_info* qmfa, const int32_t* input, complex_t X[MAX_NTSRHFG][64], uint8_t offset, uint8_t kx) {
     int32_t u[64];
     int32_t in_real[32], in_imag[32], out_real[32], out_imag[32];
     uint32_t in = 0;
@@ -158,7 +158,7 @@ void qmfs_end(qmfs_info* qmfs) {
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-void sbr_qmf_synthesis_32(sbr_info* sbr, qmfs_info* qmfs, qmf_t X[MAX_NTSRHFG][64], int32_t* output) {
+void sbr_qmf_synthesis_32(sbr_info* sbr, qmfs_info* qmfs, complex_t X[MAX_NTSRHFG][64], int32_t* output) {
     int32_t x1[32], x2[32];
     int32_t n, k, out = 0;
     uint8_t l;
@@ -198,12 +198,12 @@ void sbr_qmf_synthesis_32(sbr_info* sbr, qmfs_info* qmfs, qmf_t X[MAX_NTSRHFG][6
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-void sbr_qmf_synthesis_64(sbr_info* sbr, qmfs_info* qmfs, qmf_t X[MAX_NTSRHFG][64], int32_t* output) {
+void sbr_qmf_synthesis_64(sbr_info* sbr, qmfs_info* qmfs, complex_t X[MAX_NTSRHFG][64], int32_t* output) {
     //     int32_t x1[64], x2[64];
     int32_t in_real1[32], in_imag1[32], out_real1[32], out_imag1[32];
     int32_t in_real2[32], in_imag2[32], out_real2[32], out_imag2[32];
 
-    qmf_t*   pX;
+    complex_t*   pX;
     int32_t *pring_buffer_1, *pring_buffer_3;
     //    int32_t * ptemp_1, * ptemp_2;
     #ifdef PREFER_POINTERS

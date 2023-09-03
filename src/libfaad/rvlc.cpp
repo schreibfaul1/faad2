@@ -43,7 +43,7 @@
 
 #include "neaacdec.h"
 #include "rvlc.h"
-#include "common.h"
+
 #include "structs.h"
 #include "syntax.h"
 #include <stdlib.h>

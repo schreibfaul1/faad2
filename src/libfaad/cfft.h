@@ -32,7 +32,6 @@
 #define __CFFT_H__
 
 #include "neaacdec.h"
-#include "common.h"
 
 
 

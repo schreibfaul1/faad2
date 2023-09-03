@@ -30,7 +30,7 @@
 
 #include "neaacdec.h"
 #include "huffman.h"
-#include "common.h"
+
 #include "hcb.h"
 #include "structs.h"
 #include <stdlib.h>

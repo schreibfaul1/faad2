@@ -29,7 +29,7 @@
 **/
 
 #include "neaacdec.h"
-#include "common.h"
+
 #include "huffman.h"
 #include "specrec.h"
 #include "structs.h"

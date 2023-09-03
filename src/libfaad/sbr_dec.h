@@ -128,7 +128,7 @@ typedef struct {
     uint8_t    id_aac;
     qmfa_info* qmfa[2];
     qmfs_info* qmfs[2];
-    qmf_t Xsbr[2][MAX_NTSRHFG][64];
+    complex_t Xsbr[2][MAX_NTSRHFG][64];
     uint8_t numTimeSlotsRate;
     uint8_t numTimeSlots;
     uint8_t tHFGen;

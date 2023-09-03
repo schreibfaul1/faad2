@@ -36,7 +36,7 @@
 */
 #include "neaacdec.h"
 #include "specrec.h"
-#include "common.h"
+
 #include "drc.h"
 #include "filtbank.h"
 #include "iq_table.h"

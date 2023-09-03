@@ -30,7 +30,7 @@
 
 /* High Frequency generation */
 #include "neaacdec.h"
-#include "common.h"
+
 #include "structs.h"
 
 #ifdef SBR_DEC
@@ -41,15 +41,15 @@
 
 /* static function declarations */
 
-static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
+static void calc_prediction_coef(sbr_info *sbr, complex_t Xlow[MAX_NTSRHFG][64],
                                  complex_t *alpha_0, complex_t *alpha_1, uint8_t k);
 
 static void calc_chirp_factors(sbr_info *sbr, uint8_t ch);
 static void patch_construction(sbr_info *sbr);
 
 
-void hf_generation(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
-                   qmf_t Xhigh[MAX_NTSRHFG][64]
+void hf_generation(sbr_info *sbr, complex_t Xlow[MAX_NTSRHFG][64],
+                   complex_t Xhigh[MAX_NTSRHFG][64]
 
                    ,uint8_t ch)
 {
@@ -166,7 +166,7 @@ typedef struct
     int32_t det;
 } acorr_coef;
 
-static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t buffer[MAX_NTSRHFG][64],
+static void auto_correlation(sbr_info *sbr, acorr_coef *ac, complex_t buffer[MAX_NTSRHFG][64],
                              uint8_t bd, uint8_t len)
 {
     int32_t r01r = 0, r01i = 0, r02r = 0, r02i = 0, r11r = 0;
@@ -258,7 +258,7 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac, qmf_t buffer[MAX_NTS
 
 /* calculate linear prediction coefficients using the covariance method */
 
-static void calc_prediction_coef(sbr_info *sbr, qmf_t Xlow[MAX_NTSRHFG][64],
+static void calc_prediction_coef(sbr_info *sbr, complex_t Xlow[MAX_NTSRHFG][64],
                                  complex_t *alpha_0, complex_t *alpha_1, uint8_t k)
 {
     int32_t tmp;

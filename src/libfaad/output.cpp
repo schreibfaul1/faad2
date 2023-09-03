@@ -29,7 +29,7 @@
 **/
 #include "neaacdec.h"
 #include "output.h"
-#include "common.h"
+
 #include "structs.h"
 
 #define DM_MUL FRAC_CONST(0.3203772410170407)    // 1/(1+sqrt(2) + 1/sqrt(2))

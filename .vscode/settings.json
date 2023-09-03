@@ -1,6 +1,5 @@
 {
     "files.associations": {
-        "common.h": "c",
         "stdlib.h": "c",
         "math.h": "c",
         "memory.h": "c",
