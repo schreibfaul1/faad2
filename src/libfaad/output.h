@@ -33,18 +33,6 @@
 #include "neaacdec.h"
 #include "structs.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+void* output_to_PCM(NeAACDecStruct* hDecoder, int32_t** input, void* samplebuffer, uint8_t channels, uint16_t frame_len, uint8_t format);
 
-void* output_to_PCM(NeAACDecStruct *hDecoder,
-                    int32_t **input,
-                    void *samplebuffer,
-                    uint8_t channels,
-                    uint16_t frame_len,
-                    uint8_t format);
-
-#ifdef __cplusplus
-}
-#endif
 #endif

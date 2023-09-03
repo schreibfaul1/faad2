@@ -32,14 +32,7 @@
 #define __MS_H__
 #include "neaacdec.h"
 #include "structs.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-void ms_decode(ic_stream *ics, ic_stream *icsr, int32_t *l_spec, int32_t *r_spec,
-               uint16_t frame_len);
+void ms_decode(ic_stream* ics, ic_stream* icsr, int32_t* l_spec, int32_t* r_spec, uint16_t frame_len);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

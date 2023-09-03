@@ -31,16 +31,11 @@
 #ifndef __SBR_E_NF_H__
 #define __SBR_E_NF_H__
 #include "neaacdec.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 void extract_envelope_data(sbr_info *sbr, uint8_t ch);
 void extract_noise_floor_data(sbr_info *sbr, uint8_t ch);
 
-#ifdef __cplusplus
-}
-#endif
+
 #endif
 

@@ -31,17 +31,12 @@
 #ifndef __SBR_TF_GRID_H__
 #define __SBR_TF_GRID_H__
 #include "neaacdec.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 
 
 uint8_t envelope_time_border_vector(sbr_info *sbr, uint8_t ch);
 void noise_floor_time_border_vector(sbr_info *sbr, uint8_t ch);
 
 
-#ifdef __cplusplus
-}
-#endif
 #endif
 
