@@ -31,11 +31,8 @@
 #ifndef __BITS_H__
 #define __BITS_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include "neaacdec.h"
 #include "common.h"
+#include "neaacdec.h"
 
 #define BYTE_NUMBIT    8
 #define BYTE_NUMBIT_LD 3
@@ -244,7 +241,4 @@ static inline int8_t get1bit_hcr(bits_t* ld, uint8_t* result) {
 
 #endif
 
-#ifdef __cplusplus
-}
-#endif
 #endif

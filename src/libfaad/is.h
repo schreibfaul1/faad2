@@ -32,9 +32,6 @@
 #define __IS_H__
 
 #include "neaacdec.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include "syntax.h"
 
@@ -62,7 +59,4 @@ static inline int8_t invert_intensity(ic_stream *ics, uint8_t group, uint8_t sfb
 }
 
 
-#ifdef __cplusplus
-}
-#endif
 #endif
