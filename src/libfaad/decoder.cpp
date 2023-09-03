@@ -83,9 +83,9 @@ unsigned long NeAACDecGetCapabilities(void) {
 #ifdef ERROR_RESILIENCE
     cap += ERROR_RESILIENCE_CAP;
 #endif
-#ifdef FIXED_POINT
+
     cap += FIXED_POINT_CAP;
-#endif
+
     return cap;
 }
 
@@ -153,11 +153,8 @@ unsigned char NeAACDecSetConfiguration(NeAACDecHandle hpDecoder, NeAACDecConfigu
         if(config->defSampleRate == 0) return 0;
         hDecoder->config.defSampleRate = config->defSampleRate;
         /* check output format */
-#ifdef FIXED_POINT
         if((config->outputFormat < 1) || (config->outputFormat > 4)) return 0;
-#else
-        if((config->outputFormat < 1) || (config->outputFormat > 5)) return 0;
-#endif
+
         hDecoder->config.outputFormat = config->outputFormat;
         if(config->downMatrix > 1) return 0;
         hDecoder->config.downMatrix = config->downMatrix;

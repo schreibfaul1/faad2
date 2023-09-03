@@ -22,7 +22,6 @@ extern "C" {
 #include "neaacdec.h"
 
 /* COMPILE TIME DEFINITIONS */
-#define FIXED_POINT
 #define PREFER_POINTERS
 //#define ERROR_RESILIENCE
 #define LTP_DEC  /* Allow decoding of LTP (long term prediction) profile AAC */
@@ -40,13 +39,10 @@ extern "C" {
     #endif
 #endif
 
-#ifdef FIXED_POINT
+
     #define DIV_R(A, B) (((int64_t)A << REAL_BITS) / B)
     #define DIV_C(A, B) (((int64_t)A << COEF_BITS) / B)
-#else
-    #define DIV_R(A, B) ((A) / (B))
-    #define DIV_C(A, B) ((A) / (B))
-#endif
+
 
 #define qmf_t     complex_t
 #define QMF_RE(A) RE(A)
@@ -72,13 +68,12 @@ typedef int32_t complex_t[2];
 /* common functions */
 uint32_t ne_rng(uint32_t* __r1, uint32_t* __r2);
 uint32_t wl_min_lzc(uint32_t x);
-#ifdef FIXED_POINT
     #define LOG2_MIN_INF REAL_CONST(-10000)
 int32_t log2_int(uint32_t val);
 int32_t log2_fix(uint32_t val);
 int32_t pow2_int(int32_t val);
 int32_t pow2_fix(int32_t val);
-#endif
+
 uint8_t  get_sr_index(const uint32_t samplerate);
 uint8_t  max_pred_sfb(const uint8_t sr_index);
 uint8_t  max_tns_sfb(const uint8_t sr_index, const uint8_t object_type, const uint8_t is_short);

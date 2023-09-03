@@ -202,8 +202,6 @@ uint32_t wl_min_lzc(uint32_t x) {
     return (count + 1);
 #endif
 }
-#ifdef FIXED_POINT
-
     #define TABLE_BITS 6
     /* just take the maximum number of bits for interpolation */
     #define INTERP_BITS (REAL_BITS - TABLE_BITS)
@@ -366,4 +364,4 @@ int32_t log2_fix(uint32_t val) {
     errcorr = (index_frac * (x2 - x1)) >> INTERP_BITS;
     return (exp << REAL_BITS) + errcorr + x1;
 }
-#endif
+

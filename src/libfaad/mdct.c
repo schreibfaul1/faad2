@@ -62,7 +62,7 @@ mdct_info* faad_mdct_init(uint16_t N) {
     mdct_info* mdct = (mdct_info*)faad_malloc(sizeof(mdct_info));
     assert(N % 8 == 0);
     mdct->N = N;
-    /* NOTE: For "small framelengths" in FIXED_POINT the coefficients need to be scaled by sqrt("(nearest power of 2) > N" / N) */
+    /* NOTE: For "small framelengths" the coefficients need to be scaled by sqrt("(nearest power of 2) > N" / N) */
     /* RE(mdct->sincos[k]) = scale*(int32_t)(cos(2.0*M_PI*(k+1./8.) / (int32_t)N));
      * IM(mdct->sincos[k]) = scale*(int32_t)(sin(2.0*M_PI*(k+1./8.) / (int32_t)N)); */
     /* scale is 1 for fixed point, sqrt(N) for floating point */

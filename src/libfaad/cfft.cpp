@@ -695,12 +695,6 @@ void cfftb(cfft_info* cfft, complex_t* c) { cfftf1pos(cfft->n, c, cfft->work, (c
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 static void cffti1(uint16_t n, complex_t* wa, uint16_t* ifac) {
     static uint16_t ntryh[4] = {3, 4, 2, 5};
-#ifndef FIXED_POINT
-    int32_t  arg, argh, argld, fi;
-    uint16_t ido, ipm;
-    uint16_t i1, k1, l1, l2;
-    uint16_t ld, ii, ip;
-#endif
     uint16_t ntry = 0, i, j;
     uint16_t ib;
     uint16_t nf, nl, nq, nr;
@@ -738,46 +732,6 @@ startloop:
     ifac[0] = n;
     ifac[1] = nf;
 
-#ifndef FIXED_POINT
-    argh = (int32_t)2.0 * (int32_t)M_PI / (int32_t)n;
-    i = 0;
-    l1 = 1;
-
-    for(k1 = 1; k1 <= nf; k1++) {
-        ip = ifac[k1 + 1];
-        ld = 0;
-        l2 = l1 * ip;
-        ido = n / l2;
-        ipm = ip - 1;
-
-        for(j = 0; j < ipm; j++) {
-            i1 = i;
-            RE(wa[i]) = 1.0;
-            IM(wa[i]) = 0.0;
-            ld += l1;
-            fi = 0;
-            argld = ld * argh;
-
-            for(ii = 0; ii < ido; ii++) {
-                i++;
-                fi++;
-                arg = fi * argld;
-                RE(wa[i]) = (int32_t)cos(arg);
-    #if 1
-                IM(wa[i]) = (int32_t)sin(arg);
-    #else
-                IM(wa[i]) = (int32_t)-sin(arg);
-    #endif
-            }
-
-            if(ip > 5) {
-                RE(wa[i1]) = RE(wa[i]);
-                IM(wa[i1]) = IM(wa[i]);
-            }
-        }
-        l1 = l2;
-    }
-#endif
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -787,11 +741,6 @@ cfft_info* cffti(uint16_t n) {
     cfft->n = n;
     cfft->work = (complex_t*)faad_malloc(n * sizeof(complex_t));
 
-#ifndef FIXED_POINT
-    cfft->tab = (complex_t*)faad_malloc(n * sizeof(complex_t));
-
-    cffti1(n, cfft->tab, cfft->ifac);
-#else
     cffti1(n, NULL, cfft->ifac);
 
     switch(n) {
@@ -810,16 +759,12 @@ cfft_info* cffti(uint16_t n) {
     #endif
     case 128: cfft->tab = (complex_t*)cfft_tab_128; break;
     }
-#endif
+
 
     return cfft;
 }
 
 void cfftu(cfft_info* cfft) {
     if(cfft->work) faad_free(cfft->work);
-#ifndef FIXED_POINT
-    if(cfft->tab) faad_free(cfft->tab);
-#endif
-
     if(cfft) faad_free(cfft);
 }
