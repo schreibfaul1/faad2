@@ -698,7 +698,11 @@ typedef struct {
     complex_t** temp;
 } hyb_info;
 
-
+typedef struct {
+    int8_t   index;
+    uint8_t  len;
+    uint32_t cw;
+} rvlc_huff_table;
 
 
 

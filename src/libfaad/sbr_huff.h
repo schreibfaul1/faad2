@@ -34,8 +34,7 @@
 
 
 
-void sbr_envelope(bitfile *ld, sbr_info *sbr, uint8_t ch);
-void sbr_noise(bitfile *ld, sbr_info *sbr, uint8_t ch);
+
 
 
 #endif

@@ -185,6 +185,7 @@ typedef const int8_t (*sbr_huff_tab)[2];
 #define NO_TIME_SLOTS_960    15
 #define NO_TIME_SLOTS        16
 #define RATE                 2
+#define ESC_VAL              7
 
 #define NOISE_FLOOR_OFFSET 6
 
@@ -436,6 +437,19 @@ uint8_t        is_ltp_ot(uint8_t object_type);
 void lt_prediction(ic_stream* ics, ltp_info* ltp, int32_t* spec, int16_t* lt_pred_stat, fb_info* fb, uint8_t win_shape, uint8_t win_shape_prev,
                    uint8_t sr_index, uint8_t object_type, uint16_t frame_len);
 void lt_update_state(int16_t* lt_pred_stat, int32_t* time, int32_t* overlap, uint16_t frame_len, uint8_t object_type);
+static uint16_t      ps_extension(ps_info* ps, bitfile* ld, const uint8_t ps_extension_id, const uint16_t num_bits_left);
+static void          huff_data(bitfile* ld, const uint8_t dt, const uint8_t nr_par, ps_huff_tab t_huff, ps_huff_tab f_huff, int8_t* par);
+static inline int8_t ps_huff_dec(bitfile* ld, ps_huff_tab t_huff);
+uint8_t              pulse_decode(ic_stream* ics, int16_t* spec_coef, uint16_t framelen);
+static uint8_t       sbr_save_prev_data(sbr_info* sbr, uint8_t ch);
+static void          sbr_save_matrix(sbr_info* sbr, uint8_t ch);
+void                 sbr_envelope(bitfile* ld, sbr_info* sbr, uint8_t ch);
+void                 sbr_noise(bitfile* ld, sbr_info* sbr, uint8_t ch);
+static uint8_t       rvlc_decode_sf_forward(ic_stream* ics, bitfile* ld_sf, bitfile* ld_esc, uint8_t* is_used);
+static int8_t        rvlc_huffman_sf(bitfile* ld_sf, bitfile* ld_esc, int8_t direction);
+static int8_t        rvlc_huffman_esc(bitfile* ld_esc, int8_t direction);
+uint8_t              rvlc_scale_factor_data(ic_stream* ics, bitfile* ld);
+uint8_t              rvlc_decode_scale_factors(ic_stream* ics, bitfile* ld);
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //                                              I N L I N E S
