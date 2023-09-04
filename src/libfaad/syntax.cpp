@@ -33,7 +33,6 @@
 */
 
 #include "neaacdec.h"
-#include "huffman.h"
 #include "pulse.h"
 #include <stdio.h>
 #include <stdlib.h>

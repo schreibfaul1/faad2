@@ -162,6 +162,12 @@ typedef int32_t complex_t[2];
 #define NOISE_HCB            13
 #define INTENSITY_HCB2       14
 #define INTENSITY_HCB        15
+#define IQ_TABLE_SIZE        1026
+#define NUM_CB               6
+#define NUM_CB_ER            22
+#define MAX_CB               32
+#define VCB11_FIRST          16
+#define VCB11_LAST           31
 
 #define bit2byte(a)         ((a + 7) >> BYTE_NUMBIT_LD)
 #define FAAD_MIN_STREAMSIZE 768 /* 6144 bits/channel */
@@ -194,6 +200,7 @@ typedef int32_t complex_t[2];
 #define DIV_C(A, B)       (((int64_t)A << COEF_BITS) / B)
 #define QMF_RE(A)         RE(A)
 #define QMF_IM(A)         IM(A)
+#define segmentWidth(cb)  min(maxCwLen[cb], ics->length_of_longest_codeword)
 
 #ifndef max
     #define max(a, b) (((a) > (b)) ? (a) : (b))
@@ -356,6 +363,23 @@ mdct_info* faad_mdct_init(uint16_t N);
 void       faad_mdct_end(mdct_info* mdct);
 void       faad_imdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out);
 void       faad_mdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out);
+static inline void    huffman_sign_bits(bitfile* ld, int16_t* sp, uint8_t len);
+static inline uint8_t huffman_getescape(bitfile* ld, int16_t* sp);
+static uint8_t        huffman_2step_quad(uint8_t cb, bitfile* ld, int16_t* sp);
+static uint8_t        huffman_2step_quad_sign(uint8_t cb, bitfile* ld, int16_t* sp);
+static uint8_t        huffman_2step_pair(uint8_t cb, bitfile* ld, int16_t* sp);
+static uint8_t        huffman_2step_pair_sign(uint8_t cb, bitfile* ld, int16_t* sp);
+static uint8_t        huffman_binary_quad(uint8_t cb, bitfile* ld, int16_t* sp);
+static uint8_t        huffman_binary_quad_sign(uint8_t cb, bitfile* ld, int16_t* sp);
+static uint8_t        huffman_binary_pair(uint8_t cb, bitfile* ld, int16_t* sp);
+static uint8_t        huffman_binary_pair_sign(uint8_t cb, bitfile* ld, int16_t* sp);
+static int16_t        huffman_codebook(uint8_t i);
+static void           vcb11_check_LAV(uint8_t cb, int16_t* sp);
+int8_t                huffman_scale_factor(bitfile* ld);
+uint8_t               huffman_spectral_data(uint8_t cb, bitfile* ld, int16_t* sp);
+#ifdef ERROR_RESILIENCE
+int8_t huffman_spectral_data_2(uint8_t cb, bits_t* ld, int16_t* sp);
+#endif
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //                                              I N L I N E S
@@ -483,13 +507,6 @@ static /*inline*/ uint32_t faad_getbits_rev(bitfile* ld, uint32_t n) {
 
 #ifdef ERROR_RESILIENCE
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-/* Modified bit reading functions for HCR */
-typedef struct {
-    /* bit input */
-    uint32_t bufa;
-    uint32_t bufb;
-    int8_t   len;
-} bits_t;
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 static inline uint32_t showbits_hcr(bits_t* ld, uint8_t bits) {

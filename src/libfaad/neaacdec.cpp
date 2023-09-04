@@ -2443,4 +2443,747 @@ void filter_bank_ltp(fb_info* fb, uint8_t window_sequence, uint8_t window_shape,
 }
 #endif
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+int8_t huffman_scale_factor(bitfile* ld) {
+    uint16_t offset = 0;
+
+    while(hcb_sf[offset][1]) {
+        uint8_t b = faad_get1bit(ld);
+        offset += hcb_sf[offset][b];
+        if(offset > 240) {
+            /* printf("ERROR: offset into hcb_sf = %d >240!\n", offset); */
+            return -1;
+        }
+    }
+    return hcb_sf[offset][0];
+}
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+
+hcb*          hcb_table[] = {0, hcb1_1, hcb2_1, 0, hcb4_1, 0, hcb6_1, 0, hcb8_1, 0, hcb10_1, hcb11_1};
+hcb_2_quad*   hcb_2_quad_table[] = {0, hcb1_2, hcb2_2, 0, hcb4_2, 0, 0, 0, 0, 0, 0, 0};
+hcb_2_pair*   hcb_2_pair_table[] = {0, 0, 0, 0, 0, 0, hcb6_2, 0, hcb8_2, 0, hcb10_2, hcb11_2};
+hcb_bin_pair* hcb_bin_table[] = {0, 0, 0, 0, 0, hcb5, 0, hcb7, 0, hcb9, 0, 0};
+uint8_t       hcbN[] = {0, 5, 5, 0, 5, 0, 5, 0, 5, 0, 6, 5};
+
+/* defines whether a huffman codebook is unsigned or not */
+/* Table 4.6.2 */
+uint8_t unsigned_cb[] = {0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+
+int hcb_2_quad_table_size[] = {0, 114, 86, 0, 185, 0, 0, 0, 0, 0, 0, 0};
+int hcb_2_pair_table_size[] = {0, 0, 0, 0, 0, 0, 126, 0, 83, 0, 210, 373};
+int hcb_bin_table_size[] = {0, 0, 0, 161, 0, 161, 0, 127, 0, 337, 0, 0};
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+static inline void huffman_sign_bits(bitfile* ld, int16_t* sp, uint8_t len) {
+    uint8_t i;
+
+    for(i = 0; i < len; i++) {
+        if(sp[i]) {
+            if(faad_get1bit(ld) & 1) { sp[i] = -sp[i]; }
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+static inline uint8_t huffman_getescape(bitfile* ld, int16_t* sp) {
+    uint8_t neg, i;
+    int16_t j;
+    int16_t off;
+    int16_t x = *sp;
+
+    if(x < 0) {
+        if(x != -16) return 0;
+        neg = 1;
+    }
+    else {
+        if(x != 16) return 0;
+        neg = 0;
+    }
+    for(i = 4; i < 16; i++) {
+        if(faad_get1bit(ld) == 0) { break; }
+    }
+    if(i >= 16) return 10;
+    off = (int16_t)faad_getbits(ld, i);
+    j = off | (1 << i);
+    if(neg) j = -j;
+    *sp = j;
+    return 0;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+static uint8_t huffman_2step_quad(uint8_t cb, bitfile* ld, int16_t* sp) {
+    uint32_t cw;
+    uint16_t offset = 0;
+    uint8_t  extra_bits;
+
+    cw = faad_showbits(ld, hcbN[cb]);
+    offset = hcb_table[cb][cw].offset;
+    extra_bits = hcb_table[cb][cw].extra_bits;
+    if(extra_bits) {
+        /* we know for sure it's more than hcbN[cb] bits long */
+        faad_flushbits(ld, hcbN[cb]);
+        offset += (uint16_t)faad_showbits(ld, extra_bits);
+        faad_flushbits(ld, hcb_2_quad_table[cb][offset].bits - hcbN[cb]);
+    }
+    else { faad_flushbits(ld, hcb_2_quad_table[cb][offset].bits); }
+    if(offset > hcb_2_quad_table_size[cb]) {
+        /* printf("ERROR: offset into hcb_2_quad_table = %d >%d!\n", offset,
+           hcb_2_quad_table_size[cb]); */
+        return 10;
+    }
+    sp[0] = hcb_2_quad_table[cb][offset].x;
+    sp[1] = hcb_2_quad_table[cb][offset].y;
+    sp[2] = hcb_2_quad_table[cb][offset].v;
+    sp[3] = hcb_2_quad_table[cb][offset].w;
+    return 0;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+static uint8_t huffman_2step_quad_sign(uint8_t cb, bitfile* ld, int16_t* sp) {
+    uint8_t err = huffman_2step_quad(cb, ld, sp);
+    huffman_sign_bits(ld, sp, QUAD_LEN);
+    return err;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+static uint8_t huffman_2step_pair(uint8_t cb, bitfile* ld, int16_t* sp) {
+    uint32_t cw;
+    uint16_t offset = 0;
+    uint8_t  extra_bits;
+
+    cw = faad_showbits(ld, hcbN[cb]);
+    offset = hcb_table[cb][cw].offset;
+    extra_bits = hcb_table[cb][cw].extra_bits;
+
+    if(extra_bits) {
+        /* we know for sure it's more than hcbN[cb] bits long */
+        faad_flushbits(ld, hcbN[cb]);
+        offset += (uint16_t)faad_showbits(ld, extra_bits);
+        faad_flushbits(ld, hcb_2_pair_table[cb][offset].bits - hcbN[cb]);
+    }
+    else { faad_flushbits(ld, hcb_2_pair_table[cb][offset].bits); }
+    if(offset > hcb_2_pair_table_size[cb]) {
+        /* printf("ERROR: offset into hcb_2_pair_table = %d >%d!\n", offset,
+           hcb_2_pair_table_size[cb]); */
+        return 10;
+    }
+    sp[0] = hcb_2_pair_table[cb][offset].x;
+    sp[1] = hcb_2_pair_table[cb][offset].y;
+    return 0;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+static uint8_t huffman_2step_pair_sign(uint8_t cb, bitfile* ld, int16_t* sp) {
+    uint8_t err = huffman_2step_pair(cb, ld, sp);
+    huffman_sign_bits(ld, sp, PAIR_LEN);
+    return err;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+static uint8_t huffman_binary_quad(uint8_t cb, bitfile* ld, int16_t* sp) {
+    uint16_t offset = 0;
+
+    while(!hcb3[offset].is_leaf) {
+        uint8_t b = faad_get1bit(ld);
+        offset += hcb3[offset].data[b];
+    }
+    if(offset > hcb_bin_table_size[cb]) {
+        /* printf("ERROR: offset into hcb_bin_table = %d >%d!\n", offset,
+           hcb_bin_table_size[cb]); */
+        return 10;
+    }
+    sp[0] = hcb3[offset].data[0];
+    sp[1] = hcb3[offset].data[1];
+    sp[2] = hcb3[offset].data[2];
+    sp[3] = hcb3[offset].data[3];
+    return 0;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+static uint8_t huffman_binary_quad_sign(uint8_t cb, bitfile* ld, int16_t* sp) {
+    uint8_t err = huffman_binary_quad(cb, ld, sp);
+    huffman_sign_bits(ld, sp, QUAD_LEN);
+
+    return err;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+static uint8_t huffman_binary_pair(uint8_t cb, bitfile* ld, int16_t* sp) {
+    uint16_t offset = 0;
+
+    while(!hcb_bin_table[cb][offset].is_leaf) {
+        uint8_t b = faad_get1bit(ld);
+        offset += hcb_bin_table[cb][offset].data[b];
+    }
+
+    if(offset > hcb_bin_table_size[cb]) {
+        /* printf("ERROR: offset into hcb_bin_table = %d >%d!\n", offset,
+           hcb_bin_table_size[cb]); */
+        return 10;
+    }
+    sp[0] = hcb_bin_table[cb][offset].data[0];
+    sp[1] = hcb_bin_table[cb][offset].data[1];
+    return 0;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+static uint8_t huffman_binary_pair_sign(uint8_t cb, bitfile* ld, int16_t* sp) {
+    uint8_t err = huffman_binary_pair(cb, ld, sp);
+    huffman_sign_bits(ld, sp, PAIR_LEN);
+    return err;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+static int16_t huffman_codebook(uint8_t i) {
+    static const uint32_t data = 16428320;
+    if(i == 0) return (int16_t)(data >> 16) & 0xFFFF;
+    else
+        return (int16_t)data & 0xFFFF;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+static void vcb11_check_LAV(uint8_t cb, int16_t* sp) {
+    static const uint16_t vcb11_LAV_tab[] = {16, 31, 47, 63, 95, 127, 159, 191, 223, 255, 319, 383, 511, 767, 1023, 2047};
+    uint16_t              max = 0;
+
+    if(cb < 16 || cb > 31) return;
+    max = vcb11_LAV_tab[cb - 16];
+    if((abs(sp[0]) > max) || (abs(sp[1]) > max)) {
+        sp[0] = 0;
+        sp[1] = 0;
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+uint8_t huffman_spectral_data(uint8_t cb, bitfile* ld, int16_t* sp) {
+    switch(cb) {
+    case 1: /* 2-step method for data quadruples */
+    case 2: return huffman_2step_quad(cb, ld, sp);
+    case 3: /* binary search for data quadruples */ return huffman_binary_quad_sign(cb, ld, sp);
+    case 4: /* 2-step method for data quadruples */ return huffman_2step_quad_sign(cb, ld, sp);
+    case 5: /* binary search for data pairs */ return huffman_binary_pair(cb, ld, sp);
+    case 6: /* 2-step method for data pairs */ return huffman_2step_pair(cb, ld, sp);
+    case 7: /* binary search for data pairs */
+    case 9: return huffman_binary_pair_sign(cb, ld, sp);
+    case 8: /* 2-step method for data pairs */
+    case 10: return huffman_2step_pair_sign(cb, ld, sp);
+    case 12: {
+        uint8_t err = huffman_2step_pair(11, ld, sp);
+        sp[0] = huffman_codebook(0);
+        sp[1] = huffman_codebook(1);
+        return err;
+    }
+    case 11: {
+        uint8_t err = huffman_2step_pair_sign(11, ld, sp);
+        if(!err) err = huffman_getescape(ld, &sp[0]);
+        if(!err) err = huffman_getescape(ld, &sp[1]);
+        return err;
+    }
+#ifdef ERROR_RESILIENCE
+    /* VCB11 uses codebook 11 */
+    case 16:
+    case 17:
+    case 18:
+    case 19:
+    case 20:
+    case 21:
+    case 22:
+    case 23:
+    case 24:
+    case 25:
+    case 26:
+    case 27:
+    case 28:
+    case 29:
+    case 30:
+    case 31: {
+        uint8_t err = huffman_2step_pair_sign(11, ld, sp);
+        if(!err) err = huffman_getescape(ld, &sp[0]);
+        if(!err) err = huffman_getescape(ld, &sp[1]);
+
+        /* check LAV (Largest Absolute Value) */
+        /* this finds errors in the ESCAPE signal */
+        vcb11_check_LAV(cb, sp);
+
+        return err;
+    }
+#endif
+    default:
+        /* Non existent codebook number, something went wrong */
+        return 11;
+    }
+
+    return 0;
+}
+
+#ifdef ERROR_RESILIENCE
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+/* Special version of huffman_spectral_data. Will not read from a bitfile but a bits_t structure. Will keep track of the bits decoded and return the
+   number of bits remaining. Do not read more than ld->len, return -1 if codeword would be longer */
+
+int8_t huffman_spectral_data_2(uint8_t cb, bits_t* ld, int16_t* sp) {
+    uint32_t cw;
+    uint16_t offset = 0;
+    uint8_t  extra_bits;
+    uint8_t  i, vcb11 = 0;
+
+    switch(cb) {
+    case 1: /* 2-step method for data quadruples */
+    case 2:
+    case 4:
+
+        cw = showbits_hcr(ld, hcbN[cb]);
+        offset = hcb_table[cb][cw].offset;
+        extra_bits = hcb_table[cb][cw].extra_bits;
+
+        if(extra_bits) {
+            /* we know for sure it's more than hcbN[cb] bits long */
+            if(flushbits_hcr(ld, hcbN[cb])) return -1;
+            offset += (uint16_t)showbits_hcr(ld, extra_bits);
+            if(flushbits_hcr(ld, hcb_2_quad_table[cb][offset].bits - hcbN[cb])) return -1;
+        }
+        else {
+            if(flushbits_hcr(ld, hcb_2_quad_table[cb][offset].bits)) return -1;
+        }
+
+        sp[0] = hcb_2_quad_table[cb][offset].x;
+        sp[1] = hcb_2_quad_table[cb][offset].y;
+        sp[2] = hcb_2_quad_table[cb][offset].v;
+        sp[3] = hcb_2_quad_table[cb][offset].w;
+        break;
+
+    case 6: /* 2-step method for data pairs */
+    case 8:
+    case 10:
+    case 11:
+    /* VCB11 uses codebook 11 */
+    case 16:
+    case 17:
+    case 18:
+    case 19:
+    case 20:
+    case 21:
+    case 22:
+    case 23:
+    case 24:
+    case 25:
+    case 26:
+    case 27:
+    case 28:
+    case 29:
+    case 30:
+    case 31:
+
+        if(cb >= 16) {
+            /* store the virtual codebook */
+            vcb11 = cb;
+            cb = 11;
+        }
+
+        cw = showbits_hcr(ld, hcbN[cb]);
+        offset = hcb_table[cb][cw].offset;
+        extra_bits = hcb_table[cb][cw].extra_bits;
+
+        if(extra_bits) {
+            /* we know for sure it's more than hcbN[cb] bits long */
+            if(flushbits_hcr(ld, hcbN[cb])) return -1;
+            offset += (uint16_t)showbits_hcr(ld, extra_bits);
+            if(flushbits_hcr(ld, hcb_2_pair_table[cb][offset].bits - hcbN[cb])) return -1;
+        }
+        else {
+            if(flushbits_hcr(ld, hcb_2_pair_table[cb][offset].bits)) return -1;
+        }
+        sp[0] = hcb_2_pair_table[cb][offset].x;
+        sp[1] = hcb_2_pair_table[cb][offset].y;
+        break;
+
+    case 3: /* binary search for data quadruples */
+
+        while(!hcb3[offset].is_leaf) {
+            uint8_t b;
+
+            if(get1bit_hcr(ld, &b)) return -1;
+            offset += hcb3[offset].data[b];
+        }
+
+        sp[0] = hcb3[offset].data[0];
+        sp[1] = hcb3[offset].data[1];
+        sp[2] = hcb3[offset].data[2];
+        sp[3] = hcb3[offset].data[3];
+
+        break;
+
+    case 5: /* binary search for data pairs */
+    case 7:
+    case 9:
+
+        while(!hcb_bin_table[cb][offset].is_leaf) {
+            uint8_t b;
+
+            if(get1bit_hcr(ld, &b)) return -1;
+            offset += hcb_bin_table[cb][offset].data[b];
+        }
+
+        sp[0] = hcb_bin_table[cb][offset].data[0];
+        sp[1] = hcb_bin_table[cb][offset].data[1];
+
+        break;
+    }
+
+    /* decode sign bits */
+    if(unsigned_cb[cb]) {
+        for(i = 0; i < ((cb < FIRST_PAIR_HCB) ? QUAD_LEN : PAIR_LEN); i++) {
+            if(sp[i]) {
+                uint8_t b;
+                if(get1bit_hcr(ld, &b)) return -1;
+                if(b != 0) { sp[i] = -sp[i]; }
+            }
+        }
+    }
+
+    /* decode huffman escape bits */
+    if((cb == ESC_HCB) || (cb >= 16)) {
+        uint8_t k;
+        for(k = 0; k < 2; k++) {
+            if((sp[k] == 16) || (sp[k] == -16)) {
+                uint8_t  neg, i;
+                int32_t  j;
+                uint32_t off;
+
+                neg = (sp[k] < 0) ? 1 : 0;
+
+                for(i = 4;; i++) {
+                    uint8_t b;
+                    if(get1bit_hcr(ld, &b)) return -1;
+                    if(b == 0) break;
+                }
+
+                if(getbits_hcr(ld, i, &off)) return -1;
+                j = off + (1 << i);
+                sp[k] = (int16_t)((neg) ? -j : j);
+            }
+        }
+
+        if(vcb11 != 0) {
+            /* check LAV (Largest Absolute Value) */
+            /* this finds errors in the ESCAPE signal */
+            vcb11_check_LAV(vcb11, sp);
+        }
+    }
+    return ld->len;
+}
+#endif
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+static int32_t pow05_table[] = {
+    COEF_CONST(1.68179283050743), /* 0.5^(-3/4) */
+    COEF_CONST(1.41421356237310), /* 0.5^(-2/4) */
+    COEF_CONST(1.18920711500272), /* 0.5^(-1/4) */
+    COEF_CONST(1.0),              /* 0.5^( 0/4) */
+    COEF_CONST(0.84089641525371), /* 0.5^(+1/4) */
+    COEF_CONST(0.70710678118655), /* 0.5^(+2/4) */
+    COEF_CONST(0.59460355750136)  /* 0.5^(+3/4) */
+};
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+void is_decode(ic_stream* ics, ic_stream* icsr, int32_t* l_spec, int32_t* r_spec, uint16_t frame_len) {
+    uint8_t  g, sfb, b;
+    uint16_t i;
+    int32_t exp, frac;
+    uint16_t nshort = frame_len / 8;
+    uint8_t  group = 0;
+
+    for(g = 0; g < icsr->num_window_groups; g++) {
+        /* Do intensity stereo decoding */
+        for(b = 0; b < icsr->window_group_length[g]; b++) {
+            for(sfb = 0; sfb < icsr->max_sfb; sfb++) {
+                if(is_intensity(icsr, g, sfb)) {
+                    exp = icsr->scale_factors[g][sfb] >> 2;
+                    frac = icsr->scale_factors[g][sfb] & 3;
+                    /* Scale from left to right channel,
+                       do not touch left channel */
+                    for(i = icsr->swb_offset[sfb]; i < min(icsr->swb_offset[sfb + 1], ics->swb_offset_max); i++) {
+                        if(exp < 0) r_spec[(group * nshort) + i] = l_spec[(group * nshort) + i] << -exp;
+                        else
+                            r_spec[(group * nshort) + i] = l_spec[(group * nshort) + i] >> exp;
+                        r_spec[(group * nshort) + i] = MUL_C(r_spec[(group * nshort) + i], pow05_table[frac + 3]);
+                        if(is_intensity(icsr, g, sfb) != invert_intensity(ics, g, sfb)) r_spec[(group * nshort) + i] = -r_spec[(group * nshort) + i];
+                    }
+                }
+            }
+            group++;
+        }
+    }
+}
+
+#ifdef ERROR_RESILIENCE
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+/* rewind and reverse - 32 bit version */
+static uint32_t rewrev_word(uint32_t v, const uint8_t len) {
+    /* 32 bit reverse */
+    v = ((v >> S[0]) & B[0]) | ((v << S[0]) & ~B[0]);
+    v = ((v >> S[1]) & B[1]) | ((v << S[1]) & ~B[1]);
+    v = ((v >> S[2]) & B[2]) | ((v << S[2]) & ~B[2]);
+    v = ((v >> S[3]) & B[3]) | ((v << S[3]) & ~B[3]);
+    v = ((v >> S[4]) & B[4]) | ((v << S[4]) & ~B[4]);
+
+    /* shift off low bits */
+    v >>= (32 - len);
+
+    return v;
+}
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+
+/* 64 bit version */
+static void rewrev_lword(uint32_t* hi, uint32_t* lo, const uint8_t len) {
+    if(len <= 32) {
+        *hi = 0;
+        *lo = rewrev_word(*lo, len);
+    }
+    else {
+        uint32_t t = *hi, v = *lo;
+
+        /* double 32 bit reverse */
+        v = ((v >> S[0]) & B[0]) | ((v << S[0]) & ~B[0]);
+        t = ((t >> S[0]) & B[0]) | ((t << S[0]) & ~B[0]);
+        v = ((v >> S[1]) & B[1]) | ((v << S[1]) & ~B[1]);
+        t = ((t >> S[1]) & B[1]) | ((t << S[1]) & ~B[1]);
+        v = ((v >> S[2]) & B[2]) | ((v << S[2]) & ~B[2]);
+        t = ((t >> S[2]) & B[2]) | ((t << S[2]) & ~B[2]);
+        v = ((v >> S[3]) & B[3]) | ((v << S[3]) & ~B[3]);
+        t = ((t >> S[3]) & B[3]) | ((t << S[3]) & ~B[3]);
+        v = ((v >> S[4]) & B[4]) | ((v << S[4]) & ~B[4]);
+        t = ((t >> S[4]) & B[4]) | ((t << S[4]) & ~B[4]);
+
+        /* last 32<>32 bit swap is implicit below */
+
+        /* shift off low bits (this is really only one 64 bit shift) */
+        *lo = (t >> (64 - len)) | (v << (len - 32));
+        *hi = v >> (64 - len);
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+/* bits_t version */
+static void rewrev_bits(bits_t* bits) {
+    if(bits->len == 0) return;
+    rewrev_lword(&bits->bufb, &bits->bufa, bits->len);
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+/* merge bits of a to b */
+static void concat_bits(bits_t* b, bits_t* a) {
+    uint32_t bl, bh, al, ah;
+
+    if(a->len == 0) return;
+    al = a->bufa;
+    ah = a->bufb;
+    if(b->len > 32) {
+        /* maskoff superfluous high b bits */
+        bl = b->bufa;
+        bh = b->bufb & ((1 << (b->len - 32)) - 1);
+        /* left shift a b->len bits */
+        ah = al << (b->len - 32);
+        al = 0;
+    }
+    else {
+        bl = b->bufa & ((1 << (b->len)) - 1);
+        bh = 0;
+        ah = (ah << (b->len)) | (al >> (32 - b->len));
+        al = al << b->len;
+    }
+    /* merge */
+    b->bufa = bl | al;
+    b->bufb = bh | ah;
+    b->len += a->len;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+static uint8_t is_good_cb(uint8_t this_CB, uint8_t this_sec_CB) {
+    /* only want spectral data CB's */
+    if((this_sec_CB > ZERO_HCB && this_sec_CB <= ESC_HCB) || (this_sec_CB >= VCB11_FIRST && this_sec_CB <= VCB11_LAST)) {
+        if(this_CB < ESC_HCB) {
+            /* normal codebook pairs */
+            return ((this_sec_CB == this_CB) || (this_sec_CB == this_CB + 1));
+        }
+        else {
+            /* escape codebook */
+            return (this_sec_CB == this_CB);
+        }
+    }
+    return 0;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+static void read_segment(bits_t* segment, uint8_t segwidth, bitfile* ld) {
+    segment->len = segwidth;
+
+    if(segwidth > 32) {
+        segment->bufb = faad_getbits(ld, segwidth - 32);
+        segment->bufa = faad_getbits(ld, 32);
+    }
+    else {
+        segment->bufa = faad_getbits(ld, segwidth);
+        segment->bufb = 0;
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+static void fill_in_codeword(codeword_t* codeword, uint16_t index, uint16_t sp, uint8_t cb) {
+    codeword[index].sp_offset = sp;
+    codeword[index].cb = cb;
+    codeword[index].decoded = 0;
+    codeword[index].bits.len = 0;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+uint8_t reordered_spectral_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* ld, int16_t* spectral_data) {
+    uint16_t   PCWs_done;
+    uint16_t   numberOfSegments, numberOfSets, numberOfCodewords;
+    codeword_t codeword[512];
+    bits_t     segment[512];
+    uint16_t   sp_offset[8];
+    uint16_t   g, i, sortloop, set, bitsread;
+    /*uint16_t bitsleft, codewordsleft*/;
+    uint8_t w_idx, sfb, this_CB, last_CB, this_sec_CB;
+
+    const uint16_t nshort = hDecoder->frameLength / 8;
+    const uint16_t sp_data_len = ics->length_of_reordered_spectral_data;
+    const uint8_t* PreSortCb;
+
+    /* no data (e.g. silence) */
+    if(sp_data_len == 0) return 0;
+    /* since there is spectral data, at least one codeword has nonzero length */
+    if(ics->length_of_longest_codeword == 0) return 10;
+    if(sp_data_len < ics->length_of_longest_codeword) return 10;
+    sp_offset[0] = 0;
+    for(g = 1; g < ics->num_window_groups; g++) { sp_offset[g] = sp_offset[g - 1] + nshort * ics->window_group_length[g - 1]; }
+    PCWs_done = 0;
+    numberOfSegments = 0;
+    numberOfCodewords = 0;
+    bitsread = 0;
+    /* VCB11 code books in use */
+    if(hDecoder->aacSectionDataResilienceFlag) {
+        PreSortCb = PreSortCB_ER;
+        last_CB = NUM_CB_ER;
+    }
+    else {
+        PreSortCb = PreSortCB_STD;
+        last_CB = NUM_CB;
+    }
+    /* step 1: decode PCW's (set 0), and stuff data in easier-to-use format */
+    for(sortloop = 0; sortloop < last_CB; sortloop++) {
+        /* select codebook to process this pass */
+        this_CB = PreSortCb[sortloop];
+        /* loop over sfbs */
+        for(sfb = 0; sfb < ics->max_sfb; sfb++) {
+            /* loop over all in this sfb, 4 lines per loop */
+            for(w_idx = 0; 4 * w_idx < (min(ics->swb_offset[sfb + 1], ics->swb_offset_max) - ics->swb_offset[sfb]); w_idx++) {
+                for(g = 0; g < ics->num_window_groups; g++) {
+                    for(i = 0; i < ics->num_sec[g]; i++) {
+                        /* check whether sfb used here is the one we want to process */
+                        if((ics->sect_start[g][i] <= sfb) && (ics->sect_end[g][i] > sfb)) {
+                            /* check whether codebook used here is the one we want to process */
+                            this_sec_CB = ics->sect_cb[g][i];
+
+                            if(is_good_cb(this_CB, this_sec_CB)) {
+                                /* precalculate some stuff */
+                                uint16_t sect_sfb_size = ics->sect_sfb_offset[g][sfb + 1] - ics->sect_sfb_offset[g][sfb];
+                                uint8_t  inc = (this_sec_CB < FIRST_PAIR_HCB) ? QUAD_LEN : PAIR_LEN;
+                                uint16_t group_cws_count = (4 * ics->window_group_length[g]) / inc;
+                                uint8_t  segwidth = segmentWidth(this_sec_CB);
+                                uint16_t cws;
+
+                                /* read codewords until end of sfb or end of window group (shouldn't only 1 trigger?) */
+                                for(cws = 0; (cws < group_cws_count) && ((cws + w_idx * group_cws_count) < sect_sfb_size); cws++) {
+                                    uint16_t sp = sp_offset[g] + ics->sect_sfb_offset[g][sfb] + inc * (cws + w_idx * group_cws_count);
+                                    /* read and decode PCW */
+                                    if(!PCWs_done) {
+                                        /* read in normal segments */
+                                        if(bitsread + segwidth <= sp_data_len) {
+                                            read_segment(&segment[numberOfSegments], segwidth, ld);
+                                            bitsread += segwidth;
+
+                                            huffman_spectral_data_2(this_sec_CB, &segment[numberOfSegments], &spectral_data[sp]);
+
+                                            /* keep leftover bits */
+                                            rewrev_bits(&segment[numberOfSegments]);
+
+                                            numberOfSegments++;
+                                        }
+                                        else {
+                                            /* remaining stuff after last segment, we unfortunately couldn't read
+                                               this in earlier because it might not fit in 64 bits. since we already
+                                               decoded (and removed) the PCW it is now guaranteed to fit */
+                                            if(bitsread < sp_data_len) {
+                                                const uint8_t additional_bits = sp_data_len - bitsread;
+                                                read_segment(&segment[numberOfSegments], additional_bits, ld);
+                                                segment[numberOfSegments].len += segment[numberOfSegments - 1].len;
+                                                rewrev_bits(&segment[numberOfSegments]);
+                                                if(segment[numberOfSegments - 1].len > 32) {
+                                                    segment[numberOfSegments - 1].bufb =
+                                                        segment[numberOfSegments].bufb +
+                                                        showbits_hcr(&segment[numberOfSegments - 1], segment[numberOfSegments - 1].len - 32);
+                                                    segment[numberOfSegments - 1].bufa =
+                                                        segment[numberOfSegments].bufa + showbits_hcr(&segment[numberOfSegments - 1], 32);
+                                                }
+                                                else {
+                                                    segment[numberOfSegments - 1].bufa =
+                                                        segment[numberOfSegments].bufa +
+                                                        showbits_hcr(&segment[numberOfSegments - 1], segment[numberOfSegments - 1].len);
+                                                    segment[numberOfSegments - 1].bufb = segment[numberOfSegments].bufb;
+                                                }
+                                                segment[numberOfSegments - 1].len += additional_bits;
+                                            }
+                                            bitsread = sp_data_len;
+                                            PCWs_done = 1;
+                                            fill_in_codeword(codeword, 0, sp, this_sec_CB);
+                                        }
+                                    }
+                                    else { fill_in_codeword(codeword, numberOfCodewords - numberOfSegments, sp, this_sec_CB); }
+                                    numberOfCodewords++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if(numberOfSegments == 0) return 10;
+    numberOfSets = numberOfCodewords / numberOfSegments;
+    /* step 2: decode nonPCWs */
+    for(set = 1; set <= numberOfSets; set++) {
+        uint16_t trial;
+        for(trial = 0; trial < numberOfSegments; trial++) {
+            uint16_t codewordBase;
+            for(codewordBase = 0; codewordBase < numberOfSegments; codewordBase++) {
+                const uint16_t segment_idx = (trial + codewordBase) % numberOfSegments;
+                const uint16_t codeword_idx = codewordBase + set * numberOfSegments - numberOfSegments;
+                /* data up */
+                if(codeword_idx >= numberOfCodewords - numberOfSegments) break;
+                if(!codeword[codeword_idx].decoded && segment[segment_idx].len > 0) {
+                    uint8_t tmplen;
+                    if(codeword[codeword_idx].bits.len != 0) concat_bits(&segment[segment_idx], &codeword[codeword_idx].bits);
+                    tmplen = segment[segment_idx].len;
+                    if(huffman_spectral_data_2(codeword[codeword_idx].cb, &segment[segment_idx], &spectral_data[codeword[codeword_idx].sp_offset]) >=
+                       0) {
+                        codeword[codeword_idx].decoded = 1;
+                    }
+                    else {
+                        codeword[codeword_idx].bits = segment[segment_idx];
+                        codeword[codeword_idx].bits.len = tmplen;
+                    }
+                }
+            }
+        }
+        for(i = 0; i < numberOfSegments; i++) rewrev_bits(&segment[i]);
+    }
+    return 0;
+}
+#endif
+
+
+
 /* EOF */

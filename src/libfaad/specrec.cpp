@@ -35,8 +35,6 @@
    - applying scalefactors
 */
 #include "neaacdec.h"
-#include "iq_table.h"
-#include "is.h"
 #include "lt_predict.h"
 #include "ms.h"
 #include "pns.h"

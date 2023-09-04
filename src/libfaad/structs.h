@@ -674,4 +674,19 @@ typedef struct {
     int8_t  data[2];
 } hcb_bin_pair;
 
+/* Modified bit reading functions for HCR */
+typedef struct {
+    /* bit input */
+    uint32_t bufa;
+    uint32_t bufb;
+    int8_t   len;
+} bits_t;
+
+typedef struct {
+    uint8_t  cb;
+    uint8_t  decoded;
+    uint16_t sp_offset;
+    bits_t   bits;
+} codeword_t;
+
 #endif
