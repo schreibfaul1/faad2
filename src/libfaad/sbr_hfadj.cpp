@@ -31,7 +31,6 @@
 /* High Frequency adjustment */
 
 
-#include "structs.h"
 #include "neaacdec.h"
 #ifdef SBR_DEC
 

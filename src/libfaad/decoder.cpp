@@ -34,7 +34,6 @@
 #include "filtbank.h"
 #include "mp4.h"
 #include "output.h"
-#include "structs.h"
 #include "syntax.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -133,17 +132,17 @@ NeAACDecHandle      NeAACDecOpen(void) {
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-NeAACDecConfigurationPtr NeAACDecGetCurrentConfiguration(NeAACDecHandle hpDecoder) {
+NeAACDecConfigurationPtr_t NeAACDecGetCurrentConfiguration(NeAACDecHandle hpDecoder) {
     NeAACDecStruct* hDecoder = (NeAACDecStruct*)hpDecoder;
     if(hDecoder) {
-        NeAACDecConfigurationPtr config = &(hDecoder->config);
+        NeAACDecConfigurationPtr_t config = &(hDecoder->config);
         return config;
     }
     return NULL;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-unsigned char NeAACDecSetConfiguration(NeAACDecHandle hpDecoder, NeAACDecConfigurationPtr config) {
+unsigned char NeAACDecSetConfiguration(NeAACDecHandle hpDecoder, NeAACDecConfigurationPtr_t config) {
     NeAACDecStruct* hDecoder = (NeAACDecStruct*)hpDecoder;
     if(hDecoder && config) {
         /* check if we can decode this object type */

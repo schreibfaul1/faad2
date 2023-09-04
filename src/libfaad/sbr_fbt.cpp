@@ -31,8 +31,6 @@
 /* Calculate frequency band tables */
 #include "neaacdec.h"
 
-#include "structs.h"
-
 #ifdef SBR_DEC
 
     #include "sbr_fbt.h"

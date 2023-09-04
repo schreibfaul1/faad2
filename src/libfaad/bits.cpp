@@ -30,7 +30,6 @@
 
 #include "neaacdec.h"
 
-#include "structs.h"
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 /* initialize buffer, call once before first getbits or showbits */
 void faad_initbits(bitfile* ld, const void* _buffer, const uint32_t buffer_size) {

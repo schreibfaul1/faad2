@@ -31,7 +31,6 @@
 #include "neaacdec.h"
 #include "pns.h"
 
-#include "structs.h"
 
 /* static function declarations */
 static void gen_rand_vector(int32_t* spec, int16_t scale_factor, uint16_t size, uint8_t sub, uint32_t* __r1, uint32_t* __r2);

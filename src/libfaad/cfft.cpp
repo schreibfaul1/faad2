@@ -41,7 +41,6 @@
 #include "cfft.h"
 #include "cfft_tab.h"
 #include "fixed.h"
-#include "structs.h"
 #include <stdlib.h>
 
 /* static function declarations */

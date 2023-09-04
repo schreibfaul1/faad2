@@ -31,7 +31,6 @@
 #ifndef __SSR_FB_H__
 #define __SSR_FB_H__
 #include "neaacdec.h"
-#include "structs.h"
 fb_info* ssr_filter_bank_init(uint16_t frame_len);
 void     ssr_filter_bank_end(fb_info* fb);
 

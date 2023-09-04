@@ -31,8 +31,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "drc.h"
-
-#include "structs.h"
 #include "syntax.h"
 
 

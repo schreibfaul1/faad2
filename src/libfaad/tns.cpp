@@ -30,8 +30,6 @@
 
 #include "neaacdec.h"
 #include "tns.h"
-
-#include "structs.h"
 #include "syntax.h"
 
 /* static function declarations */

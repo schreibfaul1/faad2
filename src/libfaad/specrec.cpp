@@ -44,7 +44,6 @@
 #include "lt_predict.h"
 #include "ms.h"
 #include "pns.h"
-#include "structs.h"
 #include "syntax.h"
 #include "tns.h"
 #include <stdlib.h>

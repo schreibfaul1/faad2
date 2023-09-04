@@ -29,8 +29,6 @@
 **/
 #include "neaacdec.h"
 
-#include "structs.h"
-
 #ifdef SBR_DEC
 
     #include "sbr_e_nf.h"

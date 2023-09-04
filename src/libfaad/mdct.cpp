@@ -45,8 +45,6 @@
  */
 
 #include "neaacdec.h"
-
-#include "structs.h"
 #include <stdlib.h>
 #ifdef _WIN32_WCE
     #define assert(x)

@@ -63,6 +63,8 @@
     #endif
 #endif
 
+typedef int32_t complex_t[2];
+
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 
 #define MAIN                 1 /* object types for AAC */
@@ -142,19 +144,28 @@
 #define MAX_LTP_SFB_S        8
 #define BYTE_NUMBIT          8
 #define BYTE_NUMBIT_LD       3
-#define bit2byte(a)          ((a + 7) >> BYTE_NUMBIT_LD)
-#define FAAD_MIN_STREAMSIZE  768 /* 6144 bits/channel */
-#define COEF_BITS            28
-#define COEF_PRECISION       (1 << COEF_BITS)
-#define REAL_BITS            14 // MAXIMUM OF 14 FOR FIXED POINT SBR
-#define REAL_PRECISION       (1 << REAL_BITS)
-#define FRAC_SIZE            32 /* frac is a 32 bit integer */
-#define FRAC_BITS            31
-#define FRAC_PRECISION       ((uint32_t)(1 << FRAC_BITS))
-#define FRAC_MAX             0x7FFFFFFF
-#define REAL_CONST(A)        (((A) >= 0) ? ((int32_t)((A) * (REAL_PRECISION) + 0.5)) : ((int32_t)((A) * (REAL_PRECISION)-0.5)))
-#define LOG2_MIN_INF         REAL_CONST(-10000)
-#define COEF_CONST(A)        (((A) >= 0) ? ((int32_t)((A) * (COEF_PRECISION) + 0.5)) : ((int32_t)((A) * (COEF_PRECISION)-0.5)))
+#define TNS_MAX_ORDER        20
+#define EXTENSION_ID_PS      2
+#define MAX_PS_ENVELOPES     5
+#define NO_ALLPASS_LINKS     3
+#define MAX_NTSRHFG          40 /* MAX_NTSRHFG: maximum of number_time_slots * rate + HFGen. 16*2+8 */
+#define MAX_NTSR             32 /* max number_time_slots * rate */
+#define MAX_M                49 /* MAX_M: maximum value for M */
+#define MAX_L_E              5  /* MAX_L_E: maximum value for L_E */
+
+#define bit2byte(a)         ((a + 7) >> BYTE_NUMBIT_LD)
+#define FAAD_MIN_STREAMSIZE 768 /* 6144 bits/channel */
+#define COEF_BITS           28
+#define COEF_PRECISION      (1 << COEF_BITS)
+#define REAL_BITS           14 // MAXIMUM OF 14 FOR FIXED POINT SBR
+#define REAL_PRECISION      (1 << REAL_BITS)
+#define FRAC_SIZE           32 /* frac is a 32 bit integer */
+#define FRAC_BITS           31
+#define FRAC_PRECISION      ((uint32_t)(1 << FRAC_BITS))
+#define FRAC_MAX            0x7FFFFFFF
+#define REAL_CONST(A)       (((A) >= 0) ? ((int32_t)((A) * (REAL_PRECISION) + 0.5)) : ((int32_t)((A) * (REAL_PRECISION)-0.5)))
+#define LOG2_MIN_INF        REAL_CONST(-10000)
+#define COEF_CONST(A)       (((A) >= 0) ? ((int32_t)((A) * (COEF_PRECISION) + 0.5)) : ((int32_t)((A) * (COEF_PRECISION)-0.5)))
 #define FRAC_CONST(A) \
     (((A) == 1.00) ? ((int32_t)FRAC_MAX) : (((A) >= 0) ? ((int32_t)((A) * (FRAC_PRECISION) + 0.5)) : ((int32_t)((A) * (FRAC_PRECISION)-0.5))))
 #define Q2_BITS           22
@@ -190,74 +201,17 @@
 
 typedef void* NeAACDecHandle;
 
-
-typedef int32_t complex_t[2];
-typedef struct mp4AudioSpecificConfig {
-    unsigned char  objectTypeIndex; /* Audio Specific Info */
-    unsigned char  samplingFrequencyIndex;
-    unsigned long  samplingFrequency;
-    unsigned char  channelsConfiguration;
-    unsigned char  frameLengthFlag; /* GA Specific Info */
-    unsigned char  dependsOnCoreCoder;
-    unsigned short coreCoderDelay;
-    unsigned char  extensionFlag;
-    unsigned char  aacSectionDataResilienceFlag;
-    unsigned char  aacScalefactorDataResilienceFlag;
-    unsigned char  aacSpectralDataResilienceFlag;
-    unsigned char  epConfig;
-
-    char sbr_present_flag;
-    char forceUpSampling;
-    char downSampledSBR;
-} mp4AudioSpecificConfig;
-
-typedef struct NeAACDecConfiguration {
-    unsigned char defObjectType;
-    unsigned long defSampleRate;
-    unsigned char outputFormat;
-    unsigned char downMatrix;
-    unsigned char useOldADTSFormat;
-    unsigned char dontUpSampleImplicitSBR;
-} NeAACDecConfiguration, *NeAACDecConfigurationPtr;
-
-typedef struct NeAACDecFrameInfo {
-    unsigned long bytesconsumed;
-    unsigned long samples;
-    unsigned char channels;
-    unsigned char error;
-    unsigned long samplerate;
-    unsigned char sbr;                /* SBR: 0: off, 1: on; upsample, 2: on; downsampled, 3: off; upsampled */
-    unsigned char object_type;        /* MPEG-4 ObjectType */
-    unsigned char header_type;        /* AAC header type; MP4 will be signalled as RAW also */
-    unsigned char num_front_channels; /* multichannel configuration */
-    unsigned char num_side_channels;
-    unsigned char num_back_channels;
-    unsigned char num_lfe_channels;
-    unsigned char channel_position[64];
-    unsigned char ps; /* PS: 0: off, 1: on */
-} NeAACDecFrameInfo;
-
-typedef struct _bitfile {
-    /* bit input */
-    uint32_t    bufa;
-    uint32_t    bufb;
-    uint32_t    bits_left;
-    uint32_t    buffer_size; /* size of the buffer in bytes */
-    uint32_t    bytes_left;
-    uint8_t     error;
-    uint32_t*   tail;
-    uint32_t*   start;
-    const void* buffer;
-} bitfile;
+#include "structs.h"
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //                                              P R O T O T Y P E S
 //----------------------------------------------------------------------------------------------------------------------------------------------------
+
 const char*              NeAACDecGetErrorMessage(unsigned char errcode);
 unsigned long            NeAACDecGetCapabilities(void);
 NeAACDecHandle           NeAACDecOpen(void);
-NeAACDecConfigurationPtr NeAACDecGetCurrentConfiguration(NeAACDecHandle hDecoder);
-unsigned char            NeAACDecSetConfiguration(NeAACDecHandle hDecoder, NeAACDecConfigurationPtr config);
+NeAACDecConfigurationPtr_t NeAACDecGetCurrentConfiguration(NeAACDecHandle hDecoder);
+unsigned char            NeAACDecSetConfiguration(NeAACDecHandle hDecoder, NeAACDecConfigurationPtr_t config);
 long     NeAACDecInit(NeAACDecHandle hDecoder, unsigned char* buffer, unsigned long buffer_size, unsigned long* samplerate, unsigned char* channels);
 char     NeAACDecInit2(NeAACDecHandle hDecoder, unsigned char* pBuffer, unsigned long SizeOfDecoderSpecificInfo, unsigned long* samplerate,
                        unsigned char* channels);
@@ -290,6 +244,20 @@ uint32_t get_sample_rate(const uint8_t sr_index);
 int8_t   can_decode_ot(const uint8_t object_type);
 void*    faad_malloc(size_t size);
 void     faad_free(void* b);
+void     tns_decode_frame(ic_stream* ics, tns_info* tns, uint8_t sr_index, uint8_t object_type, int32_t* spec, uint16_t frame_len);
+void     tns_encode_frame(ic_stream* ics, tns_info* tns, uint8_t sr_index, uint8_t object_type, int32_t* spec, uint16_t frame_len);
+uint16_t ps_data(ps_info* ps, bitfile* ld, uint8_t* header); /* ps_syntax.c */
+ps_info* ps_init(uint8_t sr_index, uint8_t numTimeSlotsRate); /* ps_dec.c */
+void     ps_free(ps_info* ps);
+uint8_t ps_decode(ps_info* ps, complex_t X_left[38][64], complex_t X_right[38][64]);
+sbr_info* sbrDecodeInit(uint16_t framelength, uint8_t id_aac, uint32_t sample_rate, uint8_t downSampledSBR);
+void      sbrDecodeEnd(sbr_info* sbr);
+void      sbrReset(sbr_info* sbr);
+uint8_t sbrDecodeCoupleFrame(sbr_info* sbr, int32_t* left_chan, int32_t* right_chan, const uint8_t just_seeked, const uint8_t downSampledSBR);
+uint8_t sbrDecodeSingleFrame(sbr_info* sbr, int32_t* channel, const uint8_t just_seeked, const uint8_t downSampledSBR);
+#if(defined(PS_DEC))
+uint8_t sbrDecodeSingleFramePS(sbr_info* sbr, int32_t* left_channel, int32_t* right_channel, const uint8_t just_seeked, const uint8_t downSampledSBR);
+#endif
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //                                              I N L I N E S

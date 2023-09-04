@@ -30,8 +30,6 @@
 
 #include "neaacdec.h"
 
-#include "structs.h"
-
 #ifdef SBR_DEC
 
 #include <string.h>

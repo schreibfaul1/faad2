@@ -29,8 +29,6 @@
 **/
 #include "neaacdec.h"
 
-#include "structs.h"
-
 #ifdef LTP_DEC
 
     #include "filtbank.h"

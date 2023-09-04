@@ -31,8 +31,6 @@
 /* Time/Frequency grid */
 #include "neaacdec.h"
 
-#include "structs.h"
-
 #ifdef SBR_DEC
 
     #include "sbr_syntax.h"

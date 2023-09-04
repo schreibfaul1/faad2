@@ -44,7 +44,6 @@
 #include "neaacdec.h"
 #include "rvlc.h"
 
-#include "structs.h"
 #include "syntax.h"
 #include <stdlib.h>
 

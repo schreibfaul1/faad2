@@ -30,8 +30,6 @@
 
 #include "neaacdec.h"
 #include "mp4.h"
-
-#include "structs.h"
 #include "syntax.h"
 #include <stdlib.h>
 

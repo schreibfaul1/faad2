@@ -29,8 +29,6 @@
 **/
 #include "neaacdec.h"
 #include "is.h"
-
-#include "structs.h"
 #include "syntax.h"
 
 

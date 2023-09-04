@@ -31,7 +31,6 @@
 #ifndef __MDCT_TAB_H__
 #define __MDCT_TAB_H__
 #include "neaacdec.h"
-#include "structs.h"
 
 
 /* 256 (N/4) complex twiddle factors */

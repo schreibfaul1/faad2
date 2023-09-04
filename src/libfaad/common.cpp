@@ -1,5 +1,4 @@
 #include "neaacdec.h"
-#include "structs.h"
 #include "syntax.h"
 #include <stdlib.h>
 

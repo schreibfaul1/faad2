@@ -31,7 +31,7 @@
 #ifndef __RVLC_SCF_H__
 #define __RVLC_SCF_H__
 #include "neaacdec.h"
-#include "structs.h"
+
 #include <stdint.h>
 
 typedef struct {

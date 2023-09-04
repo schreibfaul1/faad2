@@ -30,7 +30,6 @@
 #include "neaacdec.h"
 #include "output.h"
 
-#include "structs.h"
 
 #define DM_MUL FRAC_CONST(0.3203772410170407)    // 1/(1+sqrt(2) + 1/sqrt(2))
 #define RSQRT2 FRAC_CONST(0.7071067811865475244) // 1/sqrt(2)

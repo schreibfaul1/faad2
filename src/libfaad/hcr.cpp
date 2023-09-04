@@ -32,7 +32,6 @@
 
 #include "huffman.h"
 #include "specrec.h"
-#include "structs.h"
 #include <stdlib.h>
 #include <string.h>
 

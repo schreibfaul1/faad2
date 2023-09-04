@@ -10,7 +10,7 @@
 
 NeAACDecHandle hAac;
 NeAACDecFrameInfo frameInfo;
-NeAACDecConfigurationPtr conf;
+NeAACDecConfigurationPtr_t conf;
 bool f_decoderIsInit = false;
 bool f_firstCall = false;
 unsigned long aacSamplerate = 0;

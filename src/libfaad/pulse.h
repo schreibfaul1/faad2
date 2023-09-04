@@ -31,7 +31,7 @@
 #ifndef __PULSE_H__
 #define __PULSE_H__
 #include "neaacdec.h"
-#include "structs.h"
+
 
 uint8_t pulse_decode(ic_stream *ics, int16_t *spec_coef, uint16_t framelen);
 

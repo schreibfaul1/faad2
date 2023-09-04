@@ -39,7 +39,6 @@
 #include "huffman.h"
 #include "pulse.h"
 #include "specrec.h"
-#include "structs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
