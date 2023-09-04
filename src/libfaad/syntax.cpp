@@ -47,35 +47,7 @@
 #include "mp4.h"
 
 /* static function declarations */
-static void    decode_sce_lfe(NeAACDecStruct* hDecoder, NeAACDecFrameInfo* hInfo, bitfile* ld, uint8_t id_syn_ele);
-static void    decode_cpe(NeAACDecStruct* hDecoder, NeAACDecFrameInfo* hInfo, bitfile* ld, uint8_t id_syn_ele);
-static uint8_t single_lfe_channel_element(NeAACDecStruct* hDecoder, bitfile* ld, uint8_t channel, uint8_t* tag);
-static uint8_t channel_pair_element(NeAACDecStruct* hDecoder, bitfile* ld, uint8_t channel, uint8_t* tag);
-static uint16_t data_stream_element(NeAACDecStruct* hDecoder, bitfile* ld);
-static uint8_t  program_config_element(program_config* pce, bitfile* ld);
-static uint8_t  fill_element(NeAACDecStruct* hDecoder, bitfile* ld, drc_info* drc
-#ifdef SBR_DEC
-                            ,
-                            uint8_t sbr_ele
-#endif
-);
-static uint8_t individual_channel_stream(NeAACDecStruct* hDecoder, element* ele, bitfile* ld, ic_stream* ics, uint8_t scal_flag, int16_t* spec_data);
-static uint8_t ics_info(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* ld, uint8_t common_window);
-static uint8_t section_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* ld);
-static uint8_t scale_factor_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* ld);
-static uint8_t  spectral_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* ld, int16_t* spectral_data);
-static uint16_t extension_payload(bitfile* ld, drc_info* drc, uint16_t count);
-static uint8_t  pulse_data(ic_stream* ics, pulse_info* pul, bitfile* ld);
-static void     tns_data(ic_stream* ics, tns_info* tns, bitfile* ld);
-#ifdef LTP_DEC
-static uint8_t ltp_data(NeAACDecStruct* hDecoder, ic_stream* ics, ltp_info* ltp, bitfile* ld);
-#endif
-static uint8_t adts_fixed_header(adts_header* adts, bitfile* ld);
-static void    adts_variable_header(adts_header* adts, bitfile* ld);
-static void    adts_error_check(adts_header* adts, bitfile* ld);
-static uint8_t dynamic_range_info(bitfile* ld, drc_info* drc);
-static uint8_t excluded_channels(bitfile* ld, drc_info* drc);
-static uint8_t side_info(NeAACDecStruct* hDecoder, element* ele, bitfile* ld, ic_stream* ics, uint8_t scal_flag);
+
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 /* Table 4.4.1 */
@@ -347,12 +319,7 @@ void raw_data_block(NeAACDecStruct* hDecoder, NeAACDecFrameInfo* hInfo, bitfile*
                 /* one sbr_info describes a channel_element not a channel! */
                 /* if we encounter SBR data here: error */
                 /* SBR data will be read directly in the SCE/LFE/CPE element */
-                if((hInfo->error = fill_element(hDecoder, ld, drc
-#ifdef SBR_DEC
-                                                ,
-                                                INVALID_SBR_ELEMENT
-#endif
-                                                )) > 0)
+                if((hInfo->error = fill_element(hDecoder, ld, drc, INVALID_SBR_ELEMENT)) > 0)
                     return;
                 break;
             }
@@ -639,12 +606,7 @@ static uint16_t data_stream_element(NeAACDecStruct* hDecoder, bitfile* ld) {
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 /* Table 4.4.11 */
-static uint8_t fill_element(NeAACDecStruct* hDecoder, bitfile* ld, drc_info* drc
-#ifdef SBR_DEC
-                            ,
-                            uint8_t sbr_ele
-#endif
-) {
+static uint8_t fill_element(NeAACDecStruct* hDecoder, bitfile* ld, drc_info* drc, uint8_t sbr_ele) {
     uint16_t count;
 #ifdef SBR_DEC
     uint8_t bs_extension_type;
@@ -738,28 +700,23 @@ static uint8_t side_info(NeAACDecStruct* hDecoder, element* ele, bitfile* ld, ic
         /* get gain control data */
         if((ics->gain_control_data_present = faad_get1bit(ld)) & 1) { return 1; }
     }
-
 #ifdef ERROR_RESILIENCE
     if(hDecoder->aacSpectralDataResilienceFlag) {
         ics->length_of_reordered_spectral_data = (uint16_t)faad_getbits(ld, 14);
-
         if(hDecoder->channelConfiguration == 2) {
             if(ics->length_of_reordered_spectral_data > 6144) ics->length_of_reordered_spectral_data = 6144;
         }
         else {
             if(ics->length_of_reordered_spectral_data > 12288) ics->length_of_reordered_spectral_data = 12288;
         }
-
         ics->length_of_longest_codeword = (uint8_t)faad_getbits(ld, 6);
         if(ics->length_of_longest_codeword >= 49) ics->length_of_longest_codeword = 49;
     }
-
     /* RVLC spectral data is put here */
     if(hDecoder->aacScalefactorDataResilienceFlag) {
         if((result = rvlc_decode_scale_factors(ics, ld)) > 0) return result;
     }
 #endif
-
     return 0;
 }
 
@@ -770,11 +727,9 @@ static uint8_t individual_channel_stream(NeAACDecStruct* hDecoder, element* ele,
 
     result = side_info(hDecoder, ele, ld, ics, scal_flag);
     if(result > 0) return result;
-
     if(hDecoder->object_type >= ER_OBJECT_START) {
         if(ics->tns_data_present) tns_data(ics, &(ics->tns), ld);
     }
-
 #ifdef ERROR_RESILIENCE
     if(hDecoder->aacSpectralDataResilienceFlag) {
         /* error resilient spectral data decoding */
@@ -787,7 +742,6 @@ static uint8_t individual_channel_stream(NeAACDecStruct* hDecoder, element* ele,
 #ifdef ERROR_RESILIENCE
     }
 #endif
-
     /* pulse coding reconstruction */
     if(ics->pulse_data_present) {
         if(ics->window_sequence != EIGHT_SHORT_SEQUENCE) {
@@ -795,7 +749,6 @@ static uint8_t individual_channel_stream(NeAACDecStruct* hDecoder, element* ele,
         }
         else { return 2; /* pulse coding not allowed for short blocks */ }
     }
-
     return 0;
 }
 
@@ -809,16 +762,9 @@ static uint8_t section_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* l
     else
         sect_bits = 5;
     sect_esc_val = (1 << sect_bits) - 1;
-
-#if 0
-    printf("\ntotal sfb %d\n", ics->max_sfb);
-    printf("   sect    top     cb\n");
-#endif
-
     for(g = 0; g < ics->num_window_groups; g++) {
         uint8_t k = 0;
         uint8_t i = 0;
-
         while(k < ics->max_sfb) {
 #ifdef ERROR_RESILIENCE
             uint8_t vcb11 = 0;
@@ -827,27 +773,15 @@ static uint8_t section_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* l
             uint8_t  sect_len_incr;
             uint16_t sect_len = 0;
             uint8_t  sect_cb_bits = 4;
-
-            /* if "faad_getbits" detects error and returns "0", "k" is never
-               incremented and we cannot leave the while loop */
+            /* if "faad_getbits" detects error and returns "0", "k" is never incremented and we cannot leave the while loop */
             if(ld->error != 0) return 14;
-
 #ifdef ERROR_RESILIENCE
             if(hDecoder->aacSectionDataResilienceFlag) sect_cb_bits = 5;
 #endif
-
             ics->sect_cb[g][i] = (uint8_t)faad_getbits(ld, sect_cb_bits);
-
             if(ics->sect_cb[g][i] == 12) return 32;
-
-#if 0
-            printf("%d\n", ics->sect_cb[g][i]);
-#endif
-
             if(ics->sect_cb[g][i] == NOISE_HCB) ics->noise_used = 1;
-
             if(ics->sect_cb[g][i] == INTENSITY_HCB2 || ics->sect_cb[g][i] == INTENSITY_HCB) ics->is_used = 1;
-
 #ifdef ERROR_RESILIENCE
             if(hDecoder->aacSectionDataResilienceFlag) {
                 if((ics->sect_cb[g][i] == 11) || ((ics->sect_cb[g][i] >= 16) && (ics->sect_cb[g][i] <= 32))) { vcb11 = 1; }
@@ -865,19 +799,9 @@ static uint8_t section_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* l
                 sect_len += sect_len_incr;
                 sect_len_incr = (uint8_t)faad_getbits(ld, sect_bits);
             }
-
             sect_len += sect_len_incr;
-
             ics->sect_start[g][i] = k;
             ics->sect_end[g][i] = k + sect_len;
-
-#if 0
-            printf("%d\n", ics->sect_start[g][i]);
-#endif
-#if 0
-            printf("%d\n", ics->sect_end[g][i]);
-#endif
-
             if(ics->window_sequence == EIGHT_SHORT_SEQUENCE) {
                 if(k + sect_len > 8 * 15) return 15;
                 if(i >= 8 * 15) return 15;
@@ -886,38 +810,16 @@ static uint8_t section_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* l
                 if(k + sect_len > MAX_SFB) return 15;
                 if(i >= MAX_SFB) return 15;
             }
-
             for(sfb = k; sfb < k + sect_len; sfb++) {
                 ics->sfb_cb[g][sfb] = ics->sect_cb[g][i];
-#if 0
-                printf("%d\n", ics->sfb_cb[g][sfb]);
-#endif
             }
-
-#if 0
-            printf(" %6d %6d %6d\n",
-                i,
-                ics->sect_end[g][i],
-                ics->sect_cb[g][i]);
-#endif
-
             k += sect_len;
             i++;
         }
         ics->num_sec[g] = i;
-
-        /* the sum of all sect_len_incr elements for a given window
-         * group shall equal max_sfb */
+        /* the sum of all sect_len_incr elements for a given window group shall equal max_sfb */
         if(k != ics->max_sfb) { return 32; }
-#if 0
-        printf("%d\n", ics->num_sec[g]);
-#endif
     }
-
-#if 0
-    printf("\n");
-#endif
-
     return 0;
 }
 
@@ -957,10 +859,8 @@ static uint8_t decode_scale_factors(ic_stream* ics, bitfile* ld) {
 #ifdef SF_PRINT
                 printf("%d\n", ics->scale_factors[g][sfb]);
 #endif
-
                 break;
             case NOISE_HCB: /* noise books */
-
                 /* decode noise energy */
                 if(noise_pcm_flag) {
                     noise_pcm_flag = 0;
@@ -975,7 +875,6 @@ static uint8_t decode_scale_factors(ic_stream* ics, bitfile* ld) {
 #ifdef SF_PRINT
                 printf("%d\n", ics->scale_factors[g][sfb]);
 #endif
-
                 break;
             default: /* spectral books */
 
@@ -991,12 +890,10 @@ static uint8_t decode_scale_factors(ic_stream* ics, bitfile* ld) {
 #ifdef SF_PRINT
                 printf("%d\n", ics->scale_factors[g][sfb]);
 #endif
-
                 break;
             }
         }
     }
-
     return 0;
 }
 
@@ -1061,29 +958,13 @@ static void tns_data(ic_stream* ics, tns_info* tns, bitfile* ld) {
 
         for(filt = 0; filt < tns->n_filt[w]; filt++) {
             tns->length[w][filt] = (uint8_t)faad_getbits(ld, length_bits);
-#if 0
-            printf("%d\n", tns->length[w][filt]);
-#endif
             tns->order[w][filt] = (uint8_t)faad_getbits(ld, order_bits);
-#if 0
-            printf("%d\n", tns->order[w][filt]);
-#endif
             if(tns->order[w][filt]) {
                 tns->direction[w][filt] = faad_get1bit(ld);
-#if 0
-                printf("%d\n", tns->direction[w][filt]);
-#endif
                 tns->coef_compress[w][filt] = faad_get1bit(ld);
-#if 0
-                printf("%d\n", tns->coef_compress[w][filt]);
-#endif
-
                 coef_bits = start_coef_bits - tns->coef_compress[w][filt];
                 for(i = 0; i < tns->order[w][filt]; i++) {
                     tns->coef[w][filt][i] = (uint8_t)faad_getbits(ld, coef_bits);
-#if 0
-                    printf("%d\n", tns->coef[w][filt][i]);
-#endif
                 }
             }
         }
@@ -1128,7 +1009,6 @@ static uint8_t ltp_data(NeAACDecStruct* hDecoder, ic_stream* ics, ltp_info* ltp,
 
         for(sfb = 0; sfb < ltp->last_band; sfb++) { ltp->long_used[sfb] = faad_get1bit(ld); }
     }
-
     return 0;
 }
 #endif

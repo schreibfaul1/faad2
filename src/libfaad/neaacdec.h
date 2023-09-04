@@ -274,33 +274,63 @@ uint8_t adts_frame(adts_header* adts, bitfile* ld);
 void    get_adif_header(adif_header* adif, bitfile* ld);
 void    raw_data_block(NeAACDecStruct* hDecoder, NeAACDecFrameInfo* hInfo, bitfile* ld, program_config* pce, drc_info* drc);
 uint8_t reordered_spectral_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* ld, int16_t* spectral_data);
-uint32_t    faad_latm_frame(latm_header* latm, bitfile* ld);
-qmfa_info*  qmfa_init(uint8_t channels);
-void        qmfa_end(qmfa_info* qmfa);
-qmfs_info*  qmfs_init(uint8_t channels);
-void        qmfs_end(qmfs_info* qmfs);
-void        sbr_qmf_analysis_32(sbr_info* sbr, qmfa_info* qmfa, const int32_t* input, complex_t X[MAX_NTSRHFG][64], uint8_t offset, uint8_t kx);
-void        sbr_qmf_synthesis_32(sbr_info* sbr, qmfs_info* qmfs, complex_t X[MAX_NTSRHFG][64], int32_t* output);
-void        sbr_qmf_synthesis_64(sbr_info* sbr, qmfs_info* qmfs, complex_t X[MAX_NTSRHFG][64], int32_t* output);
-void        cfftf(cfft_info* cfft, complex_t* c);
-void        cfftb(cfft_info* cfft, complex_t* c);
-cfft_info*  cffti(uint16_t n);
-void        cfftu(cfft_info* cfft);
-void        is_decode(ic_stream* ics, ic_stream* icsr, int32_t* l_spec, int32_t* r_spec, uint16_t frame_len);
-static void passf2pos(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa);
-static void passf2neg(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa);
-static void passf3(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2,
-                   const int8_t isign);
-static void passf4pos(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2,
-                      const complex_t* wa3);
-static void passf4neg(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2,
-                      const complex_t* wa3);
-static void passf5(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2,
-                   const complex_t* wa3, const complex_t* wa4, const int8_t isign);
-static void cffti1(uint16_t n, complex_t* wa, uint16_t* ifac);
-drc_info*   drc_init(int32_t cut, int32_t boost);
-void        drc_end(drc_info* drc);
-void        drc_decode(drc_info* drc, int32_t* spec);
+uint32_t        faad_latm_frame(latm_header* latm, bitfile* ld);
+qmfa_info*      qmfa_init(uint8_t channels);
+void            qmfa_end(qmfa_info* qmfa);
+qmfs_info*      qmfs_init(uint8_t channels);
+void            qmfs_end(qmfs_info* qmfs);
+void            sbr_qmf_analysis_32(sbr_info* sbr, qmfa_info* qmfa, const int32_t* input, complex_t X[MAX_NTSRHFG][64], uint8_t offset, uint8_t kx);
+void            sbr_qmf_synthesis_32(sbr_info* sbr, qmfs_info* qmfs, complex_t X[MAX_NTSRHFG][64], int32_t* output);
+void            sbr_qmf_synthesis_64(sbr_info* sbr, qmfs_info* qmfs, complex_t X[MAX_NTSRHFG][64], int32_t* output);
+void            cfftf(cfft_info* cfft, complex_t* c);
+void            cfftb(cfft_info* cfft, complex_t* c);
+cfft_info*      cffti(uint16_t n);
+void            cfftu(cfft_info* cfft);
+void            is_decode(ic_stream* ics, ic_stream* icsr, int32_t* l_spec, int32_t* r_spec, uint16_t frame_len);
+static void     passf2pos(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa);
+static void     passf2neg(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa);
+static void     passf3(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2,
+                       const int8_t isign);
+static void     passf4pos(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2,
+                          const complex_t* wa3);
+static void     passf4neg(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2,
+                          const complex_t* wa3);
+static void     passf5(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2,
+                       const complex_t* wa3, const complex_t* wa4, const int8_t isign);
+static void     cffti1(uint16_t n, complex_t* wa, uint16_t* ifac);
+drc_info*       drc_init(int32_t cut, int32_t boost);
+void            drc_end(drc_info* drc);
+void            drc_decode(drc_info* drc, int32_t* spec);
+static void     tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_compress, uint8_t* coef, int32_t* a);
+static void     tns_ar_filter(int32_t* spectrum, uint16_t size, int8_t inc, int32_t* lpc, uint8_t order);
+static void     tns_ma_filter(int32_t* spectrum, uint16_t size, int8_t inc, int32_t* lpc, uint8_t order);
+void            dct4_kernel(int32_t* in_real, int32_t* in_imag, int32_t* out_real, int32_t* out_imag);
+void            DCT4_32(int32_t* y, int32_t* x);
+void            DST4_32(int32_t* y, int32_t* x);
+static void     decode_sce_lfe(NeAACDecStruct* hDecoder, NeAACDecFrameInfo* hInfo, bitfile* ld, uint8_t id_syn_ele);
+static void     decode_cpe(NeAACDecStruct* hDecoder, NeAACDecFrameInfo* hInfo, bitfile* ld, uint8_t id_syn_ele);
+static uint8_t  single_lfe_channel_element(NeAACDecStruct* hDecoder, bitfile* ld, uint8_t channel, uint8_t* tag);
+static uint8_t  channel_pair_element(NeAACDecStruct* hDecoder, bitfile* ld, uint8_t channel, uint8_t* tag);
+static uint16_t data_stream_element(NeAACDecStruct* hDecoder, bitfile* ld);
+static uint8_t  program_config_element(program_config* pce, bitfile* ld);
+static uint8_t  fill_element(NeAACDecStruct* hDecoder, bitfile* ld, drc_info* drc, uint8_t sbr_ele);
+static uint8_t  individual_channel_stream(NeAACDecStruct* hDecoder, element* ele, bitfile* ld, ic_stream* ics, uint8_t scal_flag, int16_t* spec_data);
+static uint8_t  ics_info(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* ld, uint8_t common_window);
+static uint8_t  section_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* ld);
+static uint8_t  scale_factor_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* ld);
+static uint8_t  spectral_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* ld, int16_t* spectral_data);
+static uint16_t extension_payload(bitfile* ld, drc_info* drc, uint16_t count);
+static uint8_t  pulse_data(ic_stream* ics, pulse_info* pul, bitfile* ld);
+static void     tns_data(ic_stream* ics, tns_info* tns, bitfile* ld);
+#ifdef LTP_DEC
+static uint8_t ltp_data(NeAACDecStruct* hDecoder, ic_stream* ics, ltp_info* ltp, bitfile* ld);
+#endif
+static uint8_t adts_fixed_header(adts_header* adts, bitfile* ld);
+static void    adts_variable_header(adts_header* adts, bitfile* ld);
+static void    adts_error_check(adts_header* adts, bitfile* ld);
+static uint8_t dynamic_range_info(bitfile* ld, drc_info* drc);
+static uint8_t excluded_channels(bitfile* ld, drc_info* drc);
+static uint8_t side_info(NeAACDecStruct* hDecoder, element* ele, bitfile* ld, ic_stream* ics, uint8_t scal_flag);
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //                                              I N L I N E S
