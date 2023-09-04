@@ -169,6 +169,7 @@ typedef int32_t complex_t[2];
 #define VCB11_FIRST          16
 #define VCB11_LAST           31
 #define NOISE_OFFSET         90
+#define NEGATE_IPD_MASK      (0x1000)
 
 #define bit2byte(a)         ((a + 7) >> BYTE_NUMBIT_LD)
 #define FAAD_MIN_STREAMSIZE 768 /* 6144 bits/channel */
@@ -185,6 +186,8 @@ typedef int32_t complex_t[2];
 #define COEF_CONST(A)       (((A) >= 0) ? ((int32_t)((A) * (COEF_PRECISION) + 0.5)) : ((int32_t)((A) * (COEF_PRECISION)-0.5)))
 #define FRAC_CONST(A) \
     (((A) == 1.00) ? ((int32_t)FRAC_MAX) : (((A) >= 0) ? ((int32_t)((A) * (FRAC_PRECISION) + 0.5)) : ((int32_t)((A) * (FRAC_PRECISION)-0.5))))
+#define DECAY_SLOPE       FRAC_CONST(0.05)
+#define COEF_SQRT2        COEF_CONST(1.4142135623731)
 #define Q2_BITS           22
 #define Q2_PRECISION      (1 << Q2_BITS)
 #define Q2_CONST(A)       (((A) >= 0) ? ((int32_t)((A) * (Q2_PRECISION) + 0.5)) : ((int32_t)((A) * (Q2_PRECISION)-0.5)))
@@ -394,6 +397,25 @@ int8_t huffman_spectral_data_2(uint8_t cb, bits_t* ld, int16_t* sp);
 static void gen_rand_vector(int32_t* spec, int16_t scale_factor, uint16_t size, uint8_t sub, uint32_t* __r1, uint32_t* __r2);
 void        pns_decode(ic_stream* ics_left, ic_stream* ics_right, int32_t* spec_left, int32_t* spec_right, uint16_t frame_len, uint8_t channel_pair,
                        uint8_t object_type, uint32_t* __r1, uint32_t* __r2);
+void        ms_decode(ic_stream* ics, ic_stream* icsr, int32_t* l_spec, int32_t* r_spec, uint16_t frame_len);
+static void ps_data_decode(ps_info* ps);
+static hyb_info* hybrid_init(uint8_t numTimeSlotsRate);
+static void      channel_filter2(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, complex_t* buffer, complex_t** X_hybrid);
+static void inline DCT3_4_unscaled(int32_t* y, int32_t* x);
+static void   channel_filter8(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, complex_t* buffer, complex_t** X_hybrid);
+static void   hybrid_analysis(hyb_info* hyb, complex_t X[32][64], complex_t X_hybrid[32][32], uint8_t use34, uint8_t numTimeSlotsRate);
+static void   hybrid_synthesis(hyb_info* hyb, complex_t X[32][64], complex_t X_hybrid[32][32], uint8_t use34, uint8_t numTimeSlotsRate);
+static int8_t delta_clip(int8_t i, int8_t min, int8_t max);
+static void   delta_decode(uint8_t enable, int8_t* index, int8_t* index_prev, uint8_t dt_flag, uint8_t nr_par, uint8_t stride, int8_t min_index,
+                           int8_t max_index);
+static void   delta_modulo_decode(uint8_t enable, int8_t* index, int8_t* index_prev, uint8_t dt_flag, uint8_t nr_par, uint8_t stride,
+                                  int8_t and_modulo);
+static void   map20indexto34(int8_t* index, uint8_t bins);
+static void   ps_data_decode(ps_info* ps);
+static void   ps_decorrelate(ps_info* ps, complex_t X_left[38][64], complex_t X_right[38][64], complex_t X_hybrid_left[32][32],
+                             complex_t X_hybrid_right[32][32]);
+static void   ps_mix_phase(ps_info* ps, complex_t X_left[38][64], complex_t X_right[38][64], complex_t X_hybrid_left[32][32],
+                           complex_t X_hybrid_right[32][32]);
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //                                              I N L I N E S

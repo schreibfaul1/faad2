@@ -689,4 +689,18 @@ typedef struct {
     bits_t   bits;
 } codeword_t;
 
+typedef struct {
+    uint8_t frame_len;
+    uint8_t resolution20[3];
+    uint8_t resolution34[5];
+    complex_t*  work;
+    complex_t** buffer;
+    complex_t** temp;
+} hyb_info;
+
+
+
+
+
+
 #endif
