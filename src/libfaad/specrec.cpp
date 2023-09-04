@@ -35,7 +35,6 @@
    - applying scalefactors
 */
 #include "neaacdec.h"
-#include "lt_predict.h"
 #include <stdlib.h>
 #include <string.h>
 

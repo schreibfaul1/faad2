@@ -4791,7 +4791,530 @@ uint8_t ps_decode(ps_info* ps, complex_t X_left[38][64], complex_t X_right[38][6
 
     return 0;
 }
+#endif
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+uint8_t is_ltp_ot(uint8_t object_type) { /* check if the object type is an object type that can have LTP */
+    #ifdef LTP_DEC
+    if((object_type == LTP)
+        #ifdef ERROR_RESILIENCE
+       || (object_type == ER_LTP)
+        #endif
+        #ifdef LD_DEC
+       || (object_type == LD)
+        #endif
+    ) {
+        return 1;
+    }
+    #endif
+    return 0;
+}
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+void lt_prediction(ic_stream* ics, ltp_info* ltp, int32_t* spec, int16_t* lt_pred_stat, fb_info* fb, uint8_t win_shape, uint8_t win_shape_prev,
+                   uint8_t sr_index, uint8_t object_type, uint16_t frame_len) {
+    uint8_t  sfb;
+    uint16_t bin, i, num_samples;
+    int32_t  x_est[2048];
+    int32_t  X_est[2048];
+
+    if(ics->window_sequence != EIGHT_SHORT_SEQUENCE) {
+        if(ltp->data_present) {
+            num_samples = frame_len << 1;
+            for(i = 0; i < num_samples; i++) {
+                /* The extra lookback M (N/2 for LD, 0 for LTP) is handled in the buffer updating */
+                /* lt_pred_stat is a 16 bit int, multiplied with the fixed point real this gives a real for x_est */
+                x_est[i] = (int32_t)lt_pred_stat[num_samples + i - ltp->lag] * codebook[ltp->coef];
+            }
+            filter_bank_ltp(fb, ics->window_sequence, win_shape, win_shape_prev, x_est, X_est, object_type, frame_len);
+            tns_encode_frame(ics, &(ics->tns), sr_index, object_type, X_est, frame_len);
+            for(sfb = 0; sfb < ltp->last_band; sfb++) {
+                if(ltp->long_used[sfb]) {
+                    uint16_t low = ics->swb_offset[sfb];
+                    uint16_t high = min(ics->swb_offset[sfb + 1], ics->swb_offset_max);
+                    for(bin = low; bin < high; bin++) { spec[bin] += X_est[bin]; }
+                }
+            }
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+static inline int16_t real_to_int16(int32_t sig_in) {
+    if(sig_in >= 0) {
+        sig_in += (1 << (REAL_BITS - 1));
+        if(sig_in >= REAL_CONST(32768)) return 32767;
+    }
+    else {
+        sig_in += -(1 << (REAL_BITS - 1));
+        if(sig_in <= REAL_CONST(-32768)) return -32768;
+    }
+    return (sig_in >> REAL_BITS);
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+void lt_update_state(int16_t* lt_pred_stat, int32_t* time, int32_t* overlap, uint16_t frame_len, uint8_t object_type) {
+    uint16_t i;
+
+    /*
+     * The reference point for index i and the content of the buffer lt_pred_stat are arranged so that lt_pred_stat(0 ... N/2 - 1) contains the
+     * last aliased half window from the IMDCT, and lt_pred_stat(N/2 ... N-1) is always all zeros. The rest of lt_pred_stat (i<0) contains the
+     * previous fully reconstructed time domain samples, i.e., output of the decoder.
+     * These values are shifted up by N*2 to avoid (i<0)
+     * For the LD object type an extra 512 samples lookback is accomodated here.
+     */
+    #ifdef LD_DEC
+    if(object_type == LD) {
+        for(i = 0; i < frame_len; i++) {
+            lt_pred_stat[i] /* extra 512 */ = lt_pred_stat[i + frame_len];
+            lt_pred_stat[frame_len + i] = lt_pred_stat[i + (frame_len * 2)];
+            lt_pred_stat[(frame_len * 2) + i] = real_to_int16(time[i]);
+            lt_pred_stat[(frame_len * 3) + i] = real_to_int16(overlap[i]);
+        }
+    }
+    else {
+    #endif
+        for(i = 0; i < frame_len; i++) {
+            lt_pred_stat[i] = lt_pred_stat[i + frame_len];
+            lt_pred_stat[frame_len + i] = real_to_int16(time[i]);
+            lt_pred_stat[(frame_len * 2) + i] = real_to_int16(overlap[i]);
+        }
+    #ifdef LD_DEC
+    }
+    #endif
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+mdct_info* faad_mdct_init(uint16_t N) {
+    mdct_info* mdct = (mdct_info*)faad_malloc(sizeof(mdct_info));
+    assert(N % 8 == 0);
+    mdct->N = N;
+    /* NOTE: For "small framelengths" the coefficients need to be scaled by sqrt("(nearest power of 2) > N" / N) */
+    /* RE(mdct->sincos[k]) = scale*(int32_t)(cos(2.0*M_PI*(k+1./8.) / (int32_t)N));
+     * IM(mdct->sincos[k]) = scale*(int32_t)(sin(2.0*M_PI*(k+1./8.) / (int32_t)N)); */
+    /* scale is 1 for fixed point, sqrt(N) for floating point */
+    switch(N) {
+    case 2048: mdct->sincos = (complex_t*)mdct_tab_2048; break;
+    case 256: mdct->sincos = (complex_t*)mdct_tab_256; break;
+#ifdef LD_DEC
+    case 1024: mdct->sincos = (complex_t*)mdct_tab_1024; break;
+#endif
+#ifdef ALLOW_SMALL_FRAMELENGTH
+    case 1920: mdct->sincos = (complex_t*)mdct_tab_1920; break;
+    case 240: mdct->sincos = (complex_t*)mdct_tab_240; break;
+    #ifdef LD_DEC
+    case 960: mdct->sincos = (complex_t*)mdct_tab_960; break;
+    #endif
+#endif
+    }
+
+    /* initialise fft */
+    mdct->cfft = cffti(N / 4);
+
+#ifdef PROFILE
+    mdct->cycles = 0;
+    mdct->fft_cycles = 0;
+#endif
+
+    return mdct;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+void faad_mdct_end(mdct_info* mdct) {
+    if(mdct != NULL) {
+#ifdef PROFILE
+        printf("MDCT[%.4d]:         %I64d cycles\n", mdct->N, mdct->cycles);
+        printf("CFFT[%.4d]:         %I64d cycles\n", mdct->N / 4, mdct->fft_cycles);
+#endif
+        cfftu(mdct->cfft);
+        faad_free(mdct);
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+void faad_imdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out) {
+    uint16_t k;
+    complex_t x;
+#ifdef ALLOW_SMALL_FRAMELENGTH
+    int32_t scale, b_scale = 0;
+#endif
+    complex_t  Z1[512];
+    complex_t* sincos = mdct->sincos;
+    uint16_t N = mdct->N;
+    uint16_t N2 = N >> 1;
+    uint16_t N4 = N >> 2;
+    uint16_t N8 = N >> 3;
+
+#ifdef PROFILE
+    int64_t count1, count2 = faad_get_ts();
+#endif
+
+#ifdef ALLOW_SMALL_FRAMELENGTH
+    /* detect non-power of 2 */
+    if(N & (N - 1)) {
+        /* adjust scale for non-power of 2 MDCT */
+        /* 2048/1920 */
+        b_scale = 1;
+        scale = COEF_CONST(1.0666666666666667);
+    }
+#endif
+    /* pre-IFFT complex multiplication */
+    for(k = 0; k < N4; k++) { ComplexMult(&IM(Z1[k]), &RE(Z1[k]), X_in[2 * k], X_in[N2 - 1 - 2 * k], RE(sincos[k]), IM(sincos[k])); }
+
+#ifdef PROFILE
+    count1 = faad_get_ts();
+#endif
+
+    /* complex IFFT, any non-scaling FFT can be used here */
+    cfftb(mdct->cfft, Z1);
+
+#ifdef PROFILE
+    count1 = faad_get_ts() - count1;
+#endif
+    /* post-IFFT complex multiplication */
+    for(k = 0; k < N4; k++) {
+        RE(x) = RE(Z1[k]);
+        IM(x) = IM(Z1[k]);
+        ComplexMult(&IM(Z1[k]), &RE(Z1[k]), IM(x), RE(x), RE(sincos[k]), IM(sincos[k]));
+#ifdef ALLOW_SMALL_FRAMELENGTH
+        /* non-power of 2 MDCT scaling */
+        if(b_scale) {
+            RE(Z1[k]) = MUL_C(RE(Z1[k]), scale);
+            IM(Z1[k]) = MUL_C(IM(Z1[k]), scale);
+        }
+#endif
+    }
+    /* reordering */
+    for(k = 0; k < N8; k += 2) {
+        X_out[2 * k] = IM(Z1[N8 + k]);
+        X_out[2 + 2 * k] = IM(Z1[N8 + 1 + k]);
+        X_out[1 + 2 * k] = -RE(Z1[N8 - 1 - k]);
+        X_out[3 + 2 * k] = -RE(Z1[N8 - 2 - k]);
+        X_out[N4 + 2 * k] = RE(Z1[k]);
+        X_out[N4 + +2 + 2 * k] = RE(Z1[1 + k]);
+        X_out[N4 + 1 + 2 * k] = -IM(Z1[N4 - 1 - k]);
+        X_out[N4 + 3 + 2 * k] = -IM(Z1[N4 - 2 - k]);
+        X_out[N2 + 2 * k] = RE(Z1[N8 + k]);
+        X_out[N2 + +2 + 2 * k] = RE(Z1[N8 + 1 + k]);
+        X_out[N2 + 1 + 2 * k] = -IM(Z1[N8 - 1 - k]);
+        X_out[N2 + 3 + 2 * k] = -IM(Z1[N8 - 2 - k]);
+        X_out[N2 + N4 + 2 * k] = -IM(Z1[k]);
+        X_out[N2 + N4 + 2 + 2 * k] = -IM(Z1[1 + k]);
+        X_out[N2 + N4 + 1 + 2 * k] = RE(Z1[N4 - 1 - k]);
+        X_out[N2 + N4 + 3 + 2 * k] = RE(Z1[N4 - 2 - k]);
+    }
+#ifdef PROFILE
+    count2 = faad_get_ts() - count2;
+    mdct->fft_cycles += count1;
+    mdct->cycles += (count2 - count1);
+#endif
+}
+
+#ifdef LTP_DEC
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+void faad_mdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out) {
+    uint16_t k;
+    complex_t  x;
+    complex_t  Z1[512];
+    complex_t* sincos = mdct->sincos;
+    uint16_t N = mdct->N;
+    uint16_t N2 = N >> 1;
+    uint16_t N4 = N >> 2;
+    uint16_t N8 = N >> 3;
+
+     int32_t scale = REAL_CONST(4.0 / N);
+    #ifdef ALLOW_SMALL_FRAMELENGTH
+    /* detect non-power of 2 */
+    if(N & (N - 1)) {
+        /* adjust scale for non-power of 2 MDCT */
+        /* *= sqrt(2048/1920) */
+        scale = MUL_C(scale, COEF_CONST(1.0327955589886444));
+    }
+    #endif
+    /* pre-FFT complex multiplication */
+    for(k = 0; k < N8; k++) {
+        uint16_t n = k << 1;
+        RE(x) = X_in[N - N4 - 1 - n] + X_in[N - N4 + n];
+        IM(x) = X_in[N4 + n] - X_in[N4 - 1 - n];
+        ComplexMult(&RE(Z1[k]), &IM(Z1[k]), RE(x), IM(x), RE(sincos[k]), IM(sincos[k]));
+        RE(Z1[k]) = MUL_R(RE(Z1[k]), scale);
+        IM(Z1[k]) = MUL_R(IM(Z1[k]), scale);
+        RE(x) = X_in[N2 - 1 - n] - X_in[n];
+        IM(x) = X_in[N2 + n] + X_in[N - 1 - n];
+        ComplexMult(&RE(Z1[k + N8]), &IM(Z1[k + N8]), RE(x), IM(x), RE(sincos[k + N8]), IM(sincos[k + N8]));
+        RE(Z1[k + N8]) = MUL_R(RE(Z1[k + N8]), scale);
+        IM(Z1[k + N8]) = MUL_R(IM(Z1[k + N8]), scale);
+    }
+    /* complex FFT, any non-scaling FFT can be used here  */
+    cfftf(mdct->cfft, Z1);
+    /* post-FFT complex multiplication */
+    for(k = 0; k < N4; k++) {
+        uint16_t n = k << 1;
+        ComplexMult(&RE(x), &IM(x), RE(Z1[k]), IM(Z1[k]), RE(sincos[k]), IM(sincos[k]));
+        X_out[n] = -RE(x);
+        X_out[N2 - 1 - n] = IM(x);
+        X_out[N2 + n] = -IM(x);
+        X_out[N - 1 - n] = RE(x);
+    }
+}
+#endif
+
+/* defines if an object type can be decoded by this library or not */
+static uint8_t ObjectTypesTable[32] = {
+    0, /*  0 NULL */
+    0, /*  1 AAC Main */
+    1, /*  2 AAC LC */
+    0, /*  3 AAC SSR */
+#ifdef LTP_DEC
+    1, /*  4 AAC LTP */
+#else
+    0, /*  4 AAC LTP */
+#endif
+#ifdef SBR_DEC
+    1, /*  5 SBR */
+#else
+    0, /*  5 SBR */
+#endif
+    0, /*  6 AAC Scalable */
+    0, /*  7 TwinVQ */
+    0, /*  8 CELP */
+    0, /*  9 HVXC */
+    0, /* 10 Reserved */
+    0, /* 11 Reserved */
+    0, /* 12 TTSI */
+    0, /* 13 Main synthetic */
+    0, /* 14 Wavetable synthesis */
+    0, /* 15 General MIDI */
+    0, /* 16 Algorithmic Synthesis and Audio FX */
+
+/* MPEG-4 Version 2 */
+#ifdef ERROR_RESILIENCE
+    1, /* 17 ER AAC LC */
+    0, /* 18 (Reserved) */
+    #ifdef LTP_DEC
+    1, /* 19 ER AAC LTP */
+    #else
+    0, /* 19 ER AAC LTP */
+    #endif
+    0, /* 20 ER AAC scalable */
+    0, /* 21 ER TwinVQ */
+    0, /* 22 ER BSAC */
+    #ifdef LD_DEC
+    1, /* 23 ER AAC LD */
+    #else
+    0, /* 23 ER AAC LD */
+    #endif
+    0, /* 24 ER CELP */
+    0, /* 25 ER HVXC */
+    0, /* 26 ER HILN */
+    0, /* 27 ER Parametric */
+#else  /* No ER defined */
+    0, /* 17 ER AAC LC */
+    0, /* 18 (Reserved) */
+    0, /* 19 ER AAC LTP */
+    0, /* 20 ER AAC scalable */
+    0, /* 21 ER TwinVQ */
+    0, /* 22 ER BSAC */
+    0, /* 23 ER AAC LD */
+    0, /* 24 ER CELP */
+    0, /* 25 ER HVXC */
+    0, /* 26 ER HILN */
+    0, /* 27 ER Parametric */
+#endif
+    0, /* 28 (Reserved) */
+#ifdef PS_DEC
+    1, /* 29 AAC LC + SBR + PS */
+#else
+    0, /* 29 AAC LC + SBR + PS */
+#endif
+    0, /* 30 (Reserved) */
+    0  /* 31 (Reserved) */
+};
+/* Table 1.6.1 */
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+char NeAACDecAudioSpecificConfig(unsigned char* pBuffer, unsigned long buffer_size, mp4AudioSpecificConfig* mp4ASC) {
+    return AudioSpecificConfig2(pBuffer, buffer_size, mp4ASC, NULL, 0);
+}
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+int8_t AudioSpecificConfigFromBitfile(bitfile* ld, mp4AudioSpecificConfig* mp4ASC, program_config* pce, uint32_t buffer_size, uint8_t short_form) {
+    int8_t   result = 0;
+    uint32_t startpos = faad_get_processed_bits(ld);
+#ifdef SBR_DEC
+    int8_t bits_to_decode = 0;
+#endif
+    if(mp4ASC == NULL) return -8;
+    memset(mp4ASC, 0, sizeof(mp4AudioSpecificConfig));
+    mp4ASC->objectTypeIndex = (uint8_t)faad_getbits(ld, 5);
+    mp4ASC->samplingFrequencyIndex = (uint8_t)faad_getbits(ld, 4);
+    if(mp4ASC->samplingFrequencyIndex == 0x0f) faad_getbits(ld, 24);
+    mp4ASC->channelsConfiguration = (uint8_t)faad_getbits(ld, 4);
+    mp4ASC->samplingFrequency = get_sample_rate(mp4ASC->samplingFrequencyIndex);
+    if(ObjectTypesTable[mp4ASC->objectTypeIndex] != 1) { return -1; }
+    if(mp4ASC->samplingFrequency == 0) { return -2; }
+    if(mp4ASC->channelsConfiguration > 7) { return -3; }
+#if(defined(PS_DEC))
+    /* check if we have a mono file */
+    if(mp4ASC->channelsConfiguration == 1) {
+        /* upMatrix to 2 channels for implicit signalling of PS */
+        mp4ASC->channelsConfiguration = 2;
+    }
+#endif
+
+#ifdef SBR_DEC
+    mp4ASC->sbr_present_flag = -1;
+    if(mp4ASC->objectTypeIndex == 5 || mp4ASC->objectTypeIndex == 29) {
+        uint8_t tmp;
+        mp4ASC->sbr_present_flag = 1;
+        tmp = (uint8_t)faad_getbits(ld, 4);
+        /* check for downsampled SBR */
+        if(tmp == mp4ASC->samplingFrequencyIndex) mp4ASC->downSampledSBR = 1;
+        mp4ASC->samplingFrequencyIndex = tmp;
+        if(mp4ASC->samplingFrequencyIndex == 15) { mp4ASC->samplingFrequency = (uint32_t)faad_getbits(ld, 24); }
+        else { mp4ASC->samplingFrequency = get_sample_rate(mp4ASC->samplingFrequencyIndex); }
+        mp4ASC->objectTypeIndex = (uint8_t)faad_getbits(ld, 5);
+    }
+#endif
+    /* get GASpecificConfig */
+    if(mp4ASC->objectTypeIndex == 1 || mp4ASC->objectTypeIndex == 2 || mp4ASC->objectTypeIndex == 3 || mp4ASC->objectTypeIndex == 4 ||
+       mp4ASC->objectTypeIndex == 6 || mp4ASC->objectTypeIndex == 7) {
+        result = GASpecificConfig(ld, mp4ASC, pce);
+#ifdef ERROR_RESILIENCE
+    }
+    else if(mp4ASC->objectTypeIndex >= ER_OBJECT_START) { /* ER */
+        result = GASpecificConfig(ld, mp4ASC, pce);
+        mp4ASC->epConfig = (uint8_t)faad_getbits(ld, 2);
+
+        if(mp4ASC->epConfig != 0) result = -5;
+#endif
+    }
+    else { result = -4; }
+#ifdef SBR_DEC
+    if(short_form) bits_to_decode = 0;
+    else
+        bits_to_decode = (int8_t)(buffer_size * 8 - (startpos - faad_get_processed_bits(ld)));
+    if((mp4ASC->objectTypeIndex != 5 && mp4ASC->objectTypeIndex != 29) && (bits_to_decode >= 16)) {
+        int16_t syncExtensionType = (int16_t)faad_getbits(ld, 11);
+        if(syncExtensionType == 0x2b7) {
+            uint8_t tmp_OTi = (uint8_t)faad_getbits(ld, 5);
+            if(tmp_OTi == 5) {
+                mp4ASC->sbr_present_flag = (uint8_t)faad_get1bit(ld);
+                if(mp4ASC->sbr_present_flag) {
+                    uint8_t tmp;
+                    /* Don't set OT to SBR until checked that it is actually there */
+                    mp4ASC->objectTypeIndex = tmp_OTi;
+                    tmp = (uint8_t)faad_getbits(ld, 4);
+                    /* check for downsampled SBR */
+                    if(tmp == mp4ASC->samplingFrequencyIndex) mp4ASC->downSampledSBR = 1;
+                    mp4ASC->samplingFrequencyIndex = tmp;
+                    if(mp4ASC->samplingFrequencyIndex == 15) { mp4ASC->samplingFrequency = (uint32_t)faad_getbits(ld, 24); }
+                    else { mp4ASC->samplingFrequency = get_sample_rate(mp4ASC->samplingFrequencyIndex); }
+                }
+            }
+        }
+    }
+    /* no SBR signalled, this could mean either implicit signalling or no SBR in this file */
+    /* MPEG specification states: assume SBR on files with samplerate <= 24000 Hz */
+    if(mp4ASC->sbr_present_flag == (char)-1) /* cannot be -1 on systems with unsigned char */
+    {
+        if(mp4ASC->samplingFrequency <= 24000) {
+            mp4ASC->samplingFrequency *= 2;
+            mp4ASC->forceUpSampling = 1;
+        }
+        else /* > 24000*/ { mp4ASC->downSampledSBR = 1; }
+    }
+#endif
+    return result;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+int8_t AudioSpecificConfig2(uint8_t* pBuffer, uint32_t buffer_size, mp4AudioSpecificConfig* mp4ASC, program_config* pce, uint8_t short_form) {
+    uint8_t ret = 0;
+    bitfile ld;
+    faad_initbits(&ld, pBuffer, buffer_size);
+    faad_byte_align(&ld);
+    ret = AudioSpecificConfigFromBitfile(&ld, mp4ASC, pce, buffer_size, short_form);
+    return ret;
+}
+
+#ifdef SBR_DEC
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+void extract_envelope_data(sbr_info* sbr, uint8_t ch) {
+    uint8_t l, k;
+
+    for(l = 0; l < sbr->L_E[ch]; l++) {
+        if(sbr->bs_df_env[ch][l] == 0) {
+            for(k = 1; k < sbr->n[sbr->f[ch][l]]; k++) {
+                sbr->E[ch][k][l] = sbr->E[ch][k - 1][l] + sbr->E[ch][k][l];
+                if(sbr->E[ch][k][l] < 0) sbr->E[ch][k][l] = 0;
+            }
+        }
+        else { /* bs_df_env == 1 */
+
+            uint8_t g = (l == 0) ? sbr->f_prev[ch] : sbr->f[ch][l - 1];
+            int16_t E_prev;
+
+            if(sbr->f[ch][l] == g) {
+                for(k = 0; k < sbr->n[sbr->f[ch][l]]; k++) {
+                    if(l == 0) E_prev = sbr->E_prev[ch][k];
+                    else
+                        E_prev = sbr->E[ch][k][l - 1];
+
+                    sbr->E[ch][k][l] = E_prev + sbr->E[ch][k][l];
+                }
+            }
+            else if((g == 1) && (sbr->f[ch][l] == 0)) {
+                uint8_t i;
+                for(k = 0; k < sbr->n[sbr->f[ch][l]]; k++) {
+                    for(i = 0; i < sbr->N_high; i++) {
+                        if(sbr->f_table_res[HI_RES][i] == sbr->f_table_res[LO_RES][k]) {
+                            if(l == 0) E_prev = sbr->E_prev[ch][i];
+                            else
+                                E_prev = sbr->E[ch][i][l - 1];
+                            sbr->E[ch][k][l] = E_prev + sbr->E[ch][k][l];
+                        }
+                    }
+                }
+            }
+            else if((g == 0) && (sbr->f[ch][l] == 1)) {
+                uint8_t i;
+                for(k = 0; k < sbr->n[sbr->f[ch][l]]; k++) {
+                    for(i = 0; i < sbr->N_low; i++) {
+                        if((sbr->f_table_res[LO_RES][i] <= sbr->f_table_res[HI_RES][k]) &&
+                           (sbr->f_table_res[HI_RES][k] < sbr->f_table_res[LO_RES][i + 1])) {
+                            if(l == 0) E_prev = sbr->E_prev[ch][i];
+                            else
+                                E_prev = sbr->E[ch][i][l - 1];
+                            sbr->E[ch][k][l] = E_prev + sbr->E[ch][k][l];
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+void extract_noise_floor_data(sbr_info* sbr, uint8_t ch) {
+    uint8_t l, k;
+
+    for(l = 0; l < sbr->L_Q[ch]; l++) {
+        if(sbr->bs_df_noise[ch][l] == 0) {
+            for(k = 1; k < sbr->N_Q; k++) { sbr->Q[ch][k][l] = sbr->Q[ch][k][l] + sbr->Q[ch][k - 1][l]; }
+        }
+        else {
+            if(l == 0) {
+                for(k = 0; k < sbr->N_Q; k++) { sbr->Q[ch][k][l] = sbr->Q_prev[ch][k] + sbr->Q[ch][k][0]; }
+            }
+            else {
+                for(k = 0; k < sbr->N_Q; k++) { sbr->Q[ch][k][l] = sbr->Q[ch][k][l - 1] + sbr->Q[ch][k][l]; }
+            }
+        }
+    }
+}
 
 #endif
+
+
+
+
 
 /* EOF */

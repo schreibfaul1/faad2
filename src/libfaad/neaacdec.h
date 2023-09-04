@@ -63,8 +63,10 @@
     #endif
 #endif
 
-typedef int32_t complex_t[2];
-
+typedef int32_t      complex_t[2];
+typedef void*        NeAACDecHandle;
+typedef const int8_t (*ps_huff_tab)[2];
+typedef const int8_t (*sbr_huff_tab)[2];
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 
 #define MAIN                 1 /* object types for AAC */
@@ -170,6 +172,21 @@ typedef int32_t complex_t[2];
 #define VCB11_LAST           31
 #define NOISE_OFFSET         90
 #define NEGATE_IPD_MASK      (0x1000)
+#define T_HFGEN              8
+#define T_HFADJ              2
+#define EXT_SBR_DATA         13
+#define EXT_SBR_DATA_CRC     14
+#define FIXFIX               0
+#define FIXVAR               1
+#define VARFIX               2
+#define VARVAR               3
+#define LO_RES               0
+#define HI_RES               1
+#define NO_TIME_SLOTS_960    15
+#define NO_TIME_SLOTS        16
+#define RATE                 2
+
+#define NOISE_FLOOR_OFFSET 6
 
 #define bit2byte(a)         ((a + 7) >> BYTE_NUMBIT_LD)
 #define FAAD_MIN_STREAMSIZE 768 /* 6144 bits/channel */
@@ -229,8 +246,6 @@ typedef int32_t complex_t[2];
 #ifndef M_PI_2 /* PI/2 */
     #define M_PI_2 1.57079632679489661923
 #endif
-
-typedef void* NeAACDecHandle;
 
 #include "structs.h"
 #include "tables.h"
@@ -402,20 +417,25 @@ static void ps_data_decode(ps_info* ps);
 static hyb_info* hybrid_init(uint8_t numTimeSlotsRate);
 static void      channel_filter2(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, complex_t* buffer, complex_t** X_hybrid);
 static void inline DCT3_4_unscaled(int32_t* y, int32_t* x);
-static void   channel_filter8(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, complex_t* buffer, complex_t** X_hybrid);
-static void   hybrid_analysis(hyb_info* hyb, complex_t X[32][64], complex_t X_hybrid[32][32], uint8_t use34, uint8_t numTimeSlotsRate);
-static void   hybrid_synthesis(hyb_info* hyb, complex_t X[32][64], complex_t X_hybrid[32][32], uint8_t use34, uint8_t numTimeSlotsRate);
-static int8_t delta_clip(int8_t i, int8_t min, int8_t max);
-static void   delta_decode(uint8_t enable, int8_t* index, int8_t* index_prev, uint8_t dt_flag, uint8_t nr_par, uint8_t stride, int8_t min_index,
-                           int8_t max_index);
-static void   delta_modulo_decode(uint8_t enable, int8_t* index, int8_t* index_prev, uint8_t dt_flag, uint8_t nr_par, uint8_t stride,
-                                  int8_t and_modulo);
-static void   map20indexto34(int8_t* index, uint8_t bins);
-static void   ps_data_decode(ps_info* ps);
-static void   ps_decorrelate(ps_info* ps, complex_t X_left[38][64], complex_t X_right[38][64], complex_t X_hybrid_left[32][32],
-                             complex_t X_hybrid_right[32][32]);
-static void   ps_mix_phase(ps_info* ps, complex_t X_left[38][64], complex_t X_right[38][64], complex_t X_hybrid_left[32][32],
-                           complex_t X_hybrid_right[32][32]);
+static void    channel_filter8(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, complex_t* buffer, complex_t** X_hybrid);
+static void    hybrid_analysis(hyb_info* hyb, complex_t X[32][64], complex_t X_hybrid[32][32], uint8_t use34, uint8_t numTimeSlotsRate);
+static void    hybrid_synthesis(hyb_info* hyb, complex_t X[32][64], complex_t X_hybrid[32][32], uint8_t use34, uint8_t numTimeSlotsRate);
+static int8_t  delta_clip(int8_t i, int8_t min, int8_t max);
+static void    delta_decode(uint8_t enable, int8_t* index, int8_t* index_prev, uint8_t dt_flag, uint8_t nr_par, uint8_t stride, int8_t min_index,
+                            int8_t max_index);
+static void    delta_modulo_decode(uint8_t enable, int8_t* index, int8_t* index_prev, uint8_t dt_flag, uint8_t nr_par, uint8_t stride,
+                                   int8_t and_modulo);
+static void    map20indexto34(int8_t* index, uint8_t bins);
+static void    ps_data_decode(ps_info* ps);
+static void    ps_decorrelate(ps_info* ps, complex_t X_left[38][64], complex_t X_right[38][64], complex_t X_hybrid_left[32][32],
+                              complex_t X_hybrid_right[32][32]);
+static void    ps_mix_phase(ps_info* ps, complex_t X_left[38][64], complex_t X_right[38][64], complex_t X_hybrid_left[32][32],
+                            complex_t X_hybrid_right[32][32]);
+static int16_t real_to_int16(int32_t sig_in);
+uint8_t        is_ltp_ot(uint8_t object_type);
+void lt_prediction(ic_stream* ics, ltp_info* ltp, int32_t* spec, int16_t* lt_pred_stat, fb_info* fb, uint8_t win_shape, uint8_t win_shape_prev,
+                   uint8_t sr_index, uint8_t object_type, uint16_t frame_len);
+void lt_update_state(int16_t* lt_pred_stat, int32_t* time, int32_t* overlap, uint16_t frame_len, uint8_t object_type);
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //                                              I N L I N E S
