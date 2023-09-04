@@ -51,7 +51,6 @@
 #else
     #include <assert.h>
 #endif
-#include "fixed.h"
 
 #include "mdct.h"
 #include "mdct_tab.h"

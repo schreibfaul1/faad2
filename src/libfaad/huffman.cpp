@@ -30,7 +30,6 @@
 
 #include "neaacdec.h"
 #include "huffman.h"
-#include "hcb.h"
 #include <stdlib.h>
 
 /* static function declarations */

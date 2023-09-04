@@ -30,8 +30,6 @@
 #include "neaacdec.h"
 
 #ifdef LTP_DEC
-
-    #include "filtbank.h"
     #include "lt_predict.h"
     #include <stdlib.h>
 

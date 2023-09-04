@@ -32,7 +32,6 @@
 
     #ifndef __LT_PREDICT_H__
         #define __LT_PREDICT_H__
-        #include "filtbank.h"
         #include "neaacdec.h"
 
 uint8_t is_ltp_ot(uint8_t object_type);

@@ -30,7 +30,6 @@
 #include "neaacdec.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "fixed.h"
 
 #ifdef PS_DEC
 

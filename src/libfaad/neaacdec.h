@@ -154,6 +154,14 @@ typedef int32_t complex_t[2];
 #define MAX_L_E              5      /* MAX_L_E: maximum value for L_E */
 #define DRC_REF_LEVEL        20 * 4 /* -20 dB */
 #define NUM_ERROR_MESSAGES   34
+#define ZERO_HCB             0
+#define FIRST_PAIR_HCB       5
+#define ESC_HCB              11
+#define QUAD_LEN             4
+#define PAIR_LEN             2
+#define NOISE_HCB            13
+#define INTENSITY_HCB2       14
+#define INTENSITY_HCB        15
 
 #define bit2byte(a)         ((a + 7) >> BYTE_NUMBIT_LD)
 #define FAAD_MIN_STREAMSIZE 768 /* 6144 bits/channel */
