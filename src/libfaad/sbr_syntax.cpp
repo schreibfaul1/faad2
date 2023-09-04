@@ -32,12 +32,11 @@
 #ifdef SBR_DEC
 
     #include "sbr_e_nf.h"
-    #include "sbr_fbt.h"
     #include "sbr_huff.h"
     #include "sbr_syntax.h"
    
     #ifdef PS_DEC
-        #include "ps_dec.h"
+
     #endif
 
 

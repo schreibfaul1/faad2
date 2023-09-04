@@ -43,7 +43,6 @@
 #ifdef SBR_DEC
     #include "sbr_syntax.h"
 #endif
-#include "mp4.h"
 
 /* static function declarations */
 

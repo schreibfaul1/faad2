@@ -32,7 +32,6 @@
 
 #ifdef PS_DEC
 
-    #include "ps_dec.h"
 
 /* type definitaions */
 typedef const int8_t (*ps_huff_tab)[2];

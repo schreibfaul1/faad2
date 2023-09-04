@@ -36,8 +36,6 @@
 */
 #include "neaacdec.h"
 #include "lt_predict.h"
-#include "ms.h"
-#include "pns.h"
 #include <stdlib.h>
 #include <string.h>
 

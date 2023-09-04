@@ -36,7 +36,6 @@
 
 #ifdef SBR_DEC
 
-    #include "sbr_dct.h"
 
 void DCT4_32(int32_t* y, int32_t* x) {
     int32_t f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10;
