@@ -338,12 +338,16 @@ static void    create_channel_config(NeAACDecStruct* hDecoder, NeAACDecFrameInfo
 void*          output_to_PCM(NeAACDecStruct* hDecoder, int32_t** input, void* samplebuffer, uint8_t channels, uint16_t frame_len, uint8_t format);
 fb_info*       filter_bank_init(uint16_t frame_len);
 void           filter_bank_end(fb_info* fb);
-void filter_bank_ltp(fb_info* fb, uint8_t window_sequence, uint8_t window_shape, uint8_t window_shape_prev, int32_t* in_data, int32_t* out_mdct,
-                     uint8_t object_type, uint16_t frame_len);
-void ifilter_bank(fb_info* fb, uint8_t window_sequence, uint8_t window_shape, uint8_t window_shape_prev, int32_t* freq_in, int32_t* time_out,
-                  int32_t* overlap, uint8_t object_type, uint16_t frame_len);
-int8_t AudioSpecificConfig2(uint8_t* pBuffer, uint32_t buffer_size, mp4AudioSpecificConfig* mp4ASC, program_config* pce, uint8_t short_form);
-int8_t AudioSpecificConfigFromBitfile(bitfile* ld, mp4AudioSpecificConfig* mp4ASC, program_config* pce, uint32_t bsize, uint8_t short_form);
+void       filter_bank_ltp(fb_info* fb, uint8_t window_sequence, uint8_t window_shape, uint8_t window_shape_prev, int32_t* in_data, int32_t* out_mdct,
+                           uint8_t object_type, uint16_t frame_len);
+void       ifilter_bank(fb_info* fb, uint8_t window_sequence, uint8_t window_shape, uint8_t window_shape_prev, int32_t* freq_in, int32_t* time_out,
+                        int32_t* overlap, uint8_t object_type, uint16_t frame_len);
+int8_t     AudioSpecificConfig2(uint8_t* pBuffer, uint32_t buffer_size, mp4AudioSpecificConfig* mp4ASC, program_config* pce, uint8_t short_form);
+int8_t     AudioSpecificConfigFromBitfile(bitfile* ld, mp4AudioSpecificConfig* mp4ASC, program_config* pce, uint32_t bsize, uint8_t short_form);
+mdct_info* faad_mdct_init(uint16_t N);
+void       faad_mdct_end(mdct_info* mdct);
+void       faad_imdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out);
+void       faad_mdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out);
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //                                              I N L I N E S
