@@ -33,8 +33,6 @@
 
     #include "filtbank.h"
     #include "lt_predict.h"
-    #include "syntax.h"
-    #include "tns.h"
     #include <stdlib.h>
 
 /* static function declarations */

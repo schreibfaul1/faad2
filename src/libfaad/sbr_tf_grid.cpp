@@ -34,7 +34,6 @@
 #ifdef SBR_DEC
 
     #include "sbr_syntax.h"
-    #include "sbr_tf_grid.h"
     #include <stdlib.h>
 
     /* static function declarations */

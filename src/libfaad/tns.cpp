@@ -29,8 +29,6 @@
 **/
 
 #include "neaacdec.h"
-#include "tns.h"
-#include "syntax.h"
 
 /* static function declarations */
 static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_compress, uint8_t* coef, int32_t* a);

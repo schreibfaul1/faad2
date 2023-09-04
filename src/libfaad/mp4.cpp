@@ -30,7 +30,6 @@
 
 #include "neaacdec.h"
 #include "mp4.h"
-#include "syntax.h"
 #include <stdlib.h>
 
 /* defines if an object type can be decoded by this library or not */

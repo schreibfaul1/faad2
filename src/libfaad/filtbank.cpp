@@ -40,7 +40,6 @@
 #include "kbd_win.h"
 #include "mdct.h"
 #include "sine_win.h"
-#include "syntax.h"
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 fb_info* filter_bank_init(uint16_t frame_len) {

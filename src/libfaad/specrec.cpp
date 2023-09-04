@@ -35,8 +35,6 @@
    - applying scalefactors
 */
 #include "neaacdec.h"
-#include "specrec.h"
-
 #include "drc.h"
 #include "filtbank.h"
 #include "iq_table.h"
@@ -44,8 +42,6 @@
 #include "lt_predict.h"
 #include "ms.h"
 #include "pns.h"
-#include "syntax.h"
-#include "tns.h"
 #include <stdlib.h>
 #include <string.h>
 

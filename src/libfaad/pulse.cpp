@@ -29,7 +29,6 @@
 **/
 #include "neaacdec.h"
 #include "pulse.h"
-#include "syntax.h"
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t pulse_decode(ic_stream* ics, int16_t* spec_data, uint16_t framelen) {

@@ -31,7 +31,6 @@
 #ifndef __PNS_H__
 #define __PNS_H__
 #include "neaacdec.h"
-#include "syntax.h"
 
 #define NOISE_OFFSET 90
 

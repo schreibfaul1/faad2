@@ -35,8 +35,7 @@
     #include "sbr_fbt.h"
     #include "sbr_huff.h"
     #include "sbr_syntax.h"
-    #include "sbr_tf_grid.h"
-    #include "syntax.h"
+   
     #ifdef PS_DEC
         #include "ps_dec.h"
     #endif

@@ -29,7 +29,6 @@
 **/
 #include "neaacdec.h"
 #include "is.h"
-#include "syntax.h"
 
 
 

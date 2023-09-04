@@ -33,12 +33,9 @@
 */
 
 #include "neaacdec.h"
-#include "syntax.h"
-
 #include "drc.h"
 #include "huffman.h"
 #include "pulse.h"
-#include "specrec.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

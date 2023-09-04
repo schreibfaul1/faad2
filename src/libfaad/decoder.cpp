@@ -34,7 +34,6 @@
 #include "filtbank.h"
 #include "mp4.h"
 #include "output.h"
-#include "syntax.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

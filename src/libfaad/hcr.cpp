@@ -29,9 +29,7 @@
 **/
 
 #include "neaacdec.h"
-
 #include "huffman.h"
-#include "specrec.h"
 #include <stdlib.h>
 #include <string.h>
 

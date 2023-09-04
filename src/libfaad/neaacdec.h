@@ -207,11 +207,11 @@ typedef void* NeAACDecHandle;
 //                                              P R O T O T Y P E S
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 
-const char*              NeAACDecGetErrorMessage(unsigned char errcode);
-unsigned long            NeAACDecGetCapabilities(void);
-NeAACDecHandle           NeAACDecOpen(void);
+const char*                NeAACDecGetErrorMessage(unsigned char errcode);
+unsigned long              NeAACDecGetCapabilities(void);
+NeAACDecHandle             NeAACDecOpen(void);
 NeAACDecConfigurationPtr_t NeAACDecGetCurrentConfiguration(NeAACDecHandle hDecoder);
-unsigned char            NeAACDecSetConfiguration(NeAACDecHandle hDecoder, NeAACDecConfigurationPtr_t config);
+unsigned char              NeAACDecSetConfiguration(NeAACDecHandle hDecoder, NeAACDecConfigurationPtr_t config);
 long     NeAACDecInit(NeAACDecHandle hDecoder, unsigned char* buffer, unsigned long buffer_size, unsigned long* samplerate, unsigned char* channels);
 char     NeAACDecInit2(NeAACDecHandle hDecoder, unsigned char* pBuffer, unsigned long SizeOfDecoderSpecificInfo, unsigned long* samplerate,
                        unsigned char* channels);
@@ -233,31 +233,54 @@ uint8_t* faad_getbitbuffer(bitfile* ld, uint32_t bits);
 uint32_t ne_rng(uint32_t* __r1, uint32_t* __r2);
 uint32_t wl_min_lzc(uint32_t x);
 
-int32_t  log2_int(uint32_t val);
-int32_t  log2_fix(uint32_t val);
-int32_t  pow2_int(int32_t val);
-int32_t  pow2_fix(int32_t val);
-uint8_t  get_sr_index(const uint32_t samplerate);
-uint8_t  max_pred_sfb(const uint8_t sr_index);
-uint8_t  max_tns_sfb(const uint8_t sr_index, const uint8_t object_type, const uint8_t is_short);
-uint32_t get_sample_rate(const uint8_t sr_index);
-int8_t   can_decode_ot(const uint8_t object_type);
-void*    faad_malloc(size_t size);
-void     faad_free(void* b);
-void     tns_decode_frame(ic_stream* ics, tns_info* tns, uint8_t sr_index, uint8_t object_type, int32_t* spec, uint16_t frame_len);
-void     tns_encode_frame(ic_stream* ics, tns_info* tns, uint8_t sr_index, uint8_t object_type, int32_t* spec, uint16_t frame_len);
-uint16_t ps_data(ps_info* ps, bitfile* ld, uint8_t* header); /* ps_syntax.c */
-ps_info* ps_init(uint8_t sr_index, uint8_t numTimeSlotsRate); /* ps_dec.c */
-void     ps_free(ps_info* ps);
-uint8_t ps_decode(ps_info* ps, complex_t X_left[38][64], complex_t X_right[38][64]);
+int32_t   log2_int(uint32_t val);
+int32_t   log2_fix(uint32_t val);
+int32_t   pow2_int(int32_t val);
+int32_t   pow2_fix(int32_t val);
+uint8_t   get_sr_index(const uint32_t samplerate);
+uint8_t   max_pred_sfb(const uint8_t sr_index);
+uint8_t   max_tns_sfb(const uint8_t sr_index, const uint8_t object_type, const uint8_t is_short);
+uint32_t  get_sample_rate(const uint8_t sr_index);
+int8_t    can_decode_ot(const uint8_t object_type);
+void*     faad_malloc(size_t size);
+void      faad_free(void* b);
+void      tns_decode_frame(ic_stream* ics, tns_info* tns, uint8_t sr_index, uint8_t object_type, int32_t* spec, uint16_t frame_len);
+void      tns_encode_frame(ic_stream* ics, tns_info* tns, uint8_t sr_index, uint8_t object_type, int32_t* spec, uint16_t frame_len);
+uint16_t  ps_data(ps_info* ps, bitfile* ld, uint8_t* header);  /* ps_syntax.c */
+ps_info*  ps_init(uint8_t sr_index, uint8_t numTimeSlotsRate); /* ps_dec.c */
+void      ps_free(ps_info* ps);
+uint8_t   ps_decode(ps_info* ps, complex_t X_left[38][64], complex_t X_right[38][64]);
 sbr_info* sbrDecodeInit(uint16_t framelength, uint8_t id_aac, uint32_t sample_rate, uint8_t downSampledSBR);
 void      sbrDecodeEnd(sbr_info* sbr);
 void      sbrReset(sbr_info* sbr);
-uint8_t sbrDecodeCoupleFrame(sbr_info* sbr, int32_t* left_chan, int32_t* right_chan, const uint8_t just_seeked, const uint8_t downSampledSBR);
-uint8_t sbrDecodeSingleFrame(sbr_info* sbr, int32_t* channel, const uint8_t just_seeked, const uint8_t downSampledSBR);
-#if(defined(PS_DEC))
+uint8_t   sbrDecodeCoupleFrame(sbr_info* sbr, int32_t* left_chan, int32_t* right_chan, const uint8_t just_seeked, const uint8_t downSampledSBR);
+uint8_t   sbrDecodeSingleFrame(sbr_info* sbr, int32_t* channel, const uint8_t just_seeked, const uint8_t downSampledSBR);
 uint8_t sbrDecodeSingleFramePS(sbr_info* sbr, int32_t* left_channel, int32_t* right_channel, const uint8_t just_seeked, const uint8_t downSampledSBR);
-#endif
+uint8_t allocate_single_channel(NeAACDecStruct* hDecoder, uint8_t channel, uint8_t output_channels);
+uint8_t window_grouping_info(NeAACDecStruct* hDecoder, ic_stream* ics);
+uint8_t reconstruct_channel_pair(NeAACDecStruct* hDecoder, ic_stream* ics1, ic_stream* ics2, element* cpe, int16_t* spec_data1, int16_t* spec_data2);
+uint8_t reconstruct_single_channel(NeAACDecStruct* hDecoder, ic_stream* ics, element* sce, int16_t* spec_data);
+uint8_t envelope_time_border_vector(sbr_info* sbr, uint8_t ch);
+void    noise_floor_time_border_vector(sbr_info* sbr, uint8_t ch);
+uint8_t qmf_start_channel(uint8_t bs_start_freq, uint8_t bs_samplerate_mode, uint32_t sample_rate);
+uint8_t qmf_stop_channel(uint8_t bs_stop_freq, uint32_t sample_rate, uint8_t k0);
+uint8_t master_frequency_table_fs0(sbr_info* sbr, uint8_t k0, uint8_t k2, uint8_t bs_alter_scale);
+uint8_t master_frequency_table(sbr_info* sbr, uint8_t k0, uint8_t k2, uint8_t bs_freq_scale, uint8_t bs_alter_scale);
+uint8_t derived_frequency_table(sbr_info* sbr, uint8_t bs_xover_band, uint8_t k2);
+void    limiter_frequency_table(sbr_info* sbr);
+int8_t  GASpecificConfig(bitfile* ld, mp4AudioSpecificConfig* mp4ASC, program_config* pce);
+uint8_t adts_frame(adts_header* adts, bitfile* ld);
+void    get_adif_header(adif_header* adif, bitfile* ld);
+void    raw_data_block(NeAACDecStruct* hDecoder, NeAACDecFrameInfo* hInfo, bitfile* ld, program_config* pce, drc_info* drc);
+uint8_t reordered_spectral_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* ld, int16_t* spectral_data);
+uint32_t   faad_latm_frame(latm_header* latm, bitfile* ld);
+qmfa_info* qmfa_init(uint8_t channels);
+void       qmfa_end(qmfa_info* qmfa);
+qmfs_info* qmfs_init(uint8_t channels);
+void       qmfs_end(qmfs_info* qmfs);
+void       sbr_qmf_analysis_32(sbr_info* sbr, qmfa_info* qmfa, const int32_t* input, complex_t X[MAX_NTSRHFG][64], uint8_t offset, uint8_t kx);
+void       sbr_qmf_synthesis_32(sbr_info* sbr, qmfs_info* qmfs, complex_t X[MAX_NTSRHFG][64], int32_t* output);
+void       sbr_qmf_synthesis_64(sbr_info* sbr, qmfs_info* qmfs, complex_t X[MAX_NTSRHFG][64], int32_t* output);
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //                                              I N L I N E S
