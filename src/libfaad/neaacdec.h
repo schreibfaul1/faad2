@@ -168,6 +168,7 @@ typedef int32_t complex_t[2];
 #define MAX_CB               32
 #define VCB11_FIRST          16
 #define VCB11_LAST           31
+#define NOISE_OFFSET         90
 
 #define bit2byte(a)         ((a + 7) >> BYTE_NUMBIT_LD)
 #define FAAD_MIN_STREAMSIZE 768 /* 6144 bits/channel */
@@ -200,7 +201,17 @@ typedef int32_t complex_t[2];
 #define DIV_C(A, B)       (((int64_t)A << COEF_BITS) / B)
 #define QMF_RE(A)         RE(A)
 #define QMF_IM(A)         IM(A)
+#define DM_MUL            FRAC_CONST(0.3203772410170407)    // 1/(1+sqrt(2) + 1/sqrt(2))
+#define RSQRT2            FRAC_CONST(0.7071067811865475244) // 1/sqrt(2)
 #define segmentWidth(cb)  min(maxCwLen[cb], ics->length_of_longest_codeword)
+#define DIV(A, B)         (((int64_t)A << REAL_BITS) / B)
+
+#define step(shift)                                  \
+    if((0x40000000l >> shift) + root <= value) {     \
+        value -= (0x40000000l >> shift) + root;      \
+        root = (root >> 1) | (0x40000000l >> shift); \
+    }                                                \
+    else { root = root >> 1; }
 
 #ifndef max
     #define max(a, b) (((a) > (b)) ? (a) : (b))
@@ -380,6 +391,9 @@ uint8_t               huffman_spectral_data(uint8_t cb, bitfile* ld, int16_t* sp
 #ifdef ERROR_RESILIENCE
 int8_t huffman_spectral_data_2(uint8_t cb, bits_t* ld, int16_t* sp);
 #endif
+static void gen_rand_vector(int32_t* spec, int16_t scale_factor, uint16_t size, uint8_t sub, uint32_t* __r1, uint32_t* __r2);
+void        pns_decode(ic_stream* ics_left, ic_stream* ics_right, int32_t* spec_left, int32_t* spec_right, uint16_t frame_len, uint8_t channel_pair,
+                       uint8_t object_type, uint32_t* __r1, uint32_t* __r2);
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //                                              I N L I N E S
@@ -575,6 +589,12 @@ inline void ComplexMult(int32_t* y1, int32_t* y2, int32_t x1, int32_t x2, int32_
     *y2 = (_MulHigh(x2, c1) - _MulHigh(x1, c2)) << (FRAC_SIZE - FRAC_BITS);
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+
+static inline uint8_t is_noise(ic_stream* ics, uint8_t group, uint8_t sfb) {
+    if(ics->sfb_cb[group][sfb] == NOISE_HCB) return 1;
+    return 0;
+}
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 
 #endif

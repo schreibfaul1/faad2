@@ -3224,3 +3224,5 @@ static const uint8_t maxCwLen[MAX_CB] = {0,  11, 9,  20, 16, 13, 11, 14, 12, 17,
 /* bit-twiddling helpers */
 static const uint8_t  S[] = {1, 2, 4, 8, 16};
 static const uint32_t B[] = {0x55555555, 0x33333333, 0x0F0F0F0F, 0x00FF00FF, 0x0000FFFF};
+
+static int32_t const pow2_table[] = {COEF_CONST(1.0), COEF_CONST(1.18920711500272), COEF_CONST(1.41421356237310), COEF_CONST(1.68179283050743)};
