@@ -31,7 +31,7 @@
 #ifndef __ERROR_H__
 #define __ERROR_H__
 #include "neaacdec.h"
-#define NUM_ERROR_MESSAGES 34
+
 extern const char *err_msg[];
 
 

@@ -33,6 +33,6 @@
 #include "neaacdec.h"
 
 
-void* output_to_PCM(NeAACDecStruct* hDecoder, int32_t** input, void* samplebuffer, uint8_t channels, uint16_t frame_len, uint8_t format);
+
 
 #endif
