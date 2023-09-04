@@ -29,7 +29,7 @@
 **/
 
 
-#include "drc.h"
+
 #include "error.h"
 #include "filtbank.h"
 #include "mp4.h"

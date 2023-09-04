@@ -148,10 +148,11 @@ typedef int32_t complex_t[2];
 #define EXTENSION_ID_PS      2
 #define MAX_PS_ENVELOPES     5
 #define NO_ALLPASS_LINKS     3
-#define MAX_NTSRHFG          40 /* MAX_NTSRHFG: maximum of number_time_slots * rate + HFGen. 16*2+8 */
-#define MAX_NTSR             32 /* max number_time_slots * rate */
-#define MAX_M                49 /* MAX_M: maximum value for M */
-#define MAX_L_E              5  /* MAX_L_E: maximum value for L_E */
+#define MAX_NTSRHFG          40     /* MAX_NTSRHFG: maximum of number_time_slots * rate + HFGen. 16*2+8 */
+#define MAX_NTSR             32     /* max number_time_slots * rate */
+#define MAX_M                49     /* MAX_M: maximum value for M */
+#define MAX_L_E              5      /* MAX_L_E: maximum value for L_E */
+#define DRC_REF_LEVEL        20 * 4 /* -20 dB */
 
 #define bit2byte(a)         ((a + 7) >> BYTE_NUMBIT_LD)
 #define FAAD_MIN_STREAMSIZE 768 /* 6144 bits/channel */
@@ -297,6 +298,9 @@ static void passf4neg(const uint16_t ido, const uint16_t l1, const complex_t* cc
 static void passf5(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2,
                    const complex_t* wa3, const complex_t* wa4, const int8_t isign);
 static void cffti1(uint16_t n, complex_t* wa, uint16_t* ifac);
+drc_info*   drc_init(int32_t cut, int32_t boost);
+void        drc_end(drc_info* drc);
+void        drc_decode(drc_info* drc, int32_t* spec);
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //                                              I N L I N E S

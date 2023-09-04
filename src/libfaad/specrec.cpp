@@ -35,7 +35,7 @@
    - applying scalefactors
 */
 #include "neaacdec.h"
-#include "drc.h"
+
 #include "filtbank.h"
 #include "iq_table.h"
 #include "is.h"

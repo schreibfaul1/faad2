@@ -52,7 +52,7 @@
     #include <assert.h>
 #endif
 #include "fixed.h"
-#include "cfft.h"
+
 #include "mdct.h"
 #include "mdct_tab.h"
 
