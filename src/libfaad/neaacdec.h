@@ -450,6 +450,8 @@ static int8_t        rvlc_huffman_sf(bitfile* ld_sf, bitfile* ld_esc, int8_t dir
 static int8_t        rvlc_huffman_esc(bitfile* ld_esc, int8_t direction);
 uint8_t              rvlc_scale_factor_data(ic_stream* ics, bitfile* ld);
 uint8_t              rvlc_decode_scale_factors(ic_stream* ics, bitfile* ld);
+void                 hf_generation(sbr_info* sbr, complex_t Xlow[MAX_NTSRHFG][64], complex_t Xhigh[MAX_NTSRHFG][64], uint8_t ch);
+uint8_t              hf_adjustment(sbr_info* sbr, complex_t Xsbr[MAX_NTSRHFG][64], uint8_t ch);
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //                                              I N L I N E S

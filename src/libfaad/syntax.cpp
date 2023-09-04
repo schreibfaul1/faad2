@@ -37,7 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 #ifdef ERROR_RESILIENCE
-    #include "rvlc.h"
+
 #endif
 #ifdef SBR_DEC
     #include "sbr_syntax.h"
