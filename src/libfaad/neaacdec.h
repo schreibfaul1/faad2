@@ -202,6 +202,7 @@ typedef int32_t complex_t[2];
 typedef void* NeAACDecHandle;
 
 #include "structs.h"
+#include "tables.h"
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //                                              P R O T O T Y P E S
@@ -212,27 +213,26 @@ unsigned long              NeAACDecGetCapabilities(void);
 NeAACDecHandle             NeAACDecOpen(void);
 NeAACDecConfigurationPtr_t NeAACDecGetCurrentConfiguration(NeAACDecHandle hDecoder);
 unsigned char              NeAACDecSetConfiguration(NeAACDecHandle hDecoder, NeAACDecConfigurationPtr_t config);
-long     NeAACDecInit(NeAACDecHandle hDecoder, unsigned char* buffer, unsigned long buffer_size, unsigned long* samplerate, unsigned char* channels);
-char     NeAACDecInit2(NeAACDecHandle hDecoder, unsigned char* pBuffer, unsigned long SizeOfDecoderSpecificInfo, unsigned long* samplerate,
-                       unsigned char* channels);
-void     NeAACDecPostSeekReset(NeAACDecHandle hDecoder, long frame);
-void     NeAACDecClose(NeAACDecHandle hDecoder);
-void*    NeAACDecDecode(NeAACDecHandle hDecoder, NeAACDecFrameInfo* hInfo, unsigned char* buffer, unsigned long buffer_size);
-void*    NeAACDecDecode2(NeAACDecHandle hDecoder, NeAACDecFrameInfo* hInfo, unsigned char* buffer, unsigned long buffer_size, void** sample_buffer,
-                         unsigned long sample_buffer_size);
-char     NeAACDecAudioSpecificConfig(unsigned char* pBuffer, unsigned long buffer_size, mp4AudioSpecificConfig* mp4ASC);
-int      NeAACDecGetVersion(const char** faad_id_string, const char** faad_copyright_string);
-void     faad_initbits(bitfile* ld, const void* buffer, const uint32_t buffer_size);
-void     faad_initbits_rev(bitfile* ld, void* buffer, uint32_t bits_in_buffer);
-uint8_t  faad_byte_align(bitfile* ld);
-uint32_t faad_get_processed_bits(bitfile* ld);
-void     faad_flushbits_ex(bitfile* ld, uint32_t bits);
-void     faad_rewindbits(bitfile* ld);
-void     faad_resetbits(bitfile* ld, int bits);
-uint8_t* faad_getbitbuffer(bitfile* ld, uint32_t bits);
-uint32_t ne_rng(uint32_t* __r1, uint32_t* __r2);
-uint32_t wl_min_lzc(uint32_t x);
-
+long      NeAACDecInit(NeAACDecHandle hDecoder, unsigned char* buffer, unsigned long buffer_size, unsigned long* samplerate, unsigned char* channels);
+char      NeAACDecInit2(NeAACDecHandle hDecoder, unsigned char* pBuffer, unsigned long SizeOfDecoderSpecificInfo, unsigned long* samplerate,
+                        unsigned char* channels);
+void      NeAACDecPostSeekReset(NeAACDecHandle hDecoder, long frame);
+void      NeAACDecClose(NeAACDecHandle hDecoder);
+void*     NeAACDecDecode(NeAACDecHandle hDecoder, NeAACDecFrameInfo* hInfo, unsigned char* buffer, unsigned long buffer_size);
+void*     NeAACDecDecode2(NeAACDecHandle hDecoder, NeAACDecFrameInfo* hInfo, unsigned char* buffer, unsigned long buffer_size, void** sample_buffer,
+                          unsigned long sample_buffer_size);
+char      NeAACDecAudioSpecificConfig(unsigned char* pBuffer, unsigned long buffer_size, mp4AudioSpecificConfig* mp4ASC);
+int       NeAACDecGetVersion(const char** faad_id_string, const char** faad_copyright_string);
+void      faad_initbits(bitfile* ld, const void* buffer, const uint32_t buffer_size);
+void      faad_initbits_rev(bitfile* ld, void* buffer, uint32_t bits_in_buffer);
+uint8_t   faad_byte_align(bitfile* ld);
+uint32_t  faad_get_processed_bits(bitfile* ld);
+void      faad_flushbits_ex(bitfile* ld, uint32_t bits);
+void      faad_rewindbits(bitfile* ld);
+void      faad_resetbits(bitfile* ld, int bits);
+uint8_t*  faad_getbitbuffer(bitfile* ld, uint32_t bits);
+uint32_t  ne_rng(uint32_t* __r1, uint32_t* __r2);
+uint32_t  wl_min_lzc(uint32_t x);
 int32_t   log2_int(uint32_t val);
 int32_t   log2_fix(uint32_t val);
 int32_t   pow2_int(int32_t val);
@@ -273,14 +273,30 @@ uint8_t adts_frame(adts_header* adts, bitfile* ld);
 void    get_adif_header(adif_header* adif, bitfile* ld);
 void    raw_data_block(NeAACDecStruct* hDecoder, NeAACDecFrameInfo* hInfo, bitfile* ld, program_config* pce, drc_info* drc);
 uint8_t reordered_spectral_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* ld, int16_t* spectral_data);
-uint32_t   faad_latm_frame(latm_header* latm, bitfile* ld);
-qmfa_info* qmfa_init(uint8_t channels);
-void       qmfa_end(qmfa_info* qmfa);
-qmfs_info* qmfs_init(uint8_t channels);
-void       qmfs_end(qmfs_info* qmfs);
-void       sbr_qmf_analysis_32(sbr_info* sbr, qmfa_info* qmfa, const int32_t* input, complex_t X[MAX_NTSRHFG][64], uint8_t offset, uint8_t kx);
-void       sbr_qmf_synthesis_32(sbr_info* sbr, qmfs_info* qmfs, complex_t X[MAX_NTSRHFG][64], int32_t* output);
-void       sbr_qmf_synthesis_64(sbr_info* sbr, qmfs_info* qmfs, complex_t X[MAX_NTSRHFG][64], int32_t* output);
+uint32_t    faad_latm_frame(latm_header* latm, bitfile* ld);
+qmfa_info*  qmfa_init(uint8_t channels);
+void        qmfa_end(qmfa_info* qmfa);
+qmfs_info*  qmfs_init(uint8_t channels);
+void        qmfs_end(qmfs_info* qmfs);
+void        sbr_qmf_analysis_32(sbr_info* sbr, qmfa_info* qmfa, const int32_t* input, complex_t X[MAX_NTSRHFG][64], uint8_t offset, uint8_t kx);
+void        sbr_qmf_synthesis_32(sbr_info* sbr, qmfs_info* qmfs, complex_t X[MAX_NTSRHFG][64], int32_t* output);
+void        sbr_qmf_synthesis_64(sbr_info* sbr, qmfs_info* qmfs, complex_t X[MAX_NTSRHFG][64], int32_t* output);
+void        cfftf(cfft_info* cfft, complex_t* c);
+void        cfftb(cfft_info* cfft, complex_t* c);
+cfft_info*  cffti(uint16_t n);
+void        cfftu(cfft_info* cfft);
+void        is_decode(ic_stream* ics, ic_stream* icsr, int32_t* l_spec, int32_t* r_spec, uint16_t frame_len);
+static void passf2pos(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa);
+static void passf2neg(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa);
+static void passf3(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2,
+                   const int8_t isign);
+static void passf4pos(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2,
+                      const complex_t* wa3);
+static void passf4neg(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2,
+                      const complex_t* wa3);
+static void passf5(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2,
+                   const complex_t* wa3, const complex_t* wa4, const int8_t isign);
+static void cffti1(uint16_t n, complex_t* wa, uint16_t* ifac);
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //                                              I N L I N E S
@@ -461,5 +477,28 @@ static inline int8_t get1bit_hcr(bits_t* ld, uint8_t* result) {
 }
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 #endif // ERROR_RESILIENCE
+
+static inline int8_t is_intensity(ic_stream* ics, uint8_t group, uint8_t sfb) {
+    switch(ics->sfb_cb[group][sfb]) {
+    case INTENSITY_HCB: return 1;
+    case INTENSITY_HCB2: return -1;
+    default: return 0;
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+static inline int8_t invert_intensity(ic_stream* ics, uint8_t group, uint8_t sfb) {
+    if(ics->ms_mask_present == 1) return (1 - 2 * ics->ms_used[group][sfb]);
+    return 1;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+/* Complex multiplication */
+inline void ComplexMult(int32_t* y1, int32_t* y2, int32_t x1, int32_t x2, int32_t c1, int32_t c2) {
+    *y1 = (_MulHigh(x1, c1) + _MulHigh(x2, c2)) << (FRAC_SIZE - FRAC_BITS);
+    *y2 = (_MulHigh(x2, c1) - _MulHigh(x1, c2)) << (FRAC_SIZE - FRAC_BITS);
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 
 #endif
