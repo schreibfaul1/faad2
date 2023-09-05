@@ -443,7 +443,9 @@ static int32_t       find_bands(uint8_t warp, uint8_t bands, uint8_t a0, uint8_t
 static uint8_t       estimate_current_envelope(sbr_info* sbr, sbr_hfadj_info* adj, complex_t Xsbr[MAX_NTSRHFG][64], uint8_t ch);
 static void          calculate_gain(sbr_info* sbr, sbr_hfadj_info* adj, uint8_t ch);
 static void          hf_assembly(sbr_info* sbr, sbr_hfadj_info* adj, complex_t Xsbr[MAX_NTSRHFG][64], uint8_t ch);
-
+static void          calc_prediction_coef(sbr_info* sbr, complex_t Xlow[MAX_NTSRHFG][64], complex_t* alpha_0, complex_t* alpha_1, uint8_t k);
+static void          calc_chirp_factors(sbr_info* sbr, uint8_t ch);
+static void          patch_construction(sbr_info* sbr);
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //                                              I N L I N E S

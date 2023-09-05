@@ -31,7 +31,7 @@
 
 #ifdef SBR_DEC
 
-    #include "sbr_huff.h"
+
     #include "sbr_syntax.h"
    
     #ifdef PS_DEC

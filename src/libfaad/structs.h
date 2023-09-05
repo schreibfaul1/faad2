@@ -711,6 +711,14 @@ typedef struct
     int32_t S_M_boost[MAX_L_E][MAX_M];
 } sbr_hfadj_info;
 
+typedef struct {
+    complex_t r01;
+    complex_t r02;
+    complex_t r11;
+    complex_t r12;
+    complex_t r22;
+    int32_t   det;
+} acorr_coef;
 
 #endif
 
