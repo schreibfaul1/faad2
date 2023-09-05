@@ -2256,6 +2256,8 @@ void ifilter_bank(fb_info* fb, uint8_t window_sequence, uint8_t window_shape, ui
 void filter_bank_ltp(fb_info* fb, uint8_t window_sequence, uint8_t window_shape, uint8_t window_shape_prev, int32_t* in_data, int32_t* out_mdct, uint8_t object_type, uint16_t frame_len) {
     int16_t        i;
 //    int32_t        windowed_buf[2 * 1024] = {0}; // ⏫⏫⏫
+    int32_t* windowed_buf = (int32_t*)calloc(2*1024, sizeof(int32_t));
+
     const int32_t* window_long = NULL;
     const int32_t* window_long_prev = NULL;
     const int32_t* window_short = NULL;
@@ -2264,10 +2266,6 @@ void filter_bank_ltp(fb_info* fb, uint8_t window_sequence, uint8_t window_shape,
     uint16_t       nshort = frame_len / 8;
     uint16_t       nflat_ls = (nlong - nshort) / 2;
     assert(window_sequence != EIGHT_SHORT_SEQUENCE);
-
-    printf("hier1\n");
-    int32_t* windowed_buf = (int32_t*)calloc(2*1024, sizeof(int32_t));
-    printf("calloc1 %i\n", 4*2*1024);
 
     #ifdef LD_DEC
     if(object_type == LD) {
@@ -2306,9 +2304,8 @@ void filter_bank_ltp(fb_info* fb, uint8_t window_sequence, uint8_t window_shape,
         mdct(fb, windowed_buf, out_mdct, 2 * nlong);
         break;
     }
-    printf("hier1 free\n");
+
     if(windowed_buf) {free(windowed_buf); windowed_buf = NULL;}
-    printf("calloc1 free\n");
 }
 #endif
 
@@ -2900,11 +2897,8 @@ uint8_t reordered_spectral_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfil
     if(ics->length_of_longest_codeword == 0) return 10;
     if(sp_data_len < ics->length_of_longest_codeword) return 10;
 
-    printf("hier2\n");
     codeword_t* codeword = (codeword_t*)malloc(512 * sizeof(codeword_t));
-    printf("calloc2 %li\n", 512 * sizeof(codeword_t));
     bits_t* segment = (bits_t*)malloc(512 * sizeof(bits_t));
-    printf("calloc2 %li\n", 512 * sizeof(bits_t));
 
     sp_offset[0] = 0;
     for(g = 1; g < ics->num_window_groups; g++) { sp_offset[g] = sp_offset[g - 1] + nshort * ics->window_group_length[g - 1]; }
@@ -3022,7 +3016,6 @@ uint8_t reordered_spectral_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfil
         }
         for(i = 0; i < numberOfSegments; i++) rewrev_bits(&segment[i]);
     }
-    printf("hier2 free\n");
     if(segment){free(codeword); segment = NULL;}
     if(codeword){free(codeword); codeword = NULL;}
     return 0;
@@ -3856,14 +3849,10 @@ static void ps_decorrelate(ps_info* ps, complex_t* X_left[64], complex_t* X_righ
 //    int32_t          G_TransientRatio[32][34] = {{0}}; // ⏫⏫⏫
     complex_t        inputLeft;
 
-    printf("hier3\n");
     int32_t** P = (int32_t**)malloc(32 * sizeof(P));
     for(uint8_t i = 0; i < 32; i++) P[i] =(int32_t*)malloc(34 * sizeof(*(P[i])));
-
     int32_t** G_TransientRatio = (int32_t**)calloc(32, sizeof(G_TransientRatio));
     for(uint8_t i = 0; i < 32; i++) G_TransientRatio[i] =(int32_t*)calloc(34, sizeof(*(G_TransientRatio[i])));
-
-    printf("calloc3\n");
 
     /* chose hybrid filterbank: 20 or 34 band case */
     if(ps->use34hybrid_bands) { Phi_Fract_SubQmf = Phi_Fract_SubQmf34; }
@@ -4071,15 +4060,10 @@ static void ps_decorrelate(ps_info* ps, complex_t* X_left[64], complex_t* X_righ
     ps->saved_delay = temp_delay;
     for(m = 0; m < NO_ALLPASS_LINKS; m++) ps->delay_buf_index_ser[m] = temp_delay_ser[m];
 
-
-    printf("hier3 free\n");
-    for(uint8_t i = 0; i < 32; i++) free(G_TransientRatio[i]);
-    free(G_TransientRatio);
-
-    for(uint8_t i = 0; i < 32; i++) free(P[i]);
-    free(P);
-
-    printf("calloc3 free\n");
+    for(uint8_t i = 0; i < 32; i++) {free(G_TransientRatio[i]); G_TransientRatio[i] = NULL;}
+    free(G_TransientRatio); G_TransientRatio = NULL;
+    for(uint8_t i = 0; i < 32; i++) {free(P[i]); P[i] = NULL;}
+    free(P); P = NULL;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -4474,14 +4458,10 @@ uint8_t ps_decode(ps_info* ps, complex_t* X_left[64], complex_t* X_right[64]) {
     // complex_t X_hybrid_left[32][32] = {{0}};  // ⏫⏫⏫
     // complex_t X_hybrid_right[32][32] = {{0}}; // ⏫⏫⏫
 
-    printf("hier5\n");
     complex_t** X_hybrid_left = (complex_t**)malloc(32 * sizeof(X_hybrid_left));
     for(uint8_t i = 0; i < 32; i++) X_hybrid_left[i] =(complex_t*)malloc(34 * sizeof(*(X_hybrid_left[i])));
-
     complex_t** X_hybrid_right = (complex_t**)calloc(32, sizeof(X_hybrid_right));
     for(uint8_t i = 0; i < 32; i++) X_hybrid_right[i] =(complex_t*)calloc(34, sizeof(*(X_hybrid_right[i])));
-
-    printf("calloc5 %i\n", 32*32 );
 
     /* delta decoding of the bitstream data */
     ps_data_decode(ps);
@@ -4514,16 +4494,10 @@ uint8_t ps_decode(ps_info* ps, complex_t* X_left[64], complex_t* X_right[64]) {
     hybrid_synthesis((hyb_info*)ps->hyb, X_left, X_hybrid_left, ps->use34hybrid_bands, ps->numTimeSlotsRate);
     hybrid_synthesis((hyb_info*)ps->hyb, X_right, X_hybrid_right, ps->use34hybrid_bands, ps->numTimeSlotsRate);
 
-
-
-    printf("hier5\n");
     for(uint8_t i = 0; i < 32; i++) {free(X_hybrid_left[i]); X_hybrid_left[i] = NULL;}
     free(X_hybrid_left); X_hybrid_left = NULL;
-
     for(uint8_t i = 0; i < 32; i++) {free(X_hybrid_right[i]); X_hybrid_right[i] = NULL;}
     free(X_hybrid_right); X_hybrid_right = NULL;
-
-    printf("calloc5 free\n");
     return 0;
 }
 #endif
@@ -4552,11 +4526,8 @@ void lt_prediction(ic_stream* ics, ltp_info* ltp, int32_t* spec, int16_t* lt_pre
 //    int32_t  x_est[2048]; // ⏫⏫⏫
 //    int32_t  X_est[2048]; // ⏫⏫⏫
 
-    printf("hier6\n");
     int32_t* x_est = (int32_t*)malloc(2048 * sizeof(int32_t));
     int32_t* X_est = (int32_t*)malloc(2048 * sizeof(int32_t));
-    printf("calloc6 %i\n", 2048 * 4);
-
 
     if(ics->window_sequence != EIGHT_SHORT_SEQUENCE) {
         if(ltp->data_present) {
@@ -4577,10 +4548,8 @@ void lt_prediction(ic_stream* ics, ltp_info* ltp, int32_t* spec, int16_t* lt_pre
             }
         }
     }
-    printf("hier6 free\n");
     if(x_est){free(x_est); x_est = NULL;}
     if(X_est){free(X_est); X_est = NULL;}
-    printf("calloc6 free\n");
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -5758,10 +5727,8 @@ uint8_t sbrDecodeCoupleFrame(sbr_info* sbr, int32_t* left_chan, int32_t* right_c
     uint8_t   ret = 0;
 //    complex_t X[MAX_NTSR][64]; // ⏫⏫⏫
 
-    printf("hier7\n");
     complex_t** X = (complex_t**)malloc(MAX_NTSR * sizeof(X));
     for(uint8_t i = 0; i < MAX_NTSR; i++) X[i] =(complex_t*)malloc(64 * sizeof(*(X[i])));
-    printf("calloc7 %i\n", 64*MAX_NTSR*2*4);
 
     if(sbr == NULL) return 20;
     /* case can occur due to bit errors */
@@ -5783,12 +5750,8 @@ uint8_t sbrDecodeCoupleFrame(sbr_info* sbr, int32_t* left_chan, int32_t* right_c
     if(downSampledSBR) { sbr_qmf_synthesis_32(sbr, sbr->qmfs[1], X, right_chan); }
     else { sbr_qmf_synthesis_64(sbr, sbr->qmfs[1], X, right_chan); }
 
-    printf("hier7 free\n");
     for(uint8_t i = 0; i < MAX_NTSR; i++) {free(X[i]); X[i] = NULL;}
     free(X); X = NULL;
-    printf("calloc7 free\n");
-
-
 
     if(sbr->bs_header_flag) sbr->just_seeked = 0;
     if(sbr->header_count != 0 && sbr->ret == 0) {
@@ -5813,13 +5776,8 @@ uint8_t sbrDecodeSingleFrame(sbr_info* sbr, int32_t* channel, const uint8_t just
     /* case can occur due to bit errors */
     if(sbr->id_aac != ID_SCE && sbr->id_aac != ID_LFE) return 21;
 
-    printf("hier10\n");
     complex_t** X = (complex_t**)calloc(MAX_NTSR, sizeof(X));
     for(uint8_t i = 0; i < MAX_NTSR; i++) X[i] =(complex_t*)calloc(64, sizeof(*(X[i])));
-    printf("calloc10 %i\n", MAX_NTSR * 64 * 4 *2);
-    
-
-
 
     if(sbr->ret || (sbr->header_count == 0)) {
         /* don't process just upsample */
@@ -5835,12 +5793,8 @@ uint8_t sbrDecodeSingleFrame(sbr_info* sbr, int32_t* channel, const uint8_t just
     else { sbr_qmf_synthesis_64(sbr, sbr->qmfs[0], X, channel); }
     if(sbr->bs_header_flag) sbr->just_seeked = 0;
 
-    printf("hier10 free\n");
     for(uint8_t i = 0; i < MAX_NTSR; i++) {free(X[i]);  X[i] = NULL;}
     free(X); X = NULL;
-    printf("calloc10 free\n");
-
-
 
     if(sbr->header_count != 0 && sbr->ret == 0) {
         ret = sbr_save_prev_data(sbr, 0);
@@ -5864,16 +5818,10 @@ uint8_t sbrDecodeSingleFramePS(sbr_info* sbr, int32_t* left_channel, int32_t* ri
     /* case can occur due to bit errors */
     if(sbr->id_aac != ID_SCE && sbr->id_aac != ID_LFE) return 21;
 
-
-    printf("hier8\n");
     complex_t** X_left = (complex_t**)calloc(38, sizeof(X_left));
     for(uint8_t i = 0; i < 38; i++) X_left[i] =(complex_t*)calloc(64, sizeof(*(X_left[i])));
     complex_t** X_right = (complex_t**)calloc(38, sizeof(X_right));
     for(uint8_t i = 0; i < 38; i++) X_right[i] =(complex_t*)calloc(64, sizeof(*(X_right[i])));
-    printf("calloc8 %i\n", 38 * 64* 2* 4);
-
-
-
 
     if(sbr->ret || (sbr->header_count == 0)) {
         /* don't process just upsample */
@@ -5906,13 +5854,10 @@ uint8_t sbrDecodeSingleFramePS(sbr_info* sbr, int32_t* left_channel, int32_t* ri
         sbr_qmf_synthesis_64(sbr, sbr->qmfs[1], X_right, right_channel);
     }
 
-
-    printf("hier8 free\n");
     for(uint8_t i = 0; i < 38; i++) {free(X_left[i]); X_left[i] = NULL;}
     free(X_left);
     for(uint8_t i = 0; i < 38; i++) {free(X_right[i]); X_right[i] = NULL;}
     free(X_right);
-    printf("calloc8 free\n");
 
     if(sbr->bs_header_flag) sbr->just_seeked = 0;
     if(sbr->header_count != 0 && sbr->ret == 0) {
