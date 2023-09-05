@@ -33,8 +33,6 @@
 #include "neaacdec.h"
 
 
-void extract_envelope_data(sbr_info *sbr, uint8_t ch);
-void extract_noise_floor_data(sbr_info *sbr, uint8_t ch);
 
 
 #endif

@@ -33,15 +33,6 @@
 #include "neaacdec.h"
 
 
-typedef struct
-{
-    int32_t G_lim_boost[MAX_L_E][MAX_M];
-    int32_t Q_M_lim_boost[MAX_L_E][MAX_M];
-    int32_t S_M_boost[MAX_L_E][MAX_M];
-} sbr_hfadj_info;
-
-
-
 
 
 
