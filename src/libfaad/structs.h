@@ -116,14 +116,10 @@ typedef struct {
     uint8_t assoc_data_element_tag_select[16];
     uint8_t cc_element_is_ind_sw[16];
     uint8_t valid_cc_element_tag_select[16];
-
     uint8_t channels;
-
     uint8_t comment_field_bytes;
     uint8_t comment_field_data[257];
-
-    /* extra added values */
-    uint8_t num_front_channels;
+    uint8_t num_front_channels;   /* extra added values */
     uint8_t num_side_channels;
     uint8_t num_back_channels;
     uint8_t num_lfe_channels;
