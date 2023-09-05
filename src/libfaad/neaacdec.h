@@ -226,6 +226,7 @@ typedef const int8_t (*sbr_huff_tab)[2];
 #define RSQRT2              FRAC_CONST(0.7071067811865475244) // 1/sqrt(2)
 #define segmentWidth(cb)    min(maxCwLen[cb], ics->length_of_longest_codeword)
 #define DIV(A, B)           (((int64_t)A << REAL_BITS) / B)
+#define bit_set(A, B)       ((A) & (1 << (B)))
 
 #define step(shift)                                  \
     if((0x40000000l >> shift) + root <= value) {     \
@@ -446,6 +447,18 @@ static void          hf_assembly(sbr_info* sbr, sbr_hfadj_info* adj, complex_t X
 static void          calc_prediction_coef(sbr_info* sbr, complex_t Xlow[MAX_NTSRHFG][64], complex_t* alpha_0, complex_t* alpha_1, uint8_t k);
 static void          calc_chirp_factors(sbr_info* sbr, uint8_t ch);
 static void          patch_construction(sbr_info* sbr);
+static void          sbr_header(bitfile* ld, sbr_info* sbr);
+static uint8_t       calc_sbr_tables(sbr_info* sbr, uint8_t start_freq, uint8_t stop_freq, uint8_t samplerate_mode, uint8_t freq_scale, uint8_t alter_scale, uint8_t xover_band);
+static uint8_t       sbr_data(bitfile* ld, sbr_info* sbr);
+static uint16_t      sbr_extension(bitfile* ld, sbr_info* sbr, uint8_t bs_extension_id, uint16_t num_bits_left);
+static uint8_t       sbr_single_channel_element(bitfile* ld, sbr_info* sbr);
+static uint8_t       sbr_channel_pair_element(bitfile* ld, sbr_info* sbr);
+static uint8_t       sbr_grid(bitfile* ld, sbr_info* sbr, uint8_t ch);
+static void          sbr_dtdf(bitfile* ld, sbr_info* sbr, uint8_t ch);
+static void          invf_mode(bitfile* ld, sbr_info* sbr, uint8_t ch);
+static void          sinusoidal_coding(bitfile* ld, sbr_info* sbr, uint8_t ch);
+static uint8_t       middleBorder(sbr_info* sbr, uint8_t ch);
+static uint8_t       quant_to_spec(NeAACDecStruct* hDecoder, ic_stream* ics, int16_t* quant_data, int32_t* spec_data, uint16_t frame_len);
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //                                              I N L I N E S
