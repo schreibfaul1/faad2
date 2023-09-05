@@ -459,6 +459,7 @@ static void          invf_mode(bitfile* ld, sbr_info* sbr, uint8_t ch);
 static void          sinusoidal_coding(bitfile* ld, sbr_info* sbr, uint8_t ch);
 static uint8_t       middleBorder(sbr_info* sbr, uint8_t ch);
 static uint8_t       quant_to_spec(NeAACDecStruct* hDecoder, ic_stream* ics, int16_t* quant_data, int32_t* spec_data, uint16_t frame_len);
+uint8_t              sbr_extension_data(bitfile* ld, sbr_info* sbr, uint16_t cnt, uint8_t resetFlag);
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //                                              I N L I N E S
