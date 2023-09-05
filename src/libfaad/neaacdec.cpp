@@ -2108,6 +2108,7 @@ void filter_bank_end(fb_info* fb) {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static inline void imdct_long(fb_info* fb, int32_t* in_data, int32_t* out_data, uint16_t len) {
+    (void)len;
 #ifdef LD_DEC
     mdct_info* mdct = NULL;
 
@@ -2124,7 +2125,6 @@ static inline void imdct_long(fb_info* fb, int32_t* in_data, int32_t* out_data, 
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#ifdef LTP_DEC
 static inline void mdct(fb_info* fb, int32_t* in_data, int32_t* out_data, uint16_t len) {
     mdct_info* mdct = NULL;
 
@@ -2140,11 +2140,11 @@ static inline void mdct(fb_info* fb, int32_t* in_data, int32_t* out_data, uint16
     }
     faad_mdct(mdct, in_data, out_data);
 }
-#endif
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void ifilter_bank(fb_info* fb, uint8_t window_sequence, uint8_t window_shape, uint8_t window_shape_prev, int32_t* freq_in, int32_t* time_out, int32_t* overlap, uint8_t object_type,
                   uint16_t frame_len) {
+    (void)object_type;
     int16_t        i;
     int32_t        transf_buf[2 * 1024] = {0}; // ⏫⏫⏫
     const int32_t* window_long = NULL;
@@ -2255,9 +2255,10 @@ void ifilter_bank(fb_info* fb, uint8_t window_sequence, uint8_t window_shape, ui
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#ifdef LTP_DEC
+
 /* only works for LTP -> no overlapping, no short blocks */
 void filter_bank_ltp(fb_info* fb, uint8_t window_sequence, uint8_t window_shape, uint8_t window_shape_prev, int32_t* in_data, int32_t* out_mdct, uint8_t object_type, uint16_t frame_len) {
+    (void)object_type;
     int16_t i;
     //    int32_t        windowed_buf[2 * 1024] = {0}; // ⏫⏫⏫
     int32_t* windowed_buf = (int32_t*)calloc(2 * 1024, sizeof(int32_t));
@@ -2314,7 +2315,6 @@ void filter_bank_ltp(fb_info* fb, uint8_t window_sequence, uint8_t window_shape,
         windowed_buf = NULL;
     }
 }
-#endif
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 int8_t huffman_scale_factor(bitfile* ld) {
@@ -2514,6 +2514,7 @@ static int16_t huffman_codebook(uint8_t i) {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static void vcb11_check_LAV(uint8_t cb, int16_t* sp) {
+    (void)vcb11_check_LAV; // -Wunused-function
     static const uint16_t vcb11_LAV_tab[] = {16, 31, 47, 63, 95, 127, 159, 191, 223, 255, 319, 383, 511, 767, 1023, 2047};
     uint16_t              max = 0;
 
@@ -4545,6 +4546,7 @@ uint8_t ps_decode(ps_info* ps, complex_t* X_left[64], complex_t* X_right[64]) {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t is_ltp_ot(uint8_t object_type) { /* check if the object type is an object type that can have LTP */
+    (void)object_type;
 #ifdef LTP_DEC
     if((object_type == LTP)
     #ifdef ERROR_RESILIENCE
@@ -4614,6 +4616,7 @@ static inline int16_t real_to_int16(int32_t sig_in) {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void lt_update_state(int16_t* lt_pred_stat, int32_t* time, int32_t* overlap, uint16_t frame_len, uint8_t object_type) {
+    (void)object_type;
     uint16_t i;
 
 /*
@@ -4866,6 +4869,9 @@ char NeAACDecAudioSpecificConfig(unsigned char* pBuffer, unsigned long buffer_si
 int8_t AudioSpecificConfigFromBitfile(bitfile* ld, mp4AudioSpecificConfig* mp4ASC, program_config* pce, uint32_t buffer_size, uint8_t short_form) {
     int8_t   result = 0;
     uint32_t startpos = faad_get_processed_bits(ld);
+    (void)startpos;
+    (void)buffer_size;
+    (void)short_form;
 #ifdef SBR_DEC
     int8_t bits_to_decode = 0;
 #endif
@@ -7333,6 +7339,7 @@ static uint8_t calc_sbr_tables(sbr_info* sbr, uint8_t start_freq, uint8_t stop_f
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* table 2 */
 uint8_t sbr_extension_data(bitfile* ld, sbr_info* sbr, uint16_t cnt, uint8_t psResetFlag) {
+    (void)psResetFlag;
     uint8_t  result = 0;
     uint16_t num_align_bits = 0;
     uint16_t num_sbr_bits1 = (uint16_t)faad_get_processed_bits(ld);
@@ -7711,7 +7718,9 @@ static void invf_mode(bitfile* ld, sbr_info* sbr, uint8_t ch) {
 static uint16_t sbr_extension(bitfile* ld, sbr_info* sbr, uint8_t bs_extension_id, uint16_t num_bits_left) {
     (void)num_bits_left;
     uint8_t  header;
+    (void)header;
     uint16_t ret;
+    (void)ret;
 
     switch(bs_extension_id) {
 #ifdef PS_DEC
@@ -8290,6 +8299,7 @@ static uint8_t channel_pair_element(NeAACDecStruct* hDecoder, bitfile* ld, uint8
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* Table 4.4.6 */
 static uint8_t ics_info(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* ld, uint8_t common_window) {
+    (void)common_window;
     uint8_t retval = 0;
     uint8_t ics_reserved_bit;
     ics_reserved_bit = faad_get1bit(ld);
@@ -8388,6 +8398,8 @@ static uint16_t data_stream_element(NeAACDecStruct* hDecoder, bitfile* ld) {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* Table 4.4.11 */
 static uint8_t fill_element(NeAACDecStruct* hDecoder, bitfile* ld, drc_info* drc, uint8_t sbr_ele) {
+    (void)hDecoder;
+    (void)sbr_ele;
     uint16_t count;
 #ifdef SBR_DEC
     uint8_t bs_extension_type;
@@ -8510,6 +8522,7 @@ static uint8_t individual_channel_stream(NeAACDecStruct* hDecoder, element* ele,
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* Table 4.4.25 */
 static uint8_t section_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* ld) {
+    (void)hDecoder;
     uint8_t g;
     uint8_t sect_esc_val, sect_bits;
 
@@ -8650,6 +8663,7 @@ static uint8_t decode_scale_factors(ic_stream* ics, bitfile* ld) {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* Table 4.4.26 */
 static uint8_t scale_factor_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* ld) {
+    (void)hDecoder;
     uint8_t ret = 0;
 
 #ifdef ERROR_RESILIENCE
@@ -8704,6 +8718,7 @@ static void tns_data(ic_stream* ics, tns_info* tns, bitfile* ld) {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* Table 4.4.28 */
 static uint8_t ltp_data(NeAACDecStruct* hDecoder, ic_stream* ics, ltp_info* ltp, bitfile* ld) {
+    (void)ltp_data;
     uint8_t sfb, w;
 
     ltp->lag = 0;
@@ -9327,6 +9342,7 @@ static uint8_t quant_to_spec(NeAACDecStruct* hDecoder, ic_stream* ics, int16_t* 
 void faad_free(void* b);
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t allocate_single_channel(NeAACDecStruct* hDecoder, uint8_t channel, uint8_t output_channels) {
+    (void)output_channels;
     int mul = 1;
 
 #ifdef LTP_DEC

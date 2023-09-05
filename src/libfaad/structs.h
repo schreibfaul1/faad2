@@ -162,7 +162,6 @@ typedef struct {
     program_config pce[16];
 } adif_header;
 
-#ifdef LTP_DEC
 typedef struct {
     uint8_t  last_band;
     uint8_t  data_present;
@@ -174,7 +173,7 @@ typedef struct {
     uint8_t  short_lag_present[8];
     uint8_t  short_lag[8];
 } ltp_info;
-#endif
+
 
 typedef struct {
     uint8_t number_pulse;
@@ -220,27 +219,19 @@ typedef struct {
     uint8_t tns_data_present;
     uint8_t gain_control_data_present;
     uint8_t predictor_data_present;
-
     pulse_info pul;
     tns_info   tns;
-#ifdef LTP_DEC
     ltp_info ltp;
     ltp_info ltp2;
-#endif
-
-#ifdef ERROR_RESILIENCE
-    /* ER HCR data */
-    uint16_t length_of_reordered_spectral_data;
+    uint16_t length_of_reordered_spectral_data;  /* ER HCR data */
     uint8_t  length_of_longest_codeword;
-    /* ER RLVC data */
-    uint8_t  sf_concealment;
+    uint8_t  sf_concealment;  /* ER RLVC data */
     uint8_t  rev_global_gain;
     uint16_t length_of_rvlc_sf;
     uint16_t dpcm_noise_nrg;
     uint8_t  sf_escapes_present;
     uint8_t  length_of_rvlc_escapes;
     uint16_t dpcm_noise_last_position;
-#endif
 } ic_stream; /* individual channel stream */
 
 typedef struct {
@@ -585,39 +576,25 @@ typedef struct {
 #endif
     fb_info*  fb;
     drc_info* drc;
-
     int32_t* time_out[MAX_CHANNELS];
     int32_t* fb_intermed[MAX_CHANNELS];
-
-#ifdef SBR_DEC
     int8_t sbr_present_flag;
     int8_t forceUpSampling;
     int8_t downSampledSBR;
-    /* determines whether SBR data is allocated for the gives element */
-    uint8_t sbr_alloced[MAX_SYNTAX_ELEMENTS];
-
+    uint8_t sbr_alloced[MAX_SYNTAX_ELEMENTS];  /* determines whether SBR data is allocated for the gives element */
     sbr_info* sbr[MAX_SYNTAX_ELEMENTS];
-#endif
-#if(defined(PS_DEC))
     uint8_t ps_used[MAX_SYNTAX_ELEMENTS];
     uint8_t ps_used_global;
-#endif
 #ifdef LTP_DEC
     int16_t* lt_pred_stat[MAX_CHANNELS];
 #endif
-
-    /* RNG states */
-    uint32_t __r1;
+    uint32_t __r1; /* RNG states */
     uint32_t __r2;
-
-    /* Program Config Element */
-    uint8_t        pce_set;
+    uint8_t        pce_set; /* Program Config Element */
     program_config pce;
     uint8_t        element_id[MAX_CHANNELS];
     uint8_t        internal_channel[MAX_CHANNELS];
-
-    /* Configuration data */
-    NeAACDecConfiguration_t config;
+    NeAACDecConfiguration_t config; /* Configuration data */
     latm_header          latm_config;
     const unsigned char* cmes;
 } NeAACDecStruct;
