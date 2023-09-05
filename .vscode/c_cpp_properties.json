@@ -9,7 +9,10 @@
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c23",
             "cppStandard": "c++23",
-            "intelliSenseMode": "${default}"
+            "intelliSenseMode": "${default}",
+            "compilerArgs": [
+                "-wall"
+            ]
         }
     ],
     "version": 4

@@ -1,5 +1,7 @@
 #include "neaacdec.h"
 #include <assert.h>
+#pragma GCC diagnostic warning "-Wall"
+#pragma GCC diagnostic warning "-Wextra"
 // ⏫⏫⏫
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* common free function */
@@ -118,7 +120,7 @@ void faad_rewindbits(bitfile* ld) {
 /* reset to a certain point */
 void faad_resetbits(bitfile* ld, int bits) {
     uint32_t tmp;
-    int      words = bits >> 5;
+    uint32_t words = bits >> 5;
     int      remainder = bits & 0x1F;
 
     if(ld->buffer_size < words * 4) { ld->bytes_left = 0; }
@@ -619,35 +621,36 @@ static void cfftf1pos(uint16_t n, complex_t* c, complex_t* ch, const uint16_t* i
         l2 = ip * l1;
         ido = n / l2;
         idl1 = ido * l1;
+        (void)idl1;
         switch(ip) {
         case 4:
             ix2 = iw + ido;
             ix3 = ix2 + ido;
-            if(na == 0) passf4pos((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)c, ch, &wa[iw], &wa[ix2], &wa[ix3]);
+            if(na == 0) passf4pos(ido, l1, (const complex_t*)c, ch, &wa[iw], &wa[ix2], &wa[ix3]);
             else
-                passf4pos((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)ch, c, &wa[iw], &wa[ix2], &wa[ix3]);
+                passf4pos(ido, l1, (const complex_t*)ch, c, &wa[iw], &wa[ix2], &wa[ix3]);
             na = 1 - na;
             break;
         case 2:
-            if(na == 0) passf2pos((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)c, ch, &wa[iw]);
+            if(na == 0) passf2pos(ido, l1, (const complex_t*)c, ch, &wa[iw]);
             else
-                passf2pos((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)ch, c, &wa[iw]);
+                passf2pos(ido, l1, (const complex_t*)ch, c, &wa[iw]);
             na = 1 - na;
             break;
         case 3:
             ix2 = iw + ido;
-            if(na == 0) passf3((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)c, ch, &wa[iw], &wa[ix2], isign);
+            if(na == 0) passf3(ido, l1, (const complex_t*)c, ch, &wa[iw], &wa[ix2], isign);
             else
-                passf3((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)ch, c, &wa[iw], &wa[ix2], isign);
+                passf3(ido, l1, (const complex_t*)ch, c, &wa[iw], &wa[ix2], isign);
             na = 1 - na;
             break;
         case 5:
             ix2 = iw + ido;
             ix3 = ix2 + ido;
             ix4 = ix3 + ido;
-            if(na == 0) passf5((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)c, ch, &wa[iw], &wa[ix2], &wa[ix3], &wa[ix4], isign);
+            if(na == 0) passf5(ido, l1, (const complex_t*)c, ch, &wa[iw], &wa[ix2], &wa[ix3], &wa[ix4], isign);
             else
-                passf5((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)ch, c, &wa[iw], &wa[ix2], &wa[ix3], &wa[ix4], isign);
+                passf5(ido, l1, (const complex_t*)ch, c, &wa[iw], &wa[ix2], &wa[ix3], &wa[ix4], isign);
             na = 1 - na;
             break;
         }
@@ -676,35 +679,36 @@ static void cfftf1neg(uint16_t n, complex_t* c, complex_t* ch, const uint16_t* i
         l2 = ip * l1;
         ido = n / l2;
         idl1 = ido * l1;
+        (void)idl1;
         switch(ip) {
         case 4:
             ix2 = iw + ido;
             ix3 = ix2 + ido;
-            if(na == 0) passf4neg((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)c, ch, &wa[iw], &wa[ix2], &wa[ix3]);
+            if(na == 0) passf4neg(ido, l1, (const complex_t*)c, ch, &wa[iw], &wa[ix2], &wa[ix3]);
             else
-                passf4neg((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)ch, c, &wa[iw], &wa[ix2], &wa[ix3]);
+                passf4neg(ido, l1, (const complex_t*)ch, c, &wa[iw], &wa[ix2], &wa[ix3]);
             na = 1 - na;
             break;
         case 2:
-            if(na == 0) passf2neg((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)c, ch, &wa[iw]);
+            if(na == 0) passf2neg(ido, l1, (const complex_t*)c, ch, &wa[iw]);
             else
-                passf2neg((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)ch, c, &wa[iw]);
+                passf2neg(ido, l1, (const complex_t*)ch, c, &wa[iw]);
             na = 1 - na;
             break;
         case 3:
             ix2 = iw + ido;
-            if(na == 0) passf3((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)c, ch, &wa[iw], &wa[ix2], isign);
+            if(na == 0) passf3(ido, l1, (const complex_t*)c, ch, &wa[iw], &wa[ix2], isign);
             else
-                passf3((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)ch, c, &wa[iw], &wa[ix2], isign);
+                passf3(ido, l1, (const complex_t*)ch, c, &wa[iw], &wa[ix2], isign);
             na = 1 - na;
             break;
         case 5:
             ix2 = iw + ido;
             ix3 = ix2 + ido;
             ix4 = ix3 + ido;
-            if(na == 0) passf5((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)c, ch, &wa[iw], &wa[ix2], &wa[ix3], &wa[ix4], isign);
+            if(na == 0) passf5(ido, l1, (const complex_t*)c, ch, &wa[iw], &wa[ix2], &wa[ix3], &wa[ix4], isign);
             else
-                passf5((const uint16_t)ido, (const uint16_t)l1, (const complex_t*)ch, c, &wa[iw], &wa[ix2], &wa[ix3], &wa[ix4], isign);
+                passf5(ido, l1, (const complex_t*)ch, c, &wa[iw], &wa[ix2], &wa[ix3], &wa[ix4], isign);
             na = 1 - na;
             break;
         }
@@ -734,6 +738,7 @@ static void cffti1(uint16_t n, complex_t* wa, uint16_t* ifac) {
     nl = n;
     nf = 0;
     j = 0;
+    (void)wa;
 
 startloop:
     j++;
@@ -892,8 +897,8 @@ static const uint8_t Parity[256] = { // parity
     1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
     0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
 
-static uint32_t __r1 = 1;
-static uint32_t __r2 = 1;
+// static uint32_t __r1 = 1;
+// static uint32_t __r2 = 1;
 
 /*
  *  This is a simple random number generator with good quality for audio purposes.
@@ -1009,11 +1014,9 @@ int32_t pow2_fix(int32_t val) {
     uint32_t index_frac;
     int32_t  retval;
     int32_t  whole = (val >> REAL_BITS);
+    int32_t  rest = val - (whole << REAL_BITS);        /* rest = [0..1] */
+    int32_t  index = rest >> (REAL_BITS - TABLE_BITS); /* index into pow2_tab */
 
-    /* rest = [0..1] */
-    int32_t rest = val - (whole << REAL_BITS);
-    /* index into pow2_tab */
-    int32_t index = rest >> (REAL_BITS - TABLE_BITS);
     if(val == 0) return (1 << REAL_BITS);
     /* leave INTERP_BITS bits */
     index_frac = rest >> (REAL_BITS - TABLE_BITS - INTERP_BITS);
@@ -1035,11 +1038,9 @@ int32_t pow2_int(int32_t val) {
     uint32_t index_frac;
     int32_t  retval;
     int32_t  whole = (val >> REAL_BITS);
+    int32_t  rest = val - (whole << REAL_BITS);        /* rest = [0..1] */
+    int32_t  index = rest >> (REAL_BITS - TABLE_BITS); /* index into pow2_tab */
 
-    /* rest = [0..1] */
-    int32_t rest = val - (whole << REAL_BITS);
-    /* index into pow2_tab */
-    int32_t index = rest >> (REAL_BITS - TABLE_BITS);
     if(val == 0) return 1;
     /* leave INTERP_BITS bits */
     index_frac = rest >> (REAL_BITS - TABLE_BITS - INTERP_BITS);
@@ -1065,6 +1066,7 @@ int32_t log2_int(uint32_t val) {
     uint32_t x1, x2;
     uint32_t errcorr;
 
+    (void)whole;
     /* error */
     if(val == 0) return -10000;
     exp = floor_log2(val);
@@ -1099,6 +1101,7 @@ int32_t log2_fix(uint32_t val) {
     uint32_t x1, x2;
     uint32_t errcorr;
 
+    (void)whole;
     if(val == 0) return -100000; /* error */
     exp = floor_log2(val);
     exp -= REAL_BITS;
@@ -1196,8 +1199,8 @@ static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_c
     uint8_t i, m;
     int32_t tmp2[TNS_MAX_ORDER + 1];
     int32_t b[TNS_MAX_ORDER + 1];
-    /* Conversion to signed integer */
-    for(i = 0; i < order; i++) {
+
+    for(i = 0; i < order; i++) { /* Conversion to signed integer */
         if(coef_compress == 0) {
             if(coef_res_bits == 3) { tmp2[i] = tns_coef_0_3[coef[i]]; }
             else { tmp2[i] = tns_coef_0_4[coef[i]]; }
@@ -1228,9 +1231,8 @@ static void tns_ar_filter(int32_t* spectrum, uint16_t size, int8_t inc, int32_t*
     uint8_t  j;
     uint16_t i;
     int32_t  y;
-    /* state is stored as a double ringbuffer */
-    int32_t state[2 * TNS_MAX_ORDER] = {0};
-    int8_t  state_index = 0;
+    int32_t  state[2 * TNS_MAX_ORDER] = {0}; /* state is stored as a double ringbuffer */
+    int8_t   state_index = 0;
 
     for(i = 0; i < size; i++) {
         y = *spectrum;
@@ -1256,9 +1258,8 @@ static void tns_ma_filter(int32_t* spectrum, uint16_t size, int8_t inc, int32_t*
     uint8_t  j;
     uint16_t i;
     int32_t  y;
-    /* state is stored as a double ringbuffer */
-    int32_t state[2 * TNS_MAX_ORDER] = {0};
-    int8_t  state_index = 0;
+    int32_t  state[2 * TNS_MAX_ORDER] = {0}; /* state is stored as a double ringbuffer */
+    int8_t   state_index = 0;
 
     for(i = 0; i < size; i++) {
         y = *spectrum;
@@ -1345,7 +1346,8 @@ unsigned long NeAACDecGetCapabilities(void) {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 const unsigned char mes[] = {0x67, 0x20, 0x61, 0x20, 0x20, 0x20, 0x6f, 0x20, 0x72, 0x20, 0x65, 0x20, 0x6e, 0x20, 0x20, 0x20, 0x74,
                              0x20, 0x68, 0x20, 0x67, 0x20, 0x69, 0x20, 0x72, 0x20, 0x79, 0x20, 0x70, 0x20, 0x6f, 0x20, 0x63};
-NeAACDecHandle      NeAACDecOpen(void) {
+
+NeAACDecHandle NeAACDecOpen(void) {
     uint8_t         i;
     NeAACDecStruct* hDecoder = NULL;
 
@@ -1399,6 +1401,7 @@ NeAACDecConfigurationPtr_t NeAACDecGetCurrentConfiguration(NeAACDecHandle hpDeco
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 unsigned char NeAACDecSetConfiguration(NeAACDecHandle hpDecoder, NeAACDecConfigurationPtr_t config) {
     NeAACDecStruct* hDecoder = (NeAACDecStruct*)hpDecoder;
+
     if(hDecoder && config) {
         /* check if we can decode this object type */
         if(can_decode_ot(config->defObjectType) < 0) return 0;
@@ -1408,7 +1411,6 @@ unsigned char NeAACDecSetConfiguration(NeAACDecHandle hpDecoder, NeAACDecConfigu
         hDecoder->config.defSampleRate = config->defSampleRate;
         /* check output format */
         if((config->outputFormat < 1) || (config->outputFormat > 4)) return 0;
-
         hDecoder->config.outputFormat = config->outputFormat;
         if(config->downMatrix > 1) return 0;
         hDecoder->config.downMatrix = config->downMatrix;
@@ -1419,23 +1421,23 @@ unsigned char NeAACDecSetConfiguration(NeAACDecHandle hpDecoder, NeAACDecConfigu
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-static int latmCheck(latm_header* latm, bitfile* ld) {
-    uint32_t good = 0, bad = 0, bits, m;
+// static int latmCheck(latm_header* latm, bitfile* ld) {
+//     uint32_t good = 0, bad = 0, bits, m;
 
-    while(ld->bytes_left) {
-        bits = faad_latm_frame(latm, ld);
-        if(bits == 0xFFFFFFFF) bad++;
-        else {
-            good++;
-            while(bits > 0) {
-                m = min(bits, 8);
-                faad_getbits(ld, m);
-                bits -= m;
-            }
-        }
-    }
-    return (good > 0);
-}
+//     while(ld->bytes_left) {
+//         bits = faad_latm_frame(latm, ld);
+//         if(bits == 0xFFFFFFFF) bad++;
+//         else {
+//             good++;
+//             while(bits > 0) {
+//                 m = min(bits, 8);
+//                 faad_getbits(ld, m);
+//                 bits -= m;
+//             }
+//         }
+//     }
+//     return (good > 0);
+// }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 long NeAACDecInit(NeAACDecHandle hpDecoder, unsigned char* buffer, unsigned long buffer_size, unsigned long* samplerate, unsigned char* channels) {
@@ -1809,14 +1811,16 @@ static void* aac_frame_decode(NeAACDecStruct* hDecoder, NeAACDecFrameInfo* hInfo
     uint16_t i;
     uint8_t  channels = 0;
     uint8_t  output_channels = 0;
-    bitfile  ld = {0}; // ⏫⏫⏫ size only 48
+    bitfile  ld = {0, 0, 0, 0, 0, 0, 0, 0, 0}; // ⏫⏫⏫ size only 48
     uint32_t bitsconsumed;
     uint16_t frame_len;
     void*    sample_buffer;
     uint32_t startbit = 0, endbit = 0, payload_bits = 0;
 
-    /* safety checks */
-    if((hDecoder == NULL) || (hInfo == NULL) || (buffer == NULL)) { return NULL; }
+    (void)startbit;
+    (void)endbit;
+    (void)payload_bits;
+    if((hDecoder == NULL) || (hInfo == NULL) || (buffer == NULL)) { return NULL; } /* safety checks */
     frame_len = hDecoder->frameLength;
     memset(hInfo, 0, sizeof(NeAACDecFrameInfo));
     memset(hDecoder->internal_channel, 0, MAX_CHANNELS * sizeof(hDecoder->internal_channel[0]));
@@ -2142,7 +2146,7 @@ static inline void mdct(fb_info* fb, int32_t* in_data, int32_t* out_data, uint16
 void ifilter_bank(fb_info* fb, uint8_t window_sequence, uint8_t window_shape, uint8_t window_shape_prev, int32_t* freq_in, int32_t* time_out, int32_t* overlap, uint8_t object_type,
                   uint16_t frame_len) {
     int16_t        i;
-    int32_t        transf_buf[2 * 1024] = {0};
+    int32_t        transf_buf[2 * 1024] = {0}; // ⏫⏫⏫
     const int32_t* window_long = NULL;
     const int32_t* window_long_prev = NULL;
     const int32_t* window_short = NULL;
@@ -2254,9 +2258,9 @@ void ifilter_bank(fb_info* fb, uint8_t window_sequence, uint8_t window_shape, ui
 #ifdef LTP_DEC
 /* only works for LTP -> no overlapping, no short blocks */
 void filter_bank_ltp(fb_info* fb, uint8_t window_sequence, uint8_t window_shape, uint8_t window_shape_prev, int32_t* in_data, int32_t* out_mdct, uint8_t object_type, uint16_t frame_len) {
-    int16_t        i;
-//    int32_t        windowed_buf[2 * 1024] = {0}; // ⏫⏫⏫
-    int32_t* windowed_buf = (int32_t*)calloc(2*1024, sizeof(int32_t));
+    int16_t i;
+    //    int32_t        windowed_buf[2 * 1024] = {0}; // ⏫⏫⏫
+    int32_t* windowed_buf = (int32_t*)calloc(2 * 1024, sizeof(int32_t));
 
     const int32_t* window_long = NULL;
     const int32_t* window_long_prev = NULL;
@@ -2305,7 +2309,10 @@ void filter_bank_ltp(fb_info* fb, uint8_t window_sequence, uint8_t window_shape,
         break;
     }
 
-    if(windowed_buf) {free(windowed_buf); windowed_buf = NULL;}
+    if(windowed_buf) {
+        free(windowed_buf);
+        windowed_buf = NULL;
+    }
 }
 #endif
 
@@ -2878,12 +2885,12 @@ static void fill_in_codeword(codeword_t* codeword, uint16_t index, uint16_t sp, 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t reordered_spectral_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* ld, int16_t* spectral_data) {
-    uint16_t   PCWs_done;
-    uint16_t   numberOfSegments, numberOfSets, numberOfCodewords;
-//    codeword_t codeword[512]; // ⏫⏫⏫
-//    bits_t     segment[512];  // ⏫⏫⏫
-    uint16_t   sp_offset[8];
-    uint16_t   g, i, sortloop, set, bitsread;
+    uint16_t PCWs_done;
+    uint16_t numberOfSegments, numberOfSets, numberOfCodewords;
+    //    codeword_t codeword[512]; // ⏫⏫⏫
+    //    bits_t     segment[512];  // ⏫⏫⏫
+    uint16_t sp_offset[8];
+    uint16_t g, i, sortloop, set, bitsread;
     /*uint16_t bitsleft, codewordsleft*/;
     uint8_t w_idx, sfb, this_CB, last_CB, this_sec_CB;
 
@@ -2898,7 +2905,7 @@ uint8_t reordered_spectral_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfil
     if(sp_data_len < ics->length_of_longest_codeword) return 10;
 
     codeword_t* codeword = (codeword_t*)malloc(512 * sizeof(codeword_t));
-    bits_t* segment = (bits_t*)malloc(512 * sizeof(bits_t));
+    bits_t*     segment = (bits_t*)malloc(512 * sizeof(bits_t));
 
     sp_offset[0] = 0;
     for(g = 1; g < ics->num_window_groups; g++) { sp_offset[g] = sp_offset[g - 1] + nshort * ics->window_group_length[g - 1]; }
@@ -2986,9 +2993,15 @@ uint8_t reordered_spectral_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfil
             }
         }
     }
-    if(numberOfSegments == 0){
-        if(segment){free(codeword); segment = NULL;}
-        if(codeword){free(codeword); codeword = NULL;}
+    if(numberOfSegments == 0) {
+        if(segment) {
+            free(codeword);
+            segment = NULL;
+        }
+        if(codeword) {
+            free(codeword);
+            codeword = NULL;
+        }
         return 10;
     }
     numberOfSets = numberOfCodewords / numberOfSegments;
@@ -3016,8 +3029,14 @@ uint8_t reordered_spectral_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfil
         }
         for(i = 0; i < numberOfSegments; i++) rewrev_bits(&segment[i]);
     }
-    if(segment){free(codeword); segment = NULL;}
-    if(codeword){free(codeword); codeword = NULL;}
+    if(segment) {
+        free(codeword);
+        segment = NULL;
+    }
+    if(codeword) {
+        free(codeword);
+        codeword = NULL;
+    }
     return 0;
 }
 #endif
@@ -3315,6 +3334,7 @@ static void hybrid_free(hyb_info* hyb) {
 /* real filter, size 2 */
 static void channel_filter2(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, complex_t* buffer, complex_t** X_hybrid) {
     uint8_t i;
+    (void)hyb;
 
     for(i = 0; i < frame_len; i++) {
         int32_t r0 = MUL_F(filter[0], (QMF_RE(buffer[0 + i]) + QMF_RE(buffer[12 + i])));
@@ -3344,6 +3364,7 @@ static void channel_filter2(hyb_info* hyb, uint8_t frame_len, const int32_t* fil
 /* complex filter, size 4 */
 static void channel_filter4(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, complex_t* buffer, complex_t** X_hybrid) {
     uint8_t i;
+    (void)hyb;
     int32_t input_re1[2], input_re2[2], input_im1[2], input_im2[2];
 
     for(i = 0; i < frame_len; i++) {
@@ -3397,6 +3418,7 @@ static void inline DCT3_4_unscaled(int32_t* y, int32_t* x) {
 /* complex filter, size 8 */
 static void channel_filter8(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, complex_t* buffer, complex_t** X_hybrid) {
     uint8_t i, n;
+    (void)hyb;
     int32_t input_re1[4], input_re2[4], input_im1[4], input_im2[4];
     int32_t x[4];
 
@@ -3472,6 +3494,7 @@ static void inline DCT3_6_unscaled(int32_t* y, int32_t* x) {
 /* complex filter, size 12 */
 static void channel_filter12(hyb_info* hyb, uint8_t frame_len, const int32_t* filter, complex_t* buffer, complex_t** X_hybrid) {
     uint8_t i, n;
+    (void)hyb;
     int32_t input_re1[6], input_re2[6], input_im1[6], input_im2[6];
     int32_t out_re1[6], out_re2[6], out_im1[6], out_im2[6];
 
@@ -3570,7 +3593,9 @@ static void hybrid_analysis(hyb_info* hyb, complex_t* X[64], complex_t* X_hybrid
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static void hybrid_synthesis(hyb_info* hyb, complex_t* X[64], complex_t* X_hybrid[32], uint8_t use34, uint8_t numTimeSlotsRate) {
-    uint8_t  k, n, band;
+    uint8_t k, n, band;
+    (void)hyb;
+    (void)numTimeSlotsRate;
     uint8_t  offset = 0;
     uint8_t  qmf_bands = (use34) ? 5 : 3;
     uint8_t* resolution = (use34) ? hyb->resolution34 : hyb->resolution20;
@@ -3845,14 +3870,14 @@ static void ps_decorrelate(ps_info* ps, complex_t* X_left[64], complex_t* X_righ
     const complex_t* Phi_Fract_SubQmf;
     uint8_t          temp_delay_ser[NO_ALLPASS_LINKS];
     int32_t          P_SmoothPeakDecayDiffNrg, nrg;
-//    int32_t          P[32][34];                        // ⏫⏫⏫
-//    int32_t          G_TransientRatio[32][34] = {{0}}; // ⏫⏫⏫
-    complex_t        inputLeft;
+    //    int32_t          P[32][34];                        // ⏫⏫⏫
+    //    int32_t          G_TransientRatio[32][34] = {{0}}; // ⏫⏫⏫
+    complex_t inputLeft;
 
     int32_t** P = (int32_t**)malloc(32 * sizeof(P));
-    for(uint8_t i = 0; i < 32; i++) P[i] =(int32_t*)malloc(34 * sizeof(*(P[i])));
+    for(uint8_t i = 0; i < 32; i++) P[i] = (int32_t*)malloc(34 * sizeof(*(P[i])));
     int32_t** G_TransientRatio = (int32_t**)calloc(32, sizeof(G_TransientRatio));
-    for(uint8_t i = 0; i < 32; i++) G_TransientRatio[i] =(int32_t*)calloc(34, sizeof(*(G_TransientRatio[i])));
+    for(uint8_t i = 0; i < 32; i++) G_TransientRatio[i] = (int32_t*)calloc(34, sizeof(*(G_TransientRatio[i])));
 
     /* chose hybrid filterbank: 20 or 34 band case */
     if(ps->use34hybrid_bands) { Phi_Fract_SubQmf = Phi_Fract_SubQmf34; }
@@ -4060,10 +4085,18 @@ static void ps_decorrelate(ps_info* ps, complex_t* X_left[64], complex_t* X_righ
     ps->saved_delay = temp_delay;
     for(m = 0; m < NO_ALLPASS_LINKS; m++) ps->delay_buf_index_ser[m] = temp_delay_ser[m];
 
-    for(uint8_t i = 0; i < 32; i++) {free(G_TransientRatio[i]); G_TransientRatio[i] = NULL;}
-    free(G_TransientRatio); G_TransientRatio = NULL;
-    for(uint8_t i = 0; i < 32; i++) {free(P[i]); P[i] = NULL;}
-    free(P); P = NULL;
+    for(uint8_t i = 0; i < 32; i++) {
+        free(G_TransientRatio[i]);
+        G_TransientRatio[i] = NULL;
+    }
+    free(G_TransientRatio);
+    G_TransientRatio = NULL;
+    for(uint8_t i = 0; i < 32; i++) {
+        free(P[i]);
+        P[i] = NULL;
+    }
+    free(P);
+    P = NULL;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -4075,29 +4108,28 @@ static void ps_decorrelate(ps_info* ps, complex_t* X_left[64], complex_t* X_righ
         else { root = root >> 1; }
 
 /* fixed point square root approximation */
-static int32_t ps_sqrt(int32_t value) {
-    int32_t root = 0;
-    step(0);
-    step(2);
-    step(4);
-    step(6);
-    step(8);
-    step(10);
-    step(12);
-    step(14);
-    step(16);
-    step(18);
-    step(20);
-    step(22);
-    step(24);
-    step(26);
-    step(28);
-    step(30);
-
-    if(root < value) ++root;
-    root <<= (REAL_BITS / 2);
-    return root;
-}
+// static int32_t ps_sqrt(int32_t value) {
+//     int32_t root = 0;
+//     step(0);
+//     step(2);
+//     step(4);
+//     step(6);
+//     step(8);
+//     step(10);
+//     step(12);
+//     step(14);
+//     step(16);
+//     step(18);
+//     step(20);
+//     step(22);
+//     step(24);
+//     step(26);
+//     step(28);
+//     step(30);
+//     if(root < value) ++root;
+//     root <<= (REAL_BITS / 2);
+//     return root;
+// }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static const int32_t ipdopd_cos_tab[] = {FRAC_CONST(1.000000000000000),  FRAC_CONST(0.707106781186548),  FRAC_CONST(0.000000000000000), FRAC_CONST(-0.707106781186547), FRAC_CONST(-1.000000000000000),
@@ -4408,6 +4440,7 @@ void ps_free(ps_info* ps) {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ps_info* ps_init(uint8_t sr_index, uint8_t numTimeSlotsRate) {
     uint8_t i;
+    (void)sr_index;
     uint8_t short_delay_band;
 
     ps_info* ps = (ps_info*)faad_malloc(sizeof(ps_info));
@@ -4459,9 +4492,9 @@ uint8_t ps_decode(ps_info* ps, complex_t* X_left[64], complex_t* X_right[64]) {
     // complex_t X_hybrid_right[32][32] = {{0}}; // ⏫⏫⏫
 
     complex_t** X_hybrid_left = (complex_t**)malloc(32 * sizeof(X_hybrid_left));
-    for(uint8_t i = 0; i < 32; i++) X_hybrid_left[i] =(complex_t*)malloc(34 * sizeof(*(X_hybrid_left[i])));
+    for(uint8_t i = 0; i < 32; i++) X_hybrid_left[i] = (complex_t*)malloc(34 * sizeof(*(X_hybrid_left[i])));
     complex_t** X_hybrid_right = (complex_t**)calloc(32, sizeof(X_hybrid_right));
-    for(uint8_t i = 0; i < 32; i++) X_hybrid_right[i] =(complex_t*)calloc(34, sizeof(*(X_hybrid_right[i])));
+    for(uint8_t i = 0; i < 32; i++) X_hybrid_right[i] = (complex_t*)calloc(34, sizeof(*(X_hybrid_right[i])));
 
     /* delta decoding of the bitstream data */
     ps_data_decode(ps);
@@ -4494,10 +4527,18 @@ uint8_t ps_decode(ps_info* ps, complex_t* X_left[64], complex_t* X_right[64]) {
     hybrid_synthesis((hyb_info*)ps->hyb, X_left, X_hybrid_left, ps->use34hybrid_bands, ps->numTimeSlotsRate);
     hybrid_synthesis((hyb_info*)ps->hyb, X_right, X_hybrid_right, ps->use34hybrid_bands, ps->numTimeSlotsRate);
 
-    for(uint8_t i = 0; i < 32; i++) {free(X_hybrid_left[i]); X_hybrid_left[i] = NULL;}
-    free(X_hybrid_left); X_hybrid_left = NULL;
-    for(uint8_t i = 0; i < 32; i++) {free(X_hybrid_right[i]); X_hybrid_right[i] = NULL;}
-    free(X_hybrid_right); X_hybrid_right = NULL;
+    for(uint8_t i = 0; i < 32; i++) {
+        free(X_hybrid_left[i]);
+        X_hybrid_left[i] = NULL;
+    }
+    free(X_hybrid_left);
+    X_hybrid_left = NULL;
+    for(uint8_t i = 0; i < 32; i++) {
+        free(X_hybrid_right[i]);
+        X_hybrid_right[i] = NULL;
+    }
+    free(X_hybrid_right);
+    X_hybrid_right = NULL;
     return 0;
 }
 #endif
@@ -4523,8 +4564,8 @@ void lt_prediction(ic_stream* ics, ltp_info* ltp, int32_t* spec, int16_t* lt_pre
                    uint16_t frame_len) {
     uint8_t  sfb;
     uint16_t bin, i, num_samples;
-//    int32_t  x_est[2048]; // ⏫⏫⏫
-//    int32_t  X_est[2048]; // ⏫⏫⏫
+    //    int32_t  x_est[2048]; // ⏫⏫⏫
+    //    int32_t  X_est[2048]; // ⏫⏫⏫
 
     int32_t* x_est = (int32_t*)malloc(2048 * sizeof(int32_t));
     int32_t* X_est = (int32_t*)malloc(2048 * sizeof(int32_t));
@@ -4548,8 +4589,14 @@ void lt_prediction(ic_stream* ics, ltp_info* ltp, int32_t* spec, int16_t* lt_pre
             }
         }
     }
-    if(x_est){free(x_est); x_est = NULL;}
-    if(X_est){free(X_est); X_est = NULL;}
+    if(x_est) {
+        free(x_est);
+        x_est = NULL;
+    }
+    if(X_est) {
+        free(X_est);
+        X_est = NULL;
+    }
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -5062,7 +5109,8 @@ uint16_t ps_data(ps_info* ps, bitfile* ld, uint8_t* header) {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static uint16_t ps_extension(ps_info* ps, bitfile* ld, const uint8_t ps_extension_id, const uint16_t num_bits_left) {
-    uint8_t  n;
+    uint8_t n;
+    (void)num_bits_left;
     uint16_t bits = (uint16_t)faad_get_processed_bits(ld);
 
     if(ps_extension_id == 0) {
@@ -5663,6 +5711,7 @@ static void sbr_save_matrix(sbr_info* sbr, uint8_t ch) {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static uint8_t sbr_process_channel(sbr_info* sbr, int32_t* channel_buf, complex_t* X[64], uint8_t ch, uint8_t dont_process, const uint8_t downSampledSBR) {
+    (void)downSampledSBR;
     int16_t k, l;
     uint8_t ret = 0;
 
@@ -5723,12 +5772,12 @@ static uint8_t sbr_process_channel(sbr_info* sbr, int32_t* channel_buf, complex_
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t sbrDecodeCoupleFrame(sbr_info* sbr, int32_t* left_chan, int32_t* right_chan, const uint8_t just_seeked, const uint8_t downSampledSBR) {
-    uint8_t   dont_process = 0;
-    uint8_t   ret = 0;
-//    complex_t X[MAX_NTSR][64]; // ⏫⏫⏫
+    uint8_t dont_process = 0;
+    uint8_t ret = 0;
+    //    complex_t X[MAX_NTSR][64]; // ⏫⏫⏫
 
     complex_t** X = (complex_t**)malloc(MAX_NTSR * sizeof(X));
-    for(uint8_t i = 0; i < MAX_NTSR; i++) X[i] =(complex_t*)malloc(64 * sizeof(*(X[i])));
+    for(uint8_t i = 0; i < MAX_NTSR; i++) X[i] = (complex_t*)malloc(64 * sizeof(*(X[i])));
 
     if(sbr == NULL) return 20;
     /* case can occur due to bit errors */
@@ -5750,8 +5799,12 @@ uint8_t sbrDecodeCoupleFrame(sbr_info* sbr, int32_t* left_chan, int32_t* right_c
     if(downSampledSBR) { sbr_qmf_synthesis_32(sbr, sbr->qmfs[1], X, right_chan); }
     else { sbr_qmf_synthesis_64(sbr, sbr->qmfs[1], X, right_chan); }
 
-    for(uint8_t i = 0; i < MAX_NTSR; i++) {free(X[i]); X[i] = NULL;}
-    free(X); X = NULL;
+    for(uint8_t i = 0; i < MAX_NTSR; i++) {
+        free(X[i]);
+        X[i] = NULL;
+    }
+    free(X);
+    X = NULL;
 
     if(sbr->bs_header_flag) sbr->just_seeked = 0;
     if(sbr->header_count != 0 && sbr->ret == 0) {
@@ -5768,16 +5821,16 @@ uint8_t sbrDecodeCoupleFrame(sbr_info* sbr, int32_t* left_chan, int32_t* right_c
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t sbrDecodeSingleFrame(sbr_info* sbr, int32_t* channel, const uint8_t just_seeked, const uint8_t downSampledSBR) {
-    uint8_t   dont_process = 0;
-    uint8_t   ret = 0;
-//    complex_t X[MAX_NTSR][64]; // ⏫⏫⏫
+    uint8_t dont_process = 0;
+    uint8_t ret = 0;
+    //    complex_t X[MAX_NTSR][64]; // ⏫⏫⏫
 
     if(sbr == NULL) return 20;
     /* case can occur due to bit errors */
     if(sbr->id_aac != ID_SCE && sbr->id_aac != ID_LFE) return 21;
 
     complex_t** X = (complex_t**)calloc(MAX_NTSR, sizeof(X));
-    for(uint8_t i = 0; i < MAX_NTSR; i++) X[i] =(complex_t*)calloc(64, sizeof(*(X[i])));
+    for(uint8_t i = 0; i < MAX_NTSR; i++) X[i] = (complex_t*)calloc(64, sizeof(*(X[i])));
 
     if(sbr->ret || (sbr->header_count == 0)) {
         /* don't process just upsample */
@@ -5793,8 +5846,12 @@ uint8_t sbrDecodeSingleFrame(sbr_info* sbr, int32_t* channel, const uint8_t just
     else { sbr_qmf_synthesis_64(sbr, sbr->qmfs[0], X, channel); }
     if(sbr->bs_header_flag) sbr->just_seeked = 0;
 
-    for(uint8_t i = 0; i < MAX_NTSR; i++) {free(X[i]);  X[i] = NULL;}
-    free(X); X = NULL;
+    for(uint8_t i = 0; i < MAX_NTSR; i++) {
+        free(X[i]);
+        X[i] = NULL;
+    }
+    free(X);
+    X = NULL;
 
     if(sbr->header_count != 0 && sbr->ret == 0) {
         ret = sbr_save_prev_data(sbr, 0);
@@ -5808,20 +5865,20 @@ uint8_t sbrDecodeSingleFrame(sbr_info* sbr, int32_t* channel, const uint8_t just
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t sbrDecodeSingleFramePS(sbr_info* sbr, int32_t* left_channel, int32_t* right_channel, const uint8_t just_seeked, const uint8_t downSampledSBR) {
-    uint8_t   l, k;
-    uint8_t   dont_process = 0;
-    uint8_t   ret = 0;
-//    complex_t X_left[38][64] = {{0}};                           // ⏫⏫⏫
-//    complex_t X_right[38][64] = {{0}}; /* must set this to 0 */ // ⏫⏫⏫
+    uint8_t l, k;
+    uint8_t dont_process = 0;
+    uint8_t ret = 0;
+    //    complex_t X_left[38][64] = {{0}};                           // ⏫⏫⏫
+    //    complex_t X_right[38][64] = {{0}}; /* must set this to 0 */ // ⏫⏫⏫
 
     if(sbr == NULL) return 20;
     /* case can occur due to bit errors */
     if(sbr->id_aac != ID_SCE && sbr->id_aac != ID_LFE) return 21;
 
     complex_t** X_left = (complex_t**)calloc(38, sizeof(X_left));
-    for(uint8_t i = 0; i < 38; i++) X_left[i] =(complex_t*)calloc(64, sizeof(*(X_left[i])));
+    for(uint8_t i = 0; i < 38; i++) X_left[i] = (complex_t*)calloc(64, sizeof(*(X_left[i])));
     complex_t** X_right = (complex_t**)calloc(38, sizeof(X_right));
-    for(uint8_t i = 0; i < 38; i++) X_right[i] =(complex_t*)calloc(64, sizeof(*(X_right[i])));
+    for(uint8_t i = 0; i < 38; i++) X_right[i] = (complex_t*)calloc(64, sizeof(*(X_right[i])));
 
     if(sbr->ret || (sbr->header_count == 0)) {
         /* don't process just upsample */
@@ -5854,9 +5911,15 @@ uint8_t sbrDecodeSingleFramePS(sbr_info* sbr, int32_t* left_channel, int32_t* ri
         sbr_qmf_synthesis_64(sbr, sbr->qmfs[1], X_right, right_channel);
     }
 
-    for(uint8_t i = 0; i < 38; i++) {free(X_left[i]); X_left[i] = NULL;}
+    for(uint8_t i = 0; i < 38; i++) {
+        free(X_left[i]);
+        X_left[i] = NULL;
+    }
     free(X_left);
-    for(uint8_t i = 0; i < 38; i++) {free(X_right[i]); X_right[i] = NULL;}
+    for(uint8_t i = 0; i < 38; i++) {
+        free(X_right[i]);
+        X_right[i] = NULL;
+    }
     free(X_right);
 
     if(sbr->bs_header_flag) sbr->just_seeked = 0;
@@ -6006,6 +6069,7 @@ static int32_t find_initial_power(uint8_t bands, uint8_t a0, uint8_t a1) {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* version for bs_freq_scale > 0 */
 uint8_t master_frequency_table(sbr_info* sbr, uint8_t k0, uint8_t k2, uint8_t bs_freq_scale, uint8_t bs_alter_scale) {
+    (void)bs_alter_scale;
     uint8_t k, bands, twoRegions;
     uint8_t k1;
     uint8_t nrBand0, nrBand1;
@@ -6219,7 +6283,7 @@ void limiter_frequency_table(sbr_info* sbr) {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t hf_adjustment(sbr_info* sbr, complex_t Xsbr[MAX_NTSRHFG][64], uint8_t ch) {
-    sbr_hfadj_info adj = {{{0}}}; // ⏫⏫⏫
+    sbr_hfadj_info adj = {}; // ⏫⏫⏫
     uint8_t        ret = 0;
 
     if(sbr->bs_frame_class[ch] == FIXFIX) { sbr->l_A[ch] = -1; }
@@ -6265,6 +6329,7 @@ static uint8_t get_S_mapped(sbr_info* sbr, uint8_t ch, uint8_t l, uint8_t curren
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static uint8_t estimate_current_envelope(sbr_info* sbr, sbr_hfadj_info* adj, complex_t Xsbr[MAX_NTSRHFG][64], uint8_t ch) {
+    (void)adj;
     uint8_t m, l, j, k, k_l, k_h, p;
     int32_t nrg, div;
 
@@ -7644,7 +7709,7 @@ static void invf_mode(bitfile* ld, sbr_info* sbr, uint8_t ch) {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static uint16_t sbr_extension(bitfile* ld, sbr_info* sbr, uint8_t bs_extension_id, uint16_t num_bits_left) {
-
+    (void)num_bits_left;
     uint8_t  header;
     uint16_t ret;
 
@@ -8117,7 +8182,7 @@ void raw_data_block(NeAACDecStruct* hDecoder, NeAACDecFrameInfo* hInfo, bitfile*
 /* Table 4.4.9 */
 static uint8_t single_lfe_channel_element(NeAACDecStruct* hDecoder, bitfile* ld, uint8_t channel, uint8_t* tag) {
     uint8_t    retval = 0;
-    element    sce = {0};
+    element    sce = {};
     ic_stream* ics = &(sce.ics1);
     int16_t    spec_data[1024] = {0}; // ⏫⏫⏫
 
@@ -8149,7 +8214,7 @@ static uint8_t single_lfe_channel_element(NeAACDecStruct* hDecoder, bitfile* ld,
 static uint8_t channel_pair_element(NeAACDecStruct* hDecoder, bitfile* ld, uint8_t channels, uint8_t* tag) {
     int16_t    spec_data1[1024] = {0}; // ⏫⏫⏫
     int16_t    spec_data2[1024] = {0};
-    element    cpe = {0};
+    element    cpe = {};
     ic_stream* ics1 = &(cpe.ics1);
     ic_stream* ics2 = &(cpe.ics2);
     uint8_t    result;
@@ -8255,7 +8320,8 @@ static uint8_t ics_info(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* ld, u
 
                        faad_get1bit(ld)) &
                    1) {
-                    (uint8_t) faad_getbits(ld, 5);
+                    uint32_t unused = faad_getbits(ld, 5);
+                    (void)unused;
                 }
                 for(sfb = 0; sfb < limit; sfb++) { faad_get1bit(ld); }
             }
@@ -8305,6 +8371,8 @@ static uint8_t pulse_data(ic_stream* ics, pulse_info* pul, bitfile* ld) {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* Table 4.4.10 */
 static uint16_t data_stream_element(NeAACDecStruct* hDecoder, bitfile* ld) {
+    (void)ld;
+    (void)hDecoder;
     uint8_t  byte_aligned;
     uint16_t i, count;
 
@@ -8736,7 +8804,9 @@ static uint16_t extension_payload(bitfile* ld, drc_info* drc, uint16_t count) {
                 /* data_element_byte[i] = */ faad_getbits(ld, 8);
                 return (dataElementLength + loopCounter + 1);
             }
+            [[fallthrough]];
         default: align = 0;
+        [[fallthrough]];
         }
     case EXT_FIL:
     default:
@@ -9016,6 +9086,7 @@ uint32_t faad_latm_frame(latm_header* latm, bitfile* ld) {
     uint32_t initpos, endpos, firstpos, ret;
 
     firstpos = faad_get_processed_bits(ld);
+    (void)firstpos;
     while(ld->bytes_left) {
         faad_byte_align(ld);
         if(faad_showbits(ld, 11) != 0x2B7) {
@@ -9175,6 +9246,7 @@ static inline int32_t iquant(int16_t q, const int32_t* tab, uint8_t* error) {
   - Within a scalefactor window band, the coefficients are in ascending spectral order.
 */
 static uint8_t quant_to_spec(NeAACDecStruct* hDecoder, ic_stream* ics, int16_t* quant_data, int32_t* spec_data, uint16_t frame_len) {
+    (void)frame_len;
     static const int32_t pow2_table[] = {
         COEF_CONST(1.0), COEF_CONST(1.1892071150027210667174999705605), /* 2^0.25 */
         COEF_CONST(1.4142135623730950488016887242097),                  /* 2^0.5 */
@@ -9456,8 +9528,8 @@ uint8_t reconstruct_single_channel(NeAACDecStruct* hDecoder, ic_stream* ics, ele
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t reconstruct_channel_pair(NeAACDecStruct* hDecoder, ic_stream* ics1, ic_stream* ics2, element* cpe, int16_t* spec_data1, int16_t* spec_data2) {
     uint8_t retval;
-    int32_t spec_coef1[1024];
-    int32_t spec_coef2[1024];
+    int32_t spec_coef1[1024]; // ⏫⏫⏫
+    int32_t spec_coef2[1024]; // ⏫⏫⏫
 
     if(hDecoder->element_alloced[hDecoder->fr_ch_ele] != 2) {
         retval = allocate_channel_pair(hDecoder, cpe->channel, (uint8_t)cpe->paired_channel);

@@ -145,9 +145,7 @@ typedef struct {
     uint16_t adts_buffer_fullness;
     uint8_t  no_raw_data_blocks_in_frame;
     uint16_t crc_check;
-
-    /* control param */
-    uint8_t old_format;
+    uint8_t old_format; /* control param */
 } adts_header;
 
 typedef struct {
