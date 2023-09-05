@@ -417,7 +417,7 @@ static void          delta_decode(uint8_t enable, int8_t* index, int8_t* index_p
 static void          delta_modulo_decode(uint8_t enable, int8_t* index, int8_t* index_prev, uint8_t dt_flag, uint8_t nr_par, uint8_t stride, int8_t and_modulo);
 static void          map20indexto34(int8_t* index, uint8_t bins);
 static void          ps_data_decode(ps_info* ps);
-static void          ps_decorrelate(ps_info* ps, complex_t X_left[38][64], complex_t X_right[38][64], complex_t X_hybrid_left[32][32], complex_t X_hybrid_right[32][32]);
+static void          ps_decorrelate(ps_info* ps, complex_t X_left[38][64], complex_t* X_right[38][64], complex_t X_hybrid_left[32][32], complex_t X_hybrid_right[32][32]);
 static void          ps_mix_phase(ps_info* ps, complex_t X_left[38][64], complex_t X_right[38][64], complex_t X_hybrid_left[32][32], complex_t X_hybrid_right[32][32]);
 static int16_t       real_to_int16(int32_t sig_in);
 uint8_t              is_ltp_ot(uint8_t object_type);

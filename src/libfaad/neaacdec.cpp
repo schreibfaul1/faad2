@@ -1194,8 +1194,8 @@ void tns_encode_frame(ic_stream* ics, tns_info* tns, uint8_t sr_index, uint8_t o
 /* Decoder transmitted coefficients for one TNS filter */
 static void tns_decode_coef(uint8_t order, uint8_t coef_res_bits, uint8_t coef_compress, uint8_t* coef, int32_t* a) {
     uint8_t i, m;
-    int32_t tmp2[TNS_MAX_ORDER + 1], b[TNS_MAX_ORDER + 1];
-    // ⏫⏫⏫
+    int32_t tmp2[TNS_MAX_ORDER + 1];
+    int32_t b[TNS_MAX_ORDER + 1];
     /* Conversion to signed integer */
     for(i = 0; i < order; i++) {
         if(coef_compress == 0) {
@@ -1809,7 +1809,7 @@ static void* aac_frame_decode(NeAACDecStruct* hDecoder, NeAACDecFrameInfo* hInfo
     uint16_t i;
     uint8_t  channels = 0;
     uint8_t  output_channels = 0;
-    bitfile  ld = {0}; // ⏫⏫⏫
+    bitfile  ld = {0}; // ⏫⏫⏫ size only 48
     uint32_t bitsconsumed;
     uint16_t frame_len;
     void*    sample_buffer;
@@ -1820,16 +1820,7 @@ static void* aac_frame_decode(NeAACDecStruct* hDecoder, NeAACDecFrameInfo* hInfo
     frame_len = hDecoder->frameLength;
     memset(hInfo, 0, sizeof(NeAACDecFrameInfo));
     memset(hDecoder->internal_channel, 0, MAX_CHANNELS * sizeof(hDecoder->internal_channel[0]));
-#ifdef USE_TIME_LIMIT
-    if((TIME_LIMIT * get_sample_rate(hDecoder->sf_index)) > hDecoder->TL_count) { hDecoder->TL_count += 1024; }
-    else {
-        hInfo->error = (NUM_ERROR_MESSAGES - 1);
-        goto error;
-    }
-#endif
-    /* check for some common metadata tag types in the bitstream
-     * No need to return an error
-     */
+    /* check for some common metadata tag types in the bitstream. No need to return an error */
     /* ID3 */
     if(buffer_size >= 128) {
         if(memcmp(buffer, "TAG", 3) == 0) {
@@ -2264,7 +2255,7 @@ void ifilter_bank(fb_info* fb, uint8_t window_sequence, uint8_t window_shape, ui
 /* only works for LTP -> no overlapping, no short blocks */
 void filter_bank_ltp(fb_info* fb, uint8_t window_sequence, uint8_t window_shape, uint8_t window_shape_prev, int32_t* in_data, int32_t* out_mdct, uint8_t object_type, uint16_t frame_len) {
     int16_t        i;
-    int32_t        windowed_buf[2 * 1024] = {0}; // ⏫⏫⏫
+//    int32_t        windowed_buf[2 * 1024] = {0}; // ⏫⏫⏫
     const int32_t* window_long = NULL;
     const int32_t* window_long_prev = NULL;
     const int32_t* window_short = NULL;
@@ -2273,6 +2264,9 @@ void filter_bank_ltp(fb_info* fb, uint8_t window_sequence, uint8_t window_shape,
     uint16_t       nshort = frame_len / 8;
     uint16_t       nflat_ls = (nlong - nshort) / 2;
     assert(window_sequence != EIGHT_SHORT_SEQUENCE);
+
+    int32_t* windowed_buf = (int32_t*)calloc(2, 1024);
+    printf("calloc1 %i\n", 2*2*1024);
 
     #ifdef LD_DEC
     if(object_type == LD) {
@@ -2311,6 +2305,9 @@ void filter_bank_ltp(fb_info* fb, uint8_t window_sequence, uint8_t window_shape,
         mdct(fb, windowed_buf, out_mdct, 2 * nlong);
         break;
     }
+
+    if(windowed_buf) {free(windowed_buf); windowed_buf = NULL;}
+    printf("calloc1 free\n");
 }
 #endif
 
@@ -2885,8 +2882,8 @@ static void fill_in_codeword(codeword_t* codeword, uint16_t index, uint16_t sp, 
 uint8_t reordered_spectral_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfile* ld, int16_t* spectral_data) {
     uint16_t   PCWs_done;
     uint16_t   numberOfSegments, numberOfSets, numberOfCodewords;
-    codeword_t codeword[512]; // ⏫⏫⏫
-    bits_t     segment[512];  // ⏫⏫⏫
+//    codeword_t codeword[512]; // ⏫⏫⏫
+//    bits_t     segment[512];  // ⏫⏫⏫
     uint16_t   sp_offset[8];
     uint16_t   g, i, sortloop, set, bitsread;
     /*uint16_t bitsleft, codewordsleft*/;
@@ -2901,6 +2898,12 @@ uint8_t reordered_spectral_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfil
     /* since there is spectral data, at least one codeword has nonzero length */
     if(ics->length_of_longest_codeword == 0) return 10;
     if(sp_data_len < ics->length_of_longest_codeword) return 10;
+
+    codeword_t* codeword = (codeword_t*)malloc(512 * sizeof(codeword_t));
+    printf("calloc2 %li\n", 512 * sizeof(codeword_t));
+    bits_t* segment = (bits_t*)malloc(512 * sizeof(bits_t));
+    printf("calloc2 %li\n", 512 * sizeof(bits_t));
+
     sp_offset[0] = 0;
     for(g = 1; g < ics->num_window_groups; g++) { sp_offset[g] = sp_offset[g - 1] + nshort * ics->window_group_length[g - 1]; }
     PCWs_done = 0;
@@ -2987,7 +2990,11 @@ uint8_t reordered_spectral_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfil
             }
         }
     }
-    if(numberOfSegments == 0) return 10;
+    if(numberOfSegments == 0){
+        if(segment){free(codeword); segment = NULL;}
+        if(codeword){free(codeword); codeword = NULL;}
+        return 10;
+    }
     numberOfSets = numberOfCodewords / numberOfSegments;
     /* step 2: decode nonPCWs */
     for(set = 1; set <= numberOfSets; set++) {
@@ -3013,6 +3020,8 @@ uint8_t reordered_spectral_data(NeAACDecStruct* hDecoder, ic_stream* ics, bitfil
         }
         for(i = 0; i < numberOfSegments; i++) rewrev_bits(&segment[i]);
     }
+    if(segment){free(codeword); segment = NULL;}
+    if(codeword){free(codeword); codeword = NULL;}
     return 0;
 }
 #endif
@@ -3840,9 +3849,18 @@ static void ps_decorrelate(ps_info* ps, complex_t X_left[38][64], complex_t X_ri
     const complex_t* Phi_Fract_SubQmf;
     uint8_t          temp_delay_ser[NO_ALLPASS_LINKS];
     int32_t          P_SmoothPeakDecayDiffNrg, nrg;
-    int32_t          P[32][34];                        // ⏫⏫⏫
-    int32_t          G_TransientRatio[32][34] = {{0}}; // ⏫⏫⏫
+//    int32_t          P[32][34];                        // ⏫⏫⏫
+//    int32_t          G_TransientRatio[32][34] = {{0}}; // ⏫⏫⏫
     complex_t        inputLeft;
+
+
+    int32_t** P = (int32_t**)malloc(32 * sizeof(P));
+    for(uint8_t i = 0; i < 32; i++) P[i] =(int32_t*)malloc(34 * sizeof(*(P[i])));
+
+    int32_t** G_TransientRatio = (int32_t**)calloc(32, sizeof(G_TransientRatio));
+    for(uint8_t i = 0; i < 32; i++) G_TransientRatio[i] =(int32_t*)calloc(34, sizeof(*(G_TransientRatio[i])));
+
+    printf("calloc3\n");
 
     /* chose hybrid filterbank: 20 or 34 band case */
     if(ps->use34hybrid_bands) { Phi_Fract_SubQmf = Phi_Fract_SubQmf34; }
@@ -3851,6 +3869,7 @@ static void ps_decorrelate(ps_info* ps, complex_t X_left[38][64], complex_t X_ri
     for(n = 0; n < 32; n++) {
         for(bk = 0; bk < 34; bk++) { P[n][bk] = 0; }
     }
+
     /* calculate the energy in each parameter band b(k) */
     for(gr = 0; gr < ps->num_groups; gr++) {
         /* select the parameter index b(k) to which this group belongs */
@@ -4048,6 +4067,14 @@ static void ps_decorrelate(ps_info* ps, complex_t X_left[38][64], complex_t X_ri
     /* update delay indices */
     ps->saved_delay = temp_delay;
     for(m = 0; m < NO_ALLPASS_LINKS; m++) ps->delay_buf_index_ser[m] = temp_delay_ser[m];
+
+    for(uint8_t i = 0; i < 32; i++) free(G_TransientRatio[i]);
+    free(G_TransientRatio);
+
+    for(uint8_t i = 0; i < 32; i++) free(P[i]);
+    free(P);
+
+    printf("calloc3 free\n");
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -4441,6 +4468,12 @@ ps_info* ps_init(uint8_t sr_index, uint8_t numTimeSlotsRate) {
 uint8_t ps_decode(ps_info* ps, complex_t X_left[38][64], complex_t X_right[38][64]) {
     complex_t X_hybrid_left[32][32] = {{0}};  // ⏫⏫⏫
     complex_t X_hybrid_right[32][32] = {{0}}; // ⏫⏫⏫
+
+    // complex_t** X_hybrid_left = (complex_t**)malloc(32 * sizeof(X_hybrid_left));
+    // for(uint8_t i = 0; i < 32; i++) X_hybrid_left[i] =(complex_t*)malloc(34 * sizeof(*(X_hybrid_left[i])));
+
+    // complex_t** G_TransientRatio = (complex_t**)calloc(32, sizeof(G_TransientRatio));
+    // for(uint8_t i = 0; i < 32; i++) G_TransientRatio[i] =(complex_t*)calloc(34, sizeof(*(G_TransientRatio[i])));
 
     /* delta decoding of the bitstream data */
     ps_data_decode(ps);
@@ -9297,7 +9330,7 @@ static uint8_t allocate_channel_pair(NeAACDecStruct* hDecoder, uint8_t channel, 
 uint8_t reconstruct_single_channel(NeAACDecStruct* hDecoder, ic_stream* ics, element* sce, int16_t* spec_data) {
     uint8_t retval;
     int     output_channels;
-    int32_t spec_coef[1024];  // ⏫⏫⏫
+    int32_t spec_coef[1024]; // ⏫⏫⏫
 
     /* always allocate 2 channels, PS can always "suddenly" turn up */
 
@@ -9363,9 +9396,7 @@ uint8_t reconstruct_single_channel(NeAACDecStruct* hDecoder, ic_stream* ics, ele
         int ele = hDecoder->fr_ch_ele;
         int ch = sce->channel;
         /* following case can happen when forceUpSampling == 1 */
-        if(hDecoder->sbr[ele] == NULL) {
-            hDecoder->sbr[ele] = sbrDecodeInit(hDecoder->frameLength, hDecoder->element_id[ele], 2 * get_sample_rate(hDecoder->sf_index), hDecoder->downSampledSBR);
-        }
+        if(hDecoder->sbr[ele] == NULL) { hDecoder->sbr[ele] = sbrDecodeInit(hDecoder->frameLength, hDecoder->element_id[ele], 2 * get_sample_rate(hDecoder->sf_index), hDecoder->downSampledSBR); }
         if(!hDecoder->sbr[ele]) return 19;
         if(sce->ics1.window_sequence == EIGHT_SHORT_SEQUENCE) hDecoder->sbr[ele]->maxAACLine = 8 * min(sce->ics1.swb_offset[max(sce->ics1.max_sfb - 1, 0)], sce->ics1.swb_offset_max);
         else
@@ -9468,10 +9499,7 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct* hDecoder, ic_stream* ics1, ic_s
         int ch0 = cpe->channel;
         int ch1 = cpe->paired_channel;
         /* following case can happen when forceUpSampling == 1 */
-        if(hDecoder->sbr[ele] == NULL) {
-            hDecoder->sbr[ele] = sbrDecodeInit(hDecoder->frameLength, hDecoder->element_id[ele], 2 * get_sample_rate(hDecoder->sf_index), hDecoder->downSampledSBR
-            );
-        }
+        if(hDecoder->sbr[ele] == NULL) { hDecoder->sbr[ele] = sbrDecodeInit(hDecoder->frameLength, hDecoder->element_id[ele], 2 * get_sample_rate(hDecoder->sf_index), hDecoder->downSampledSBR); }
         if(!hDecoder->sbr[ele]) return 19;
         if(cpe->ics1.window_sequence == EIGHT_SHORT_SEQUENCE) hDecoder->sbr[ele]->maxAACLine = 8 * min(cpe->ics1.swb_offset[max(cpe->ics1.max_sfb - 1, 0)], cpe->ics1.swb_offset_max);
         else
