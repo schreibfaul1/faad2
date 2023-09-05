@@ -56,10 +56,6 @@ typedef struct {
     uint16_t   N;
     cfft_info* cfft;
     complex_t* sincos;
-#ifdef PROFILE
-    int64_t cycles;
-    int64_t fft_cycles;
-#endif
 } mdct_info;
 
 typedef struct {
@@ -74,9 +70,6 @@ typedef struct {
     mdct_info* mdct1024;
 #endif
     mdct_info* mdct2048;
-#ifdef PROFILE
-    int64_t cycles;
-#endif
 } fb_info;
 
 typedef struct {
@@ -631,14 +624,6 @@ typedef struct {
 
     /* Configuration data */
     NeAACDecConfiguration_t config;
-
-#ifdef PROFILE
-    int64_t cycles;
-    int64_t spectral_cycles;
-    int64_t output_cycles;
-    int64_t scalefac_cycles;
-    int64_t requant_cycles;
-#endif
     latm_header          latm_config;
     const unsigned char* cmes;
 } NeAACDecStruct;
