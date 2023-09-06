@@ -4690,7 +4690,8 @@ void faad_imdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out) {
 #ifdef ALLOW_SMALL_FRAMELENGTH
     int32_t scale, b_scale = 0;
 #endif
-    complex_t  Z1[512]; // ⏫⏫⏫
+    //complex_t  Z1[512]; // ⏫⏫⏫
+    complex_t* Z1 = (complex_t*)malloc(512 * sizeof(complex_t));
     complex_t* sincos = mdct->sincos;
     uint16_t   N = mdct->N;
     uint16_t   N2 = N >> 1;
@@ -4741,13 +4742,15 @@ void faad_imdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out) {
         X_out[N2 + N4 + 1 + 2 * k] = RE(Z1[N4 - 1 - k]);
         X_out[N2 + N4 + 3 + 2 * k] = RE(Z1[N4 - 2 - k]);
     }
+    if(Z1){free(Z1); Z1 = NULL;}
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void faad_mdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out) {
     uint16_t   k;
     complex_t  x;
-    complex_t  Z1[512]; // ⏫⏫⏫
+    // complex_t  Z1[512]; // ⏫⏫⏫
+    complex_t* Z1 = (complex_t*)malloc(512 * sizeof(complex_t));
     complex_t* sincos = mdct->sincos;
     uint16_t   N = mdct->N;
     uint16_t   N2 = N >> 1;
@@ -4788,6 +4791,7 @@ void faad_mdct(mdct_info* mdct, int32_t* X_in, int32_t* X_out) {
         X_out[N2 + n] = -IM(x);
         X_out[N - 1 - n] = RE(x);
     }
+    if(Z1){free(Z1); Z1 = NULL;}
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -9444,7 +9448,8 @@ static uint8_t allocate_channel_pair(NeAACDecStruct* hDecoder, uint8_t channel, 
 uint8_t reconstruct_single_channel(NeAACDecStruct* hDecoder, ic_stream* ics, element* sce, int16_t* spec_data) {
     uint8_t retval;
     int     output_channels;
-    int32_t spec_coef[1024]; // ⏫⏫⏫
+    // int32_t spec_coef[1024]; // ⏫⏫⏫
+    
 
     /* always allocate 2 channels, PS can always "suddenly" turn up */
 
@@ -9473,8 +9478,12 @@ uint8_t reconstruct_single_channel(NeAACDecStruct* hDecoder, ic_stream* ics, ele
     if(output_channels > 1 && !hDecoder->time_out[sce->channel + 1]) return 15;
     if(!hDecoder->fb_intermed[sce->channel]) return 15;
     /* dequantisation and scaling */
+    int32_t* spec_coef = (int32_t*)malloc(1024 * sizeof(int32_t));
     retval = quant_to_spec(hDecoder, ics, spec_data, spec_coef, hDecoder->frameLength);
-    if(retval > 0) return retval;
+    if(retval > 0) {
+        if(spec_coef){free(spec_coef); spec_coef = NULL;}
+        return retval;
+    }
     /* pns decoding */
     pns_decode(ics, NULL, spec_coef, NULL, hDecoder->frameLength, 0, hDecoder->object_type, &(hDecoder->__r1), &(hDecoder->__r2));
 #ifdef LTP_DEC
@@ -9500,6 +9509,7 @@ uint8_t reconstruct_single_channel(NeAACDecStruct* hDecoder, ic_stream* ics, ele
 
     /* save window shape for next frame */
     hDecoder->window_shape_prev[sce->channel] = ics->window_shape;
+    if(spec_coef){free(spec_coef); spec_coef = NULL;}
 #ifdef LTP_DEC
     if(is_ltp_ot(hDecoder->object_type)) {
         lt_update_state(hDecoder->lt_pred_stat[sce->channel], hDecoder->time_out[sce->channel], hDecoder->fb_intermed[sce->channel], hDecoder->frameLength, hDecoder->object_type);
@@ -9544,22 +9554,44 @@ uint8_t reconstruct_single_channel(NeAACDecStruct* hDecoder, ic_stream* ics, ele
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t reconstruct_channel_pair(NeAACDecStruct* hDecoder, ic_stream* ics1, ic_stream* ics2, element* cpe, int16_t* spec_data1, int16_t* spec_data2) {
     uint8_t retval;
-    int32_t spec_coef1[1024]; // ⏫⏫⏫
-    int32_t spec_coef2[1024]; // ⏫⏫⏫
+    //int32_t spec_coef1[1024]; // ⏫⏫⏫
+    //int32_t spec_coef2[1024]; // ⏫⏫⏫
+    int32_t* spec_coef1 = (int32_t*)malloc(1024 * sizeof(int32_t));
+    int32_t* spec_coef2 = (int32_t*)malloc(1024 * sizeof(int32_t));
 
     if(hDecoder->element_alloced[hDecoder->fr_ch_ele] != 2) {
         retval = allocate_channel_pair(hDecoder, cpe->channel, (uint8_t)cpe->paired_channel);
-        if(retval > 0) return retval;
+        if(retval > 0){
+            if(spec_coef1){free(spec_coef1); spec_coef1 = NULL;}
+            if(spec_coef2){free(spec_coef2); spec_coef2 = NULL;}
+            return retval;
+        }
         hDecoder->element_alloced[hDecoder->fr_ch_ele] = 2;
     }
     /* sanity check, CVE-2018-20199, CVE-2018-20360 */
-    if(!hDecoder->time_out[cpe->channel] || !hDecoder->time_out[cpe->paired_channel]) return 15;
-    if(!hDecoder->fb_intermed[cpe->channel] || !hDecoder->fb_intermed[cpe->paired_channel]) return 15;
+    if(!hDecoder->time_out[cpe->channel] || !hDecoder->time_out[cpe->paired_channel]){
+        if(spec_coef1){free(spec_coef1); spec_coef1 = NULL;}
+        if(spec_coef2){free(spec_coef2); spec_coef2 = NULL;}
+        return 15;
+    }
+    if(!hDecoder->fb_intermed[cpe->channel] || !hDecoder->fb_intermed[cpe->paired_channel]){
+        if(spec_coef1){free(spec_coef1); spec_coef1 = NULL;}
+        if(spec_coef2){free(spec_coef2); spec_coef2 = NULL;}
+        return 15;
+    } 
     /* dequantisation and scaling */
     retval = quant_to_spec(hDecoder, ics1, spec_data1, spec_coef1, hDecoder->frameLength);
-    if(retval > 0) return retval;
+    if(retval > 0){
+        if(spec_coef1){free(spec_coef1); spec_coef1 = NULL;}
+        if(spec_coef2){free(spec_coef2); spec_coef2 = NULL;}
+        return retval;
+    } 
     retval = quant_to_spec(hDecoder, ics2, spec_data2, spec_coef2, hDecoder->frameLength);
-    if(retval > 0) return retval;
+    if(retval > 0){
+        if(spec_coef1){free(spec_coef1); spec_coef1 = NULL;}
+        if(spec_coef2){free(spec_coef2); spec_coef2 = NULL;}
+        return retval;
+    } 
     /* pns decoding */
     if(ics1->ms_mask_present) { pns_decode(ics1, ics2, spec_coef1, spec_coef2, hDecoder->frameLength, 1, hDecoder->object_type, &(hDecoder->__r1), &(hDecoder->__r2)); }
     else { pns_decode(ics1, ics2, spec_coef1, spec_coef2, hDecoder->frameLength, 0, hDecoder->object_type, &(hDecoder->__r1), &(hDecoder->__r2)); }
@@ -9614,15 +9646,29 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct* hDecoder, ic_stream* ics1, ic_s
         int ch1 = cpe->paired_channel;
         /* following case can happen when forceUpSampling == 1 */
         if(hDecoder->sbr[ele] == NULL) { hDecoder->sbr[ele] = sbrDecodeInit(hDecoder->frameLength, hDecoder->element_id[ele], 2 * get_sample_rate(hDecoder->sf_index), hDecoder->downSampledSBR); }
-        if(!hDecoder->sbr[ele]) return 19;
+        if(!hDecoder->sbr[ele]){
+            if(spec_coef1){free(spec_coef1); spec_coef1 = NULL;}
+            if(spec_coef2){free(spec_coef2); spec_coef2 = NULL;}
+            return 19;
+        }
         if(cpe->ics1.window_sequence == EIGHT_SHORT_SEQUENCE) hDecoder->sbr[ele]->maxAACLine = 8 * min(cpe->ics1.swb_offset[max(cpe->ics1.max_sfb - 1, 0)], cpe->ics1.swb_offset_max);
         else
             hDecoder->sbr[ele]->maxAACLine = min(cpe->ics1.swb_offset[max(cpe->ics1.max_sfb - 1, 0)], cpe->ics1.swb_offset_max);
         retval = sbrDecodeCoupleFrame(hDecoder->sbr[ele], hDecoder->time_out[ch0], hDecoder->time_out[ch1], hDecoder->postSeekResetFlag, hDecoder->downSampledSBR);
-        if(retval > 0) return retval;
+        if(retval > 0){
+            if(spec_coef1){free(spec_coef1); spec_coef1 = NULL;}
+            if(spec_coef2){free(spec_coef2); spec_coef2 = NULL;}
+            return retval;
+        }
     }
-    else if(((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1)) && !hDecoder->sbr_alloced[hDecoder->fr_ch_ele]) { return 23; }
+    else if(((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1)) && !hDecoder->sbr_alloced[hDecoder->fr_ch_ele]) {
+            if(spec_coef1){free(spec_coef1); spec_coef1 = NULL;}
+            if(spec_coef2){free(spec_coef2); spec_coef2 = NULL;}
+            return 23;
+        }
 #endif
+    if(spec_coef1){free(spec_coef1); spec_coef1 = NULL;}
+    if(spec_coef2){free(spec_coef2); spec_coef2 = NULL;}
     return 0;
 }
 

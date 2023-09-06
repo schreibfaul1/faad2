@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "stdlib.h": "c",
-        "math.h": "c",
-        "memory.h": "c",
-         "unistd.h": "c",
-        "neaacdec.h": "c"
-    }
-}
