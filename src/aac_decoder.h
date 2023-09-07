@@ -2,7 +2,7 @@
 #pragma once
 
 #include <stdint.h>
-
+#pragma GCC diagnostic warning "-Wunused-function"
 bool        AACDecoder_IsInit();
 bool        AACDecoder_AllocateBuffers();
 void        AACDecoder_FreeBuffers();

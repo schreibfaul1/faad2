@@ -9,12 +9,12 @@
 // Declaration of the required global variables
 
 NeAACDecHandle hAac;
-NeAACDecFrameInfo frameInfo;
+NeAACDecFrameInfo_t frameInfo;
 NeAACDecConfigurationPtr_t conf;
 bool f_decoderIsInit = false;
 bool f_firstCall = false;
-unsigned long aacSamplerate = 0;
-unsigned char aacChannels = 0;
+uint32_t aacSamplerate = 0;
+uint8_t aacChannels = 0;
 static uint16_t validSamples = 0;
 
 
@@ -46,8 +46,8 @@ bool AACDecoder_AllocateBuffers(){
     // #define ER_LTP    19 /* Error Resilient Long Term Prediction */
     // #define LD        23 /* Low Delay */
 
-    hAac = NeAACDecOpen();
-    conf = NeAACDecGetCurrentConfiguration(hAac);
+    //hAac = NeAACDecOpen();
+    //conf = NeAACDecGetCurrentConfiguration(hAac);
 
     // conf->defObjectType:  LC         2 /* Low Complexity (default) */
     //                       SSR        3 /* Scalable SampleRate */
@@ -69,6 +69,7 @@ bool AACDecoder_AllocateBuffers(){
     NeAACDecSetConfiguration(hAac, conf);
     if(hAac) f_decoderIsInit = true;
     f_firstCall = false;
+
     return f_decoderIsInit;
 }
 //----------------------------------------------------------------------------------------------------------------------
@@ -127,15 +128,16 @@ int AACGetBitsPerSample(){
 int AACDecode(uint8_t *inbuf, int *bytesLeft, short *outbuf){
     uint8_t* ob = (uint8_t*)outbuf;
     if (f_firstCall == false){
-        char err = NeAACDecInit(hAac, inbuf, *bytesLeft, &aacSamplerate, &aacChannels);
+        int8_t err = NeAACDecInit(hAac, inbuf, *bytesLeft, &aacSamplerate, &aacChannels);
         f_firstCall = true;
-        return err;
+        return 100;
     }
 
     NeAACDecDecode2(hAac, &frameInfo, inbuf, *bytesLeft, (void**)&ob, 2048 * 2 * sizeof(int16_t));
+
     *bytesLeft -= frameInfo.bytesconsumed;
     validSamples = frameInfo.samples;
-    char err = 0 - frameInfo.error;
+    int8_t err = 0 - frameInfo.error;
     return err;
 }
 //----------------------------------------------------------------------------------------------------------------------

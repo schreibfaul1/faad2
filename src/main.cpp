@@ -45,7 +45,7 @@ int main() {
     int ibs = sizeof(inBuffer);
     int err = AACDecode(inBuffer, &ibs, outBuffer);
 
-    if(err != 0){
+    if(err != 0 && err != 100){
         printf("error %d -> exit\n", err);
         return 0;
     }
