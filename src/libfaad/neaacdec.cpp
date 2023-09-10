@@ -75,6 +75,11 @@ void alloc_mem() {
     for(uint8_t i = 0; i < 38; i++) m_X_left[i] = (complex_t*)faad_calloc(64, sizeof(*(m_X_left[i])));
     m_X_right = (complex_t**)faad_calloc(38, sizeof(m_X_right));
     for(uint8_t i = 0; i < 38; i++) m_X_right[i] = (complex_t*)faad_calloc(64, sizeof(*(m_X_right[i])));
+    m_vDk0 = (int32_t*)faad_calloc(64, sizeof(int32_t));
+    m_vDk1 = (int32_t*)faad_calloc(64, sizeof(int32_t));
+    m_vk0 = (int32_t*)faad_calloc(64, sizeof(int32_t));
+    m_vk1 = (int32_t*)faad_calloc(64, sizeof(int32_t));
+
 
 
     uint32_t sum = 1 * sizeof(mp4AudioSpecificConfig_t);
@@ -91,6 +96,11 @@ void alloc_mem() {
     sum += 512 * sizeof(complex_t);
     sum += MAX_NTSR * 64 * sizeof(complex_t) + MAX_NTSR * sizeof(complex_t*);
     sum += MAX_NTSR * 64 * sizeof(complex_t) + MAX_NTSR * sizeof(complex_t*);
+    sum += 64 * sizeof(int32_t);
+    sum += 64 * sizeof(int32_t);
+    sum += 64 * sizeof(int32_t);
+    sum += 64 * sizeof(int32_t);
+
 
     printf(ANSI_ESC_ORANGE "alloc %d bytes\n" ANSI_ESC_WHITE, sum);
 }
@@ -114,7 +124,10 @@ void free_mem() {
     if(m_X_dsf)            {for(uint8_t i = 0; i < MAX_NTSR; i++){free(m_X_dsf[i]); m_X_dsf[i] = NULL;} free(m_X_dsf); m_X_dsf = NULL;}
     if(m_X_left)           {for(uint8_t i = 0; i < 38; i++){free(m_X_left[i]); m_X_left[i] = NULL;} free(m_X_left);}
     if(m_X_right)          {for(uint8_t i = 0; i < 38; i++){free(m_X_right[i]); m_X_right[i] = NULL;} free(m_X_right);}
-
+    if(m_vk1)              {free(m_vk1); m_vk1 = NULL;}
+    if(m_vk0)              {free(m_vk0); m_vk0 = NULL;}
+    if(m_vDk1)             {free(m_vDk1); m_vDk1 = NULL;}
+    if(m_vDk0)             {free(m_vDk0); m_vDk0 = NULL;}
 
     printf(ANSI_ESC_ORANGE "free mem\n" ANSI_ESC_WHITE);
     // clang-format on
@@ -6239,13 +6252,18 @@ uint8_t master_frequency_table(sbr_info_t* sbr, uint8_t k0, uint8_t k2, uint8_t 
     uint8_t k, bands, twoRegions;
     uint8_t k1;
     uint8_t nrBand0, nrBand1;
-    //    int32_t vDk0[64] = {0}, vDk1[64] = {0}; // ⏫⏫⏫
-    //    int32_t vk0[64] = {0}, vk1[64] = {0};   // ⏫⏫⏫
+    //    int32_t m_vDk0[64] = {0}, m_vDk1[64] = {0}; // ⏫⏫⏫
+    //    int32_t m_vk0[64] = {0}, m_vk1[64] = {0};   // ⏫⏫⏫
 
-    int32_t* vDk0 = (int32_t*)faad_calloc(64, sizeof(int32_t));
-    int32_t* vDk1 = (int32_t*)faad_calloc(64, sizeof(int32_t));
-    int32_t* vk0 = (int32_t*)faad_calloc(64, sizeof(int32_t));
-    int32_t* vk1 = (int32_t*)faad_calloc(64, sizeof(int32_t));
+    // int32_t* m_vDk0 = (int32_t*)faad_calloc(64, sizeof(int32_t));
+    // int32_t* m_vDk1 = (int32_t*)faad_calloc(64, sizeof(int32_t));
+    // int32_t* m_vk0 = (int32_t*)faad_calloc(64, sizeof(int32_t));
+    // int32_t* m_vk1 = (int32_t*)faad_calloc(64, sizeof(int32_t));
+
+    memset(m_vDk0, 0, 64 * sizeof(int32_t));
+    memset(m_vDk1, 0, 64 * sizeof(int32_t));
+    memset(m_vk0,  0, 64 * sizeof(int32_t));
+    memset(m_vk1,  0, 64 * sizeof(int32_t));
 
     uint8_t temp1[] = {6, 5, 4};
     int32_t q, qk;
@@ -6284,20 +6302,20 @@ uint8_t master_frequency_table(sbr_info_t* sbr, uint8_t k0, uint8_t k2, uint8_t 
         int32_t A_0 = A_1;
         qk = MUL_R(qk, q);
         A_1 = (int32_t)((qk + REAL_CONST(0.5)) >> REAL_BITS);
-        vDk0[k] = A_1 - A_0;
+        m_vDk0[k] = A_1 - A_0;
     }
     /* needed? */
-    qsort(vDk0, nrBand0, sizeof(vDk0[0]), longcmp);
-    vk0[0] = k0;
+    qsort(m_vDk0, nrBand0, sizeof(m_vDk0[0]), longcmp);
+    m_vk0[0] = k0;
     for(k = 1; k <= nrBand0; k++) {
-        vk0[k] = vk0[k - 1] + vDk0[k - 1];
-        if(vDk0[k - 1] == 0) {
+        m_vk0[k] = m_vk0[k - 1] + m_vDk0[k - 1];
+        if(m_vDk0[k - 1] == 0) {
             ret = 1;
             goto exit;
         }
     }
     if(!twoRegions) {
-        for(k = 0; k <= nrBand0; k++) sbr->f_master[k] = (uint8_t)vk0[k];
+        for(k = 0; k <= nrBand0; k++) sbr->f_master[k] = (uint8_t)m_vk0[k];
         sbr->N_master = nrBand0;
         sbr->N_master = min(sbr->N_master, 64);
         ret = 0;
@@ -6314,50 +6332,50 @@ uint8_t master_frequency_table(sbr_info_t* sbr, uint8_t k0, uint8_t k2, uint8_t 
         int32_t A_0 = A_1;
         qk = MUL_R(qk, q);
         A_1 = (int32_t)((qk + REAL_CONST(0.5)) >> REAL_BITS);
-        vDk1[k] = A_1 - A_0;
+        m_vDk1[k] = A_1 - A_0;
     }
-    if(vDk1[0] < vDk0[nrBand0 - 1]) {
+    if(m_vDk1[0] < m_vDk0[nrBand0 - 1]) {
         int32_t change;
         /* needed? */
-        qsort(vDk1, nrBand1 + 1, sizeof(vDk1[0]), longcmp);
-        change = vDk0[nrBand0 - 1] - vDk1[0];
-        vDk1[0] = vDk0[nrBand0 - 1];
-        vDk1[nrBand1 - 1] = vDk1[nrBand1 - 1] - change;
+        qsort(m_vDk1, nrBand1 + 1, sizeof(m_vDk1[0]), longcmp);
+        change = m_vDk0[nrBand0 - 1] - m_vDk1[0];
+        m_vDk1[0] = m_vDk0[nrBand0 - 1];
+        m_vDk1[nrBand1 - 1] = m_vDk1[nrBand1 - 1] - change;
     }
     /* needed? */
-    qsort(vDk1, nrBand1, sizeof(vDk1[0]), longcmp);
-    vk1[0] = k1;
+    qsort(m_vDk1, nrBand1, sizeof(m_vDk1[0]), longcmp);
+    m_vk1[0] = k1;
     for(k = 1; k <= nrBand1; k++) {
-        vk1[k] = vk1[k - 1] + vDk1[k - 1];
-        if(vDk1[k - 1] == 0) {
+        m_vk1[k] = m_vk1[k - 1] + m_vDk1[k - 1];
+        if(m_vDk1[k - 1] == 0) {
             ret = 1;
             goto exit;
         }
     }
     sbr->N_master = nrBand0 + nrBand1;
     sbr->N_master = min(sbr->N_master, 64);
-    for(k = 0; k <= nrBand0; k++) { sbr->f_master[k] = (uint8_t)vk0[k]; }
-    for(k = nrBand0 + 1; k <= sbr->N_master; k++) { sbr->f_master[k] = (uint8_t)vk1[k - nrBand0]; }
+    for(k = 0; k <= nrBand0; k++) { sbr->f_master[k] = (uint8_t)m_vk0[k]; }
+    for(k = nrBand0 + 1; k <= sbr->N_master; k++) { sbr->f_master[k] = (uint8_t)m_vk1[k - nrBand0]; }
     ret = 0;
     goto exit;
 
 exit:
-    if(vk1) {
-        free(vk1);
-        vk1 = NULL;
-    }
-    if(vk0) {
-        free(vk0);
-        vk0 = NULL;
-    }
-    if(vDk1) {
-        free(vDk1);
-        vDk1 = NULL;
-    }
-    if(vDk0) {
-        free(vDk0);
-        vDk0 = NULL;
-    }
+    // if(m_vk1) {
+    //     free(m_vk1);
+    //     m_vk1 = NULL;
+    // }
+    // if(m_vk0) {
+    //     free(m_vk0);
+    //     m_vk0 = NULL;
+    // }
+    // if(m_vDk1) {
+    //     free(m_vDk1);
+    //     m_vDk1 = NULL;
+    // }
+    // if(m_vDk0) {
+    //     free(m_vDk0);
+    //     m_vDk0 = NULL;
+    // }
     return ret;
 }
 
