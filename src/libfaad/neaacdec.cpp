@@ -90,6 +90,12 @@ void alloc_mem() {
     m_cpe = (element_t*)faad_malloc(1 * sizeof(element_t));
     m_spec_data1 = (int16_t*)faad_malloc(1024 * sizeof(int16_t));
     m_spec_data2 = (int16_t*)faad_malloc(1024 * sizeof(int16_t));
+    m_mp4ASC_ame = (mp4AudioSpecificConfig_t*)faad_malloc(1 * sizeof(mp4AudioSpecificConfig_t));
+    m_spec_coef = (int32_t*)faad_malloc(1024 * sizeof(int32_t));
+    m_spec_coef1 = (int32_t*)faad_malloc(1024 * sizeof(int32_t));
+    m_spec_coef2 = (int32_t*)faad_malloc(1024 * sizeof(int32_t));
+
+
 
 
     uint32_t sum = 1 * sizeof(mp4AudioSpecificConfig_t);
@@ -119,8 +125,14 @@ void alloc_mem() {
     sum += 1 * sizeof(element_t);
     sum += 1024 * sizeof(int16_t);
     sum += 1024 * sizeof(int16_t);
+    sum += 1 * sizeof(mp4AudioSpecificConfig_t);
+    sum += 1024 * sizeof(int32_t);
+    sum += 1024 * sizeof(int32_t);
+    sum += 1024 * sizeof(int32_t);
 
-    
+
+
+
     printf(ANSI_ESC_ORANGE "alloc %d bytes\n" ANSI_ESC_WHITE, sum);
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -158,6 +170,11 @@ void free_mem() {
     if(m_cpe)              {free(m_cpe); m_cpe = NULL;}
     if(m_spec_data1)       {free(m_spec_data1); m_spec_data1 = NULL;}
     if(m_spec_data2)       {free(m_spec_data2); m_spec_data2 = NULL;}
+    if(m_mp4ASC_ame)       {free(m_mp4ASC_ame); m_mp4ASC_ame = NULL;}
+    if(m_spec_coef)        {free(m_spec_coef); m_spec_coef = NULL;}
+    if(m_spec_coef1)       {free(m_spec_coef1); m_spec_coef1 = NULL;}
+    if(m_spec_coef2)       {free(m_spec_coef2); m_spec_coef2 = NULL;}
+
 
     printf(ANSI_ESC_ORANGE "free mem\n" ANSI_ESC_WHITE);
     // clang-format on
@@ -9381,9 +9398,9 @@ static uint32_t latmAudioMuxElement(latm_header_t* latm, bitfile_t* ld) {
     uint32_t         x1, y1, m, n, i;
     program_config_t pce;
     uint32_t         ret = 0;
-    //    mp4AudioSpecificConfig_t mp4ASC; // ⏫⏫⏫
+    //    mp4AudioSpecificConfig_t m_mp4ASC_ame; // ⏫⏫⏫
 
-    mp4AudioSpecificConfig_t* mp4ASC = (mp4AudioSpecificConfig_t*)faad_malloc(1 * sizeof(mp4AudioSpecificConfig_t));
+//    mp4AudioSpecificConfig_t* m_mp4ASC_ame = (mp4AudioSpecificConfig_t*)faad_malloc(1 * sizeof(mp4AudioSpecificConfig_t));
 
     latm->useSameStreamMux = (uint8_t)faad_getbits(ld, 1);
     if(!latm->useSameStreamMux) {
@@ -9412,7 +9429,7 @@ static uint32_t latmAudioMuxElement(latm_header_t* latm, bitfile_t* ld) {
         if(latm->version) ascLen = latm_get_value(ld);
         x1 = faad_get_processed_bits(ld);
 
-        if(AudioSpecificConfigFrombitfile_t(ld, mp4ASC, &pce, 0, 1) < 0) {
+        if(AudioSpecificConfigFrombitfile_t(ld, m_mp4ASC_ame, &pce, 0, 1) < 0) {
             ret = 0;
             goto exit;
         }
@@ -9482,10 +9499,10 @@ static uint32_t latmAudioMuxElement(latm_header_t* latm, bitfile_t* ld) {
     }
 
 exit:
-    if(mp4ASC) {
-        free(mp4ASC);
-        mp4ASC = NULL;
-    }
+    // if(m_mp4ASC_ame) {
+    //     free(m_mp4ASC_ame);
+    //     m_mp4ASC_ame = NULL;
+    // }
     return ret;
 }
 
@@ -9837,7 +9854,7 @@ static uint8_t allocate_channel_pair(NeAACDecStruct_t* hDecoder, uint8_t channel
 uint8_t reconstruct_single_channel(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, element_t* sce, int16_t* spec_data) {
     uint8_t retval;
     int32_t output_channels;
-    // int32_t spec_coef[1024]; // ⏫⏫⏫
+    // int32_t m_spec_coef[1024]; // ⏫⏫⏫
 
     /* always allocate 2 channels, PS can always "suddenly" turn up */
 
@@ -9867,17 +9884,17 @@ uint8_t reconstruct_single_channel(NeAACDecStruct_t* hDecoder, ic_stream_t* ics,
     if(output_channels > 1 && !hDecoder->time_out[sce->channel + 1]) return 15;
     if(!hDecoder->fb_intermed[sce->channel]) return 15;
     /* dequantisation and scaling */
-    int32_t* spec_coef = (int32_t*)faad_malloc(1024 * sizeof(int32_t));
-    retval = quant_to_spec(hDecoder, ics, spec_data, spec_coef, hDecoder->frameLength);
+ //   int32_t* m_spec_coef = (int32_t*)faad_malloc(1024 * sizeof(int32_t));
+    retval = quant_to_spec(hDecoder, ics, spec_data, m_spec_coef, hDecoder->frameLength);
     if(retval > 0) {
-        if(spec_coef) {
-            free(spec_coef);
-            spec_coef = NULL;
-        }
+        // if(m_spec_coef) {
+        //     free(m_spec_coef);
+        //     m_spec_coef = NULL;
+        // }
         return retval;
     }
     /* pns decoding */
-    pns_decode(ics, NULL, spec_coef, NULL, hDecoder->frameLength, 0, hDecoder->object_type, &(hDecoder->__r1), &(hDecoder->__r2));
+    pns_decode(ics, NULL, m_spec_coef, NULL, hDecoder->frameLength, 0, hDecoder->object_type, &(hDecoder->__r1), &(hDecoder->__r2));
 #ifdef LTP_DEC
     if(is_ltp_ot(hDecoder->object_type)) {
     #ifdef LD_DEC
@@ -9889,22 +9906,22 @@ uint8_t reconstruct_single_channel(NeAACDecStruct_t* hDecoder, ic_stream_t* ics,
         }
     #endif
         /* long term prediction */
-        lt_prediction(ics, &(ics->ltp), spec_coef, hDecoder->lt_pred_stat[sce->channel], hDecoder->fb, ics->window_shape, hDecoder->window_shape_prev[sce->channel], hDecoder->sf_index,
+        lt_prediction(ics, &(ics->ltp), m_spec_coef, hDecoder->lt_pred_stat[sce->channel], hDecoder->fb, ics->window_shape, hDecoder->window_shape_prev[sce->channel], hDecoder->sf_index,
                       hDecoder->object_type, hDecoder->frameLength);
     }
 #endif
     /* tns decoding */
-    tns_decode_frame(ics, &(ics->tns), hDecoder->sf_index, hDecoder->object_type, spec_coef, hDecoder->frameLength);
+    tns_decode_frame(ics, &(ics->tns), hDecoder->sf_index, hDecoder->object_type, m_spec_coef, hDecoder->frameLength);
     /* filter bank */
-    ifilter_bank(hDecoder->fb, ics->window_sequence, ics->window_shape, hDecoder->window_shape_prev[sce->channel], spec_coef, hDecoder->time_out[sce->channel], hDecoder->fb_intermed[sce->channel],
+    ifilter_bank(hDecoder->fb, ics->window_sequence, ics->window_shape, hDecoder->window_shape_prev[sce->channel], m_spec_coef, hDecoder->time_out[sce->channel], hDecoder->fb_intermed[sce->channel],
                  hDecoder->object_type, hDecoder->frameLength);
 
     /* save window shape for next frame */
     hDecoder->window_shape_prev[sce->channel] = ics->window_shape;
-    if(spec_coef) {
-        free(spec_coef);
-        spec_coef = NULL;
-    }
+    // if(m_spec_coef) {
+    //     free(m_spec_coef);
+    //     m_spec_coef = NULL;
+    // }
 #ifdef LTP_DEC
     if(is_ltp_ot(hDecoder->object_type)) {
         lt_update_state(hDecoder->lt_pred_stat[sce->channel], hDecoder->time_out[sce->channel], hDecoder->fb_intermed[sce->channel], hDecoder->frameLength, hDecoder->object_type);
@@ -9949,81 +9966,81 @@ uint8_t reconstruct_single_channel(NeAACDecStruct_t* hDecoder, ic_stream_t* ics,
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t reconstruct_channel_pair(NeAACDecStruct_t* hDecoder, ic_stream_t* ics1, ic_stream_t* ics2, element_t* cpe, int16_t* spec_data1, int16_t* spec_data2) {
     uint8_t retval;
-    // int32_t spec_coef1[1024]; // ⏫⏫⏫
-    // int32_t spec_coef2[1024]; // ⏫⏫⏫
-    int32_t* spec_coef1 = (int32_t*)faad_malloc(1024 * sizeof(int32_t));
-    int32_t* spec_coef2 = (int32_t*)faad_malloc(1024 * sizeof(int32_t));
+    // int32_t m_spec_coef1[1024]; // ⏫⏫⏫
+    // int32_t m_spec_coef2[1024]; // ⏫⏫⏫
+    // int32_t* m_spec_coef1 = (int32_t*)faad_malloc(1024 * sizeof(int32_t));
+    // int32_t* m_spec_coef2 = (int32_t*)faad_malloc(1024 * sizeof(int32_t));
 
     if(hDecoder->element_alloced[hDecoder->fr_ch_ele] != 2) {
         retval = allocate_channel_pair(hDecoder, cpe->channel, (uint8_t)cpe->paired_channel);
         if(retval > 0) {
-            if(spec_coef1) {
-                free(spec_coef1);
-                spec_coef1 = NULL;
-            }
-            if(spec_coef2) {
-                free(spec_coef2);
-                spec_coef2 = NULL;
-            }
+            // if(m_spec_coef1) {
+            //     free(m_spec_coef1);
+            //     m_spec_coef1 = NULL;
+            // }
+            // if(m_spec_coef2) {
+            //     free(m_spec_coef2);
+            //     m_spec_coef2 = NULL;
+            // }
             return retval;
         }
         hDecoder->element_alloced[hDecoder->fr_ch_ele] = 2;
     }
     /* sanity check, CVE-2018-20199, CVE-2018-20360 */
     if(!hDecoder->time_out[cpe->channel] || !hDecoder->time_out[cpe->paired_channel]) {
-        if(spec_coef1) {
-            free(spec_coef1);
-            spec_coef1 = NULL;
-        }
-        if(spec_coef2) {
-            free(spec_coef2);
-            spec_coef2 = NULL;
-        }
+        // if(m_spec_coef1) {
+        //     free(m_spec_coef1);
+        //     m_spec_coef1 = NULL;
+        // }
+        // if(m_spec_coef2) {
+        //     free(m_spec_coef2);
+        //     m_spec_coef2 = NULL;
+        // }
         return 15;
     }
     if(!hDecoder->fb_intermed[cpe->channel] || !hDecoder->fb_intermed[cpe->paired_channel]) {
-        if(spec_coef1) {
-            free(spec_coef1);
-            spec_coef1 = NULL;
-        }
-        if(spec_coef2) {
-            free(spec_coef2);
-            spec_coef2 = NULL;
-        }
+        // if(m_spec_coef1) {
+        //     free(m_spec_coef1);
+        //     m_spec_coef1 = NULL;
+        // }
+        // if(m_spec_coef2) {
+        //     free(m_spec_coef2);
+        //     m_spec_coef2 = NULL;
+        // }
         return 15;
     }
     /* dequantisation and scaling */
-    retval = quant_to_spec(hDecoder, ics1, spec_data1, spec_coef1, hDecoder->frameLength);
+    retval = quant_to_spec(hDecoder, ics1, spec_data1, m_spec_coef1, hDecoder->frameLength);
     if(retval > 0) {
-        if(spec_coef1) {
-            free(spec_coef1);
-            spec_coef1 = NULL;
-        }
-        if(spec_coef2) {
-            free(spec_coef2);
-            spec_coef2 = NULL;
-        }
+        // if(m_spec_coef1) {
+        //     free(m_spec_coef1);
+        //     m_spec_coef1 = NULL;
+        // }
+        // if(m_spec_coef2) {
+        //     free(m_spec_coef2);
+        //     m_spec_coef2 = NULL;
+        // }
         return retval;
     }
-    retval = quant_to_spec(hDecoder, ics2, spec_data2, spec_coef2, hDecoder->frameLength);
+    retval = quant_to_spec(hDecoder, ics2, spec_data2, m_spec_coef2, hDecoder->frameLength);
     if(retval > 0) {
-        if(spec_coef1) {
-            free(spec_coef1);
-            spec_coef1 = NULL;
-        }
-        if(spec_coef2) {
-            free(spec_coef2);
-            spec_coef2 = NULL;
-        }
+        // if(m_spec_coef1) {
+        //     free(m_spec_coef1);
+        //     m_spec_coef1 = NULL;
+        // }
+        // if(m_spec_coef2) {
+        //     free(m_spec_coef2);
+        //     m_spec_coef2 = NULL;
+        // }
         return retval;
     }
     /* pns decoding */
-    if(ics1->ms_mask_present) { pns_decode(ics1, ics2, spec_coef1, spec_coef2, hDecoder->frameLength, 1, hDecoder->object_type, &(hDecoder->__r1), &(hDecoder->__r2)); }
-    else { pns_decode(ics1, ics2, spec_coef1, spec_coef2, hDecoder->frameLength, 0, hDecoder->object_type, &(hDecoder->__r1), &(hDecoder->__r2)); }
+    if(ics1->ms_mask_present) { pns_decode(ics1, ics2, m_spec_coef1, m_spec_coef2, hDecoder->frameLength, 1, hDecoder->object_type, &(hDecoder->__r1), &(hDecoder->__r2)); }
+    else { pns_decode(ics1, ics2, m_spec_coef1, m_spec_coef2, hDecoder->frameLength, 0, hDecoder->object_type, &(hDecoder->__r1), &(hDecoder->__r2)); }
     /* mid/side decoding */
-    ms_decode(ics1, ics2, spec_coef1, spec_coef2, hDecoder->frameLength);
+    ms_decode(ics1, ics2, m_spec_coef1, m_spec_coef2, hDecoder->frameLength);
     /* intensity stereo decoding */
-    is_decode(ics1, ics2, spec_coef1, spec_coef2, hDecoder->frameLength);
+    is_decode(ics1, ics2, m_spec_coef1, m_spec_coef2, hDecoder->frameLength);
 #ifdef LTP_DEC
     if(is_ltp_ot(hDecoder->object_type)) {
         ltp_info_t* ltp1 = &(ics1->ltp);
@@ -10041,19 +10058,19 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct_t* hDecoder, ic_stream_t* ics1, 
         }
     #endif
         /* long term prediction */
-        lt_prediction(ics1, ltp1, spec_coef1, hDecoder->lt_pred_stat[cpe->channel], hDecoder->fb, ics1->window_shape, hDecoder->window_shape_prev[cpe->channel], hDecoder->sf_index,
+        lt_prediction(ics1, ltp1, m_spec_coef1, hDecoder->lt_pred_stat[cpe->channel], hDecoder->fb, ics1->window_shape, hDecoder->window_shape_prev[cpe->channel], hDecoder->sf_index,
                       hDecoder->object_type, hDecoder->frameLength);
-        lt_prediction(ics2, ltp2, spec_coef2, hDecoder->lt_pred_stat[cpe->paired_channel], hDecoder->fb, ics2->window_shape, hDecoder->window_shape_prev[cpe->paired_channel], hDecoder->sf_index,
+        lt_prediction(ics2, ltp2, m_spec_coef2, hDecoder->lt_pred_stat[cpe->paired_channel], hDecoder->fb, ics2->window_shape, hDecoder->window_shape_prev[cpe->paired_channel], hDecoder->sf_index,
                       hDecoder->object_type, hDecoder->frameLength);
     }
 #endif
     /* tns decoding */
-    tns_decode_frame(ics1, &(ics1->tns), hDecoder->sf_index, hDecoder->object_type, spec_coef1, hDecoder->frameLength);
-    tns_decode_frame(ics2, &(ics2->tns), hDecoder->sf_index, hDecoder->object_type, spec_coef2, hDecoder->frameLength);
+    tns_decode_frame(ics1, &(ics1->tns), hDecoder->sf_index, hDecoder->object_type, m_spec_coef1, hDecoder->frameLength);
+    tns_decode_frame(ics2, &(ics2->tns), hDecoder->sf_index, hDecoder->object_type, m_spec_coef2, hDecoder->frameLength);
     /* filter bank */
-    ifilter_bank(hDecoder->fb, ics1->window_sequence, ics1->window_shape, hDecoder->window_shape_prev[cpe->channel], spec_coef1, hDecoder->time_out[cpe->channel], hDecoder->fb_intermed[cpe->channel],
+    ifilter_bank(hDecoder->fb, ics1->window_sequence, ics1->window_shape, hDecoder->window_shape_prev[cpe->channel], m_spec_coef1, hDecoder->time_out[cpe->channel], hDecoder->fb_intermed[cpe->channel],
                  hDecoder->object_type, hDecoder->frameLength);
-    ifilter_bank(hDecoder->fb, ics2->window_sequence, ics2->window_shape, hDecoder->window_shape_prev[cpe->paired_channel], spec_coef2, hDecoder->time_out[cpe->paired_channel],
+    ifilter_bank(hDecoder->fb, ics2->window_sequence, ics2->window_shape, hDecoder->window_shape_prev[cpe->paired_channel], m_spec_coef2, hDecoder->time_out[cpe->paired_channel],
                  hDecoder->fb_intermed[cpe->paired_channel], hDecoder->object_type, hDecoder->frameLength);
     /* save window shape for next frame */
     hDecoder->window_shape_prev[cpe->channel] = ics1->window_shape;
@@ -10072,14 +10089,14 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct_t* hDecoder, ic_stream_t* ics1, 
         /* following case can happen when forceUpSampling == 1 */
         if(hDecoder->sbr[ele] == NULL) { hDecoder->sbr[ele] = sbrDecodeInit(hDecoder->frameLength, hDecoder->element_id[ele], 2 * get_sample_rate(hDecoder->sf_index), hDecoder->downSampledSBR); }
         if(!hDecoder->sbr[ele]) {
-            if(spec_coef1) {
-                free(spec_coef1);
-                spec_coef1 = NULL;
-            }
-            if(spec_coef2) {
-                free(spec_coef2);
-                spec_coef2 = NULL;
-            }
+            // if(m_spec_coef1) {
+            //     free(m_spec_coef1);
+            //     m_spec_coef1 = NULL;
+            // }
+            // if(m_spec_coef2) {
+            //     free(m_spec_coef2);
+            //     m_spec_coef2 = NULL;
+            // }
             return 19;
         }
         if(cpe->ics1.window_sequence == EIGHT_SHORT_SEQUENCE) hDecoder->sbr[ele]->maxAACLine = 8 * min(cpe->ics1.swb_offset[max(cpe->ics1.max_sfb - 1, 0)], cpe->ics1.swb_offset_max);
@@ -10087,37 +10104,37 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct_t* hDecoder, ic_stream_t* ics1, 
             hDecoder->sbr[ele]->maxAACLine = min(cpe->ics1.swb_offset[max(cpe->ics1.max_sfb - 1, 0)], cpe->ics1.swb_offset_max);
         retval = sbrDecodeCoupleFrame(hDecoder->sbr[ele], hDecoder->time_out[ch0], hDecoder->time_out[ch1], hDecoder->postSeekResetFlag, hDecoder->downSampledSBR);
         if(retval > 0) {
-            if(spec_coef1) {
-                free(spec_coef1);
-                spec_coef1 = NULL;
-            }
-            if(spec_coef2) {
-                free(spec_coef2);
-                spec_coef2 = NULL;
-            }
+            // if(m_spec_coef1) {
+            //     free(m_spec_coef1);
+            //     m_spec_coef1 = NULL;
+            // }
+            // if(m_spec_coef2) {
+            //     free(m_spec_coef2);
+            //     m_spec_coef2 = NULL;
+            // }
             return retval;
         }
     }
     else if(((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1)) && !hDecoder->sbr_alloced[hDecoder->fr_ch_ele]) {
-        if(spec_coef1) {
-            free(spec_coef1);
-            spec_coef1 = NULL;
-        }
-        if(spec_coef2) {
-            free(spec_coef2);
-            spec_coef2 = NULL;
-        }
+        // if(m_spec_coef1) {
+        //     free(m_spec_coef1);
+        //     m_spec_coef1 = NULL;
+        // }
+        // if(m_spec_coef2) {
+        //     free(m_spec_coef2);
+        //     m_spec_coef2 = NULL;
+        // }
         return 23;
     }
 #endif
-    if(spec_coef1) {
-        free(spec_coef1);
-        spec_coef1 = NULL;
-    }
-    if(spec_coef2) {
-        free(spec_coef2);
-        spec_coef2 = NULL;
-    }
+    // if(m_spec_coef1) {
+    //     free(m_spec_coef1);
+    //     m_spec_coef1 = NULL;
+    // }
+    // if(m_spec_coef2) {
+    //     free(m_spec_coef2);
+    //     m_spec_coef2 = NULL;
+    // }
     return 0;
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
