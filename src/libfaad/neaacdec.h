@@ -59,13 +59,14 @@
 //------------------------------------------------------
 
 /* COMPILE TIME DEFINITIONS */
-//#define PREFER_POINTERS
-//#define ERROR_RESILIENCE
-//#define LTP_DEC /* Allow decoding of LTP (long term prediction) profile AAC */
-//#define LD_DEC  /* Allow decoding of LD (low delay) profile AAC */
+#define PREFER_POINTERS
+#define ERROR_RESILIENCE
+#define LTP_DEC /* Allow decoding of LTP (long term prediction) profile AAC */
+#define LD_DEC  /* Allow decoding of LD (low delay) profile AAC */
+#define ALLOW_SMALL_FRAMELENGTH
+
 #define SBR_DEC /* Allow decoding of SBR (spectral band replication) */
-#define PS_DEC /* Allow decoding of PS (parametric stereo) */
-//#define ALLOW_SMALL_FRAMELENGTH
+
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* LD can't do without LTP */
 #ifdef LD_DEC
@@ -76,7 +77,7 @@
         #define LTP_DEC
     #endif
 #endif
-
+#define PS_DEC /* Allow decoding of PS (parametric stereo) */
 typedef int32_t      complex_t[2];
 typedef void*        NeAACDecHandle;
 typedef const int8_t (*ps_huff_tab)[2];

@@ -33,11 +33,13 @@ sbr_hfadj_info_t*         m_adj = NULL;
 int32_t*                  m_Q_M_lim = NULL;
 int32_t*                  m_G_lim = NULL;
 int32_t*                  m_S_M = NULL;
+
 // complex_t alpha_0[64], alpha_1[64];
 // int32_t  in_real[32], in_imag[32], out_real[32], out_imag[32];
 // int32_t x1[32], x2[32];
 // int32_t in_real1[32], in_imag1[32], out_real1[32], out_imag1[32];
 // int32_t in_real2[32], in_imag2[32], out_real2[32], out_imag2[32];
+
 element_t*                m_sce = NULL;
 int16_t*                  m_spec_data = NULL;
 element_t*                m_cpe = NULL;
@@ -50,84 +52,58 @@ int32_t*                  m_spec_coef2 = NULL;
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void alloc_mem() {
-    m_mp4ASC = (mp4AudioSpecificConfig_t*)faad_malloc(1 * sizeof(mp4AudioSpecificConfig_t));
-    m_transf_buf = (int32_t*)faad_malloc(2 * 1024 * sizeof(int32_t));
-    m_windowed_buf = (int32_t*)faad_malloc(2 * 1024 * sizeof(int32_t));
-    m_codeword = (codeword_t*)faad_malloc(512 * sizeof(codeword_t));
-    m_segment = (bits_t_t*)faad_malloc(512 * sizeof(bits_t_t));
-    m_P_dec = (int32_t**)faad_malloc(32 * sizeof(m_P_dec));
-    for(uint8_t i = 0; i < 32; i++) m_P_dec[i] = (int32_t*)faad_malloc(34 * sizeof(*(m_P_dec[i])));
-    m_G_TransientRatio = (int32_t**)faad_malloc(32 * sizeof(m_G_TransientRatio));
-    for(uint8_t i = 0; i < 32; i++) m_G_TransientRatio[i] = (int32_t*)faad_malloc(34 * sizeof(*(m_G_TransientRatio[i])));
-    m_X_hybrid_left = (complex_t**)faad_malloc(32 * sizeof(m_X_hybrid_left));
-    for(uint8_t i = 0; i < 32; i++) m_X_hybrid_left[i] = (complex_t*)faad_malloc(34 * sizeof(*(m_X_hybrid_left[i])));
-    m_X_hybrid_right = (complex_t**)faad_malloc(32 * sizeof(m_X_hybrid_right));
-    for(uint8_t i = 0; i < 32; i++) m_X_hybrid_right[i] = (complex_t*)faad_malloc(34 * sizeof(*(m_X_hybrid_right[i])));
-    m_x_est = (int32_t*)faad_malloc(2048 * sizeof(int32_t));
-    m_X_est = (int32_t*)faad_malloc(2048 * sizeof(int32_t));
-    m_Z1_imdct = (complex_t*)faad_malloc(512 * sizeof(complex_t));
-    m_Z1_mdct = (complex_t*)faad_malloc(512 * sizeof(complex_t));
-    m_X_dcf = (complex_t**)faad_malloc(MAX_NTSR * sizeof(m_X_dcf));
-    for(uint8_t i = 0; i < MAX_NTSR; i++) m_X_dcf[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_dcf[i])));
-    m_X_dsf = (complex_t**)faad_malloc(MAX_NTSR * sizeof(m_X_dsf));
-    for(uint8_t i = 0; i < MAX_NTSR; i++) m_X_dsf[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_dsf[i])));
-    m_X_left = (complex_t**)faad_malloc(38 * sizeof(m_X_left));
-    for(uint8_t i = 0; i < 38; i++) m_X_left[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_left[i])));
-    m_X_right = (complex_t**)faad_malloc(38 * sizeof(m_X_right));
-    for(uint8_t i = 0; i < 38; i++) m_X_right[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_right[i])));
-    m_vDk0 = (int32_t*)faad_malloc(64 * sizeof(int32_t));
-    m_vDk1 = (int32_t*)faad_malloc(64 * sizeof(int32_t));
-    m_vk0 = (int32_t*)faad_malloc(64 * sizeof(int32_t));
-    m_vk1 = (int32_t*)faad_malloc(64 * sizeof(int32_t));
-    m_lim_imTable = (int32_t*)faad_malloc(100 * sizeof(int32_t));
-    m_patchBorders = (uint8_t*)faad_malloc(64 * sizeof(uint8_t));
-    m_adj = (sbr_hfadj_info_t*)faad_malloc(1 * sizeof(sbr_hfadj_info_t));
-    m_Q_M_lim = (int32_t*)faad_malloc(MAX_M * sizeof(int32_t));
-    m_G_lim = (int32_t*)faad_malloc(MAX_M * sizeof(int32_t));
-    m_S_M = (int32_t*)faad_malloc(MAX_M * sizeof(int32_t));
-    m_sce = (element_t*)faad_malloc(1 * sizeof(element_t));
-    m_spec_data = (int16_t*)faad_malloc(1024 * sizeof(int16_t));
-    m_cpe = (element_t*)faad_malloc(1 * sizeof(element_t));
-    m_spec_data1 = (int16_t*)faad_malloc(1024 * sizeof(int16_t));
-    m_spec_data2 = (int16_t*)faad_malloc(1024 * sizeof(int16_t));
-    m_mp4ASC_ame = (mp4AudioSpecificConfig_t*)faad_malloc(1 * sizeof(mp4AudioSpecificConfig_t));
-    m_spec_coef = (int32_t*)faad_malloc(1024 * sizeof(int32_t));
-    m_spec_coef1 = (int32_t*)faad_malloc(1024 * sizeof(int32_t));
-    m_spec_coef2 = (int32_t*)faad_malloc(1024 * sizeof(int32_t));
+    // clang-format off
+    uint32_t sum = 0;
+    m_transf_buf = (int32_t*)faad_malloc(2 * 1024 * sizeof(int32_t));                                                       sum += 2 * 1024 * sizeof(int32_t);
+    m_Z1_imdct = (complex_t*)faad_malloc(512 * sizeof(complex_t));                                                          sum += 512 * sizeof(complex_t);
+    m_sce = (element_t*)faad_malloc(1 * sizeof(element_t));                                                                 sum += 1 * sizeof(element_t);
+    m_spec_data = (int16_t*)faad_malloc(1024 * sizeof(int16_t));                                                            sum += 1024 * sizeof(int16_t);
+    m_spec_coef = (int32_t*)faad_malloc(1024 * sizeof(int32_t));                                                            sum += 1024 * sizeof(int32_t);
+#ifdef SBR_DEC
+    m_P_dec = (int32_t**)faad_malloc(32 * sizeof(m_P_dec));                                                                  sum += 32 * sizeof(int32_t*);
+    for(uint8_t i = 0; i < 32; i++){m_P_dec[i] = (int32_t*)faad_malloc(34 * sizeof(*(m_P_dec[i])));}                         sum += 32 * 34 * sizeof(int32_t);
+    m_G_TransientRatio = (int32_t**)faad_malloc(32 * sizeof(m_G_TransientRatio));                                            sum += 32 * sizeof(int32_t*);
+    for(uint8_t i = 0; i < 32; i++){m_G_TransientRatio[i] = (int32_t*)faad_malloc(34 * sizeof(*(m_G_TransientRatio[i])));}   sum += 32 * 34 * sizeof(int32_t);
+    m_X_hybrid_left = (complex_t**)faad_malloc(32 * sizeof(m_X_hybrid_left));                                                sum += 32 * sizeof(complex_t*);
+    for(uint8_t i = 0; i < 32; i++){m_X_hybrid_left[i] = (complex_t*)faad_malloc(34 * sizeof(*(m_X_hybrid_left[i])));}       sum += 32 * 34 * sizeof(complex_t);
+    m_X_hybrid_right = (complex_t**)faad_malloc(32 * sizeof(m_X_hybrid_right));                                              sum += 32 * sizeof(complex_t*);
+    for(uint8_t i = 0; i < 32; i++){m_X_hybrid_right[i] = (complex_t*)faad_malloc(34 * sizeof(*(m_X_hybrid_right[i])));}     sum += 32 * 34 * sizeof(complex_t);
+    m_X_dsf = (complex_t**)faad_malloc(MAX_NTSR * sizeof(m_X_dsf));                                                          sum += MAX_NTSR * sizeof(complex_t*);
+    for(uint8_t i = 0; i < MAX_NTSR; i++){m_X_dsf[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_dsf[i])));}                 sum += MAX_NTSR * 64 * sizeof(complex_t);
+    m_X_left = (complex_t**)faad_malloc(38 * sizeof(m_X_left));                                                              sum += 38 * sizeof(complex_t*);
+    for(uint8_t i = 0; i < 38; i++){ m_X_left[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_left[i])));}                    sum += 38 * 64 * sizeof(int32_t);
+    m_X_right = (complex_t**)faad_malloc(38 * sizeof(m_X_right));                                                            sum += 38 * sizeof(complex_t*);
+    for(uint8_t i = 0; i < 38; i++){m_X_right[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_right[i])));}                   sum += 38 * 64 * sizeof(int32_t);
+    m_vDk0 = (int32_t*)faad_malloc(64 * sizeof(int32_t));                                                                    sum += 64 * sizeof(int32_t);
+    m_vDk1 = (int32_t*)faad_malloc(64 * sizeof(int32_t));                                                                    sum += 64 * sizeof(int32_t);
+    m_vk0 = (int32_t*)faad_malloc(64 * sizeof(int32_t));                                                                     sum += 64 * sizeof(int32_t);
+    m_vk1 = (int32_t*)faad_malloc(64 * sizeof(int32_t));                                                                     sum += 64 * sizeof(int32_t);
+    m_adj = (sbr_hfadj_info_t*)faad_malloc(1 * sizeof(sbr_hfadj_info_t));                                                    sum += 1 * sizeof(sbr_hfadj_info_t);
+    m_Q_M_lim = (int32_t*)faad_malloc(MAX_M * sizeof(int32_t));                                                              sum += MAX_M * sizeof(int32_t);
+    m_G_lim = (int32_t*)faad_malloc(MAX_M * sizeof(int32_t));                                                                sum += MAX_M * sizeof(int32_t);
+    m_S_M = (int32_t*)faad_malloc(MAX_M * sizeof(int32_t));                                                                  sum += MAX_M * sizeof(int32_t);
+#endif
 
-    uint32_t sum = 1 * sizeof(mp4AudioSpecificConfig_t);
-    sum += 2 * 1024 * sizeof(int32_t);
-    sum += 2 * 1024 * sizeof(int32_t);
-    sum += 512 * sizeof(codeword_t);
-    sum += 512 * sizeof(bits_t_t);
-    sum += 32 * 34 * sizeof(int32_t) + 32 * sizeof(int32_t*);
-    sum += 32 * 34 * sizeof(int32_t) + 32 * sizeof(int32_t*);
-    sum += 32 * 34 * sizeof(complex_t) + 32 * sizeof(complex_t*);
-    sum += 2048 * sizeof(int32_t);
-    sum += 2048 * sizeof(int32_t);
-    sum += 512 * sizeof(complex_t);
-    sum += 512 * sizeof(complex_t);
-    sum += MAX_NTSR * 64 * sizeof(complex_t) + MAX_NTSR * sizeof(complex_t*);
-    sum += MAX_NTSR * 64 * sizeof(complex_t) + MAX_NTSR * sizeof(complex_t*);
-    sum += 64 * sizeof(int32_t);
-    sum += 64 * sizeof(int32_t);
-    sum += 64 * sizeof(int32_t);
-    sum += 64 * sizeof(int32_t);
-    sum += 1 * sizeof(sbr_hfadj_info_t);
-    sum += MAX_M * sizeof(int32_t);
-    sum += MAX_M * sizeof(int32_t);
-    sum += MAX_M * sizeof(int32_t);
-    sum += 1 * sizeof(element_t);
-    sum += 1024 * sizeof(int16_t);
-    sum += 1 * sizeof(element_t);
-    sum += 1024 * sizeof(int16_t);
-    sum += 1024 * sizeof(int16_t);
-    sum += 1 * sizeof(mp4AudioSpecificConfig_t);
-    sum += 1024 * sizeof(int32_t);
-    sum += 1024 * sizeof(int32_t);
-    sum += 1024 * sizeof(int32_t);
+// m_mp4ASC = (mp4AudioSpecificConfig_t*)faad_malloc(1 * sizeof(mp4AudioSpecificConfig_t));                                 sum += 1 * sizeof(mp4AudioSpecificConfig_t);
+// m_windowed_buf = (int32_t*)faad_malloc(2 * 1024 * sizeof(int32_t));                                                      sum += 2 * 1024 * sizeof(int32_t);
+// m_codeword = (codeword_t*)faad_malloc(512 * sizeof(codeword_t));                                                         sum += 512 * sizeof(codeword_t);
+// m_segment = (bits_t_t*)faad_malloc(512 * sizeof(bits_t_t));                                                              sum += 512 * sizeof(bits_t_t);
+// m_x_est = (int32_t*)faad_malloc(2048 * sizeof(int32_t));                                                                 sum += 2048 * sizeof(int32_t);
+// m_X_est = (int32_t*)faad_malloc(2048 * sizeof(int32_t));                                                                 sum += 2048 * sizeof(int32_t);
+// m_Z1_mdct = (complex_t*)faad_malloc(512 * sizeof(complex_t));                                                            sum += 512 * sizeof(complex_t);
+// m_X_dcf = (complex_t**)faad_malloc(MAX_NTSR * sizeof(m_X_dcf));                                                          sum += MAX_NTSR * sizeof(complex_t*);
+// for(uint8_t i = 0; i < MAX_NTSR; i++){m_X_dcf[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_dcf[i])));}                 sum += MAX_NTSR * 64 * sizeof(complex_t);
+// m_lim_imTable = (int32_t*)faad_malloc(100 * sizeof(int32_t));                                                            sum += 100 * sizeof(int32_t);
+// m_patchBorders = (uint8_t*)faad_malloc(64 * sizeof(uint8_t));                                                            sum += 64 * sizeof(uint8_t);
+// m_cpe = (element_t*)faad_malloc(1 * sizeof(element_t));                                                                  sum += 1 * sizeof(element_t);
+// m_spec_data1 = (int16_t*)faad_malloc(1024 * sizeof(int16_t));                                                            sum += 1024 * sizeof(int16_t);
+// m_spec_data2 = (int16_t*)faad_malloc(1024 * sizeof(int16_t));                                                            sum += 1024 * sizeof(int16_t);
+// m_mp4ASC_ame = (mp4AudioSpecificConfig_t*)faad_malloc(1 * sizeof(mp4AudioSpecificConfig_t));                             sum += 1 * sizeof(mp4AudioSpecificConfig_t);
+// m_spec_coef1 = (int32_t*)faad_malloc(1024 * sizeof(int32_t));                                                            sum += 1024 * sizeof(int32_t);
+// m_spec_coef2 = (int32_t*)faad_malloc(1024 * sizeof(int32_t));                                                            sum += 1024 * sizeof(int32_t);
 
     printf(ANSI_ESC_ORANGE "alloc %d bytes\n" ANSI_ESC_WHITE, sum);
+    // clang-format off
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void free_mem() {
