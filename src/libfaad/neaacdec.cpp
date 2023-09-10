@@ -69,9 +69,12 @@ void alloc_mem() {
     m_Z1_mdct = (complex_t*)faad_malloc(512 * sizeof(complex_t));
     m_X_dcf = (complex_t**)faad_malloc(MAX_NTSR * sizeof(m_X_dcf));
     for(uint8_t i = 0; i < MAX_NTSR; i++) m_X_dcf[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_dcf[i])));
-    m_X_dsf = (complex_t**)faad_calloc(MAX_NTSR, sizeof(m_X_dsf));
-    for(uint8_t i = 0; i < MAX_NTSR; i++) m_X_dsf[i] = (complex_t*)faad_calloc(64, sizeof(*(m_X_dsf[i])));
-
+    m_X_dsf = (complex_t**)faad_malloc(MAX_NTSR * sizeof(m_X_dsf));
+    for(uint8_t i = 0; i < MAX_NTSR; i++) m_X_dsf[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_dsf[i])));
+    m_X_left = (complex_t**)faad_calloc(38, sizeof(m_X_left));
+    for(uint8_t i = 0; i < 38; i++) m_X_left[i] = (complex_t*)faad_calloc(64, sizeof(*(m_X_left[i])));
+    m_X_right = (complex_t**)faad_calloc(38, sizeof(m_X_right));
+    for(uint8_t i = 0; i < 38; i++) m_X_right[i] = (complex_t*)faad_calloc(64, sizeof(*(m_X_right[i])));
 
 
     uint32_t sum = 1 * sizeof(mp4AudioSpecificConfig_t);
@@ -86,8 +89,8 @@ void alloc_mem() {
     sum += 2048 * sizeof(int32_t);
     sum += 512 * sizeof(complex_t);
     sum += 512 * sizeof(complex_t);
-    sum += MAX_NTSR * 64 * sizeof(complex_t) + MAX_NTSR * sizeof(complex_t*) ;
-    sum += MAX_NTSR * 64 * sizeof(complex_t) + MAX_NTSR * sizeof(complex_t*) ;
+    sum += MAX_NTSR * 64 * sizeof(complex_t) + MAX_NTSR * sizeof(complex_t*);
+    sum += MAX_NTSR * 64 * sizeof(complex_t) + MAX_NTSR * sizeof(complex_t*);
 
     printf(ANSI_ESC_ORANGE "alloc %d bytes\n" ANSI_ESC_WHITE, sum);
 }
@@ -109,6 +112,9 @@ void free_mem() {
     if(m_Z1_mdct)          {free(m_Z1_mdct);      m_Z1_mdct = NULL;}
     if(m_X_dcf)            {for(uint8_t i = 0; i < MAX_NTSR; i++){free(m_X_dcf[i]); m_X_dcf[i] = NULL;} free(m_X_dcf); m_X_dcf = NULL;}
     if(m_X_dsf)            {for(uint8_t i = 0; i < MAX_NTSR; i++){free(m_X_dsf[i]); m_X_dsf[i] = NULL;} free(m_X_dsf); m_X_dsf = NULL;}
+    if(m_X_left)           {for(uint8_t i = 0; i < 38; i++){free(m_X_left[i]); m_X_left[i] = NULL;} free(m_X_left);}
+    if(m_X_right)          {for(uint8_t i = 0; i < 38; i++){free(m_X_right[i]); m_X_right[i] = NULL;} free(m_X_right);}
+
 
     printf(ANSI_ESC_ORANGE "free mem\n" ANSI_ESC_WHITE);
     // clang-format on
@@ -6025,17 +6031,20 @@ uint8_t sbrDecodeSingleFramePS(sbr_info_t* sbr, int32_t* left_channel, int32_t* 
     uint8_t l, k;
     uint8_t dont_process = 0;
     uint8_t ret = 0;
-    //    complex_t X_left[38][64] = {{0}};                           // ⏫⏫⏫
-    //    complex_t X_right[38][64] = {{0}}; /* must set this to 0 */ // ⏫⏫⏫
+    //    complex_t m_X_left[38][64] = {{0}};                           // ⏫⏫⏫
+    //    complex_t m_X_right[38][64] = {{0}}; /* must set this to 0 */ // ⏫⏫⏫
+
+    for(uint8_t i = 0; i < 38; i++) memset(m_X_left[i], 0, 64 * sizeof(*(m_X_left[i])));
+    for(uint8_t i = 0; i < 38; i++) memset(m_X_right[i], 0, 64 * sizeof(*(m_X_right[i])));
 
     if(sbr == NULL) return 20;
     /* case can occur due to bit errors */
     if(sbr->id_aac != ID_SCE && sbr->id_aac != ID_LFE) return 21;
 
-    complex_t** X_left = (complex_t**)faad_calloc(38, sizeof(X_left));
-    for(uint8_t i = 0; i < 38; i++) X_left[i] = (complex_t*)faad_calloc(64, sizeof(*(X_left[i])));
-    complex_t** X_right = (complex_t**)faad_calloc(38, sizeof(X_right));
-    for(uint8_t i = 0; i < 38; i++) X_right[i] = (complex_t*)faad_calloc(64, sizeof(*(X_right[i])));
+    // complex_t** m_X_left = (complex_t**)faad_calloc(38, sizeof(m_X_left));
+    // for(uint8_t i = 0; i < 38; i++) m_X_left[i] = (complex_t*)faad_calloc(64, sizeof(*(m_X_left[i])));
+    // complex_t** m_X_right = (complex_t**)faad_calloc(38, sizeof(m_X_right));
+    // for(uint8_t i = 0; i < 38; i++) m_X_right[i] = (complex_t*)faad_calloc(64, sizeof(*(m_X_right[i])));
 
     if(sbr->ret || (sbr->header_count == 0)) {
         /* don't process just upsample */
@@ -6046,38 +6055,38 @@ uint8_t sbrDecodeSingleFramePS(sbr_info_t* sbr, int32_t* left_channel, int32_t* 
     if(just_seeked) { sbr->just_seeked = 1; }
     else { sbr->just_seeked = 0; }
     if(sbr->qmfs[1] == NULL) { sbr->qmfs[1] = qmfs_init((downSampledSBR) ? 32 : 64); }
-    sbr->ret += sbr_process_channel(sbr, left_channel, X_left, 0, dont_process, downSampledSBR);
+    sbr->ret += sbr_process_channel(sbr, left_channel, m_X_left, 0, dont_process, downSampledSBR);
     /* copy some extra data for PS */
     for(l = sbr->numTimeSlotsRate; l < sbr->numTimeSlotsRate + 6; l++) {
         for(k = 0; k < 5; k++) {
-            QMF_RE(X_left[l][k]) = QMF_RE(sbr->Xsbr[0][sbr->tHFAdj + l][k]);
-            QMF_IM(X_left[l][k]) = QMF_IM(sbr->Xsbr[0][sbr->tHFAdj + l][k]);
+            QMF_RE(m_X_left[l][k]) = QMF_RE(sbr->Xsbr[0][sbr->tHFAdj + l][k]);
+            QMF_IM(m_X_left[l][k]) = QMF_IM(sbr->Xsbr[0][sbr->tHFAdj + l][k]);
         }
     }
 /* perform parametric stereo */
 #ifdef PS_DEC
-    ps_decode(sbr->ps, X_left, X_right);
+    ps_decode(sbr->ps, m_X_left, m_X_right);
 #endif
     /* subband synthesis */
     if(downSampledSBR) {
-        sbr_qmf_synthesis_32(sbr, sbr->qmfs[0], X_left, left_channel);
-        sbr_qmf_synthesis_32(sbr, sbr->qmfs[1], X_right, right_channel);
+        sbr_qmf_synthesis_32(sbr, sbr->qmfs[0], m_X_left, left_channel);
+        sbr_qmf_synthesis_32(sbr, sbr->qmfs[1], m_X_right, right_channel);
     }
     else {
-        sbr_qmf_synthesis_64(sbr, sbr->qmfs[0], X_left, left_channel);
-        sbr_qmf_synthesis_64(sbr, sbr->qmfs[1], X_right, right_channel);
+        sbr_qmf_synthesis_64(sbr, sbr->qmfs[0], m_X_left, left_channel);
+        sbr_qmf_synthesis_64(sbr, sbr->qmfs[1], m_X_right, right_channel);
     }
 
-    for(uint8_t i = 0; i < 38; i++) {
-        free(X_left[i]);
-        X_left[i] = NULL;
-    }
-    free(X_left);
-    for(uint8_t i = 0; i < 38; i++) {
-        free(X_right[i]);
-        X_right[i] = NULL;
-    }
-    free(X_right);
+    // for(uint8_t i = 0; i < 38; i++) {
+    //     free(m_X_left[i]);
+    //     m_X_left[i] = NULL;
+    // }
+    // free(m_X_left);
+    // for(uint8_t i = 0; i < 38; i++) {
+    //     free(m_X_right[i]);
+    //     m_X_right[i] = NULL;
+    // }
+    // free(m_X_right);
 
     if(sbr->bs_header_flag) sbr->just_seeked = 0;
     if(sbr->header_count != 0 && sbr->ret == 0) {
