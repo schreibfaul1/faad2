@@ -27,7 +27,8 @@ int32_t*                  m_vDk0 = NULL;
 int32_t*                  m_vDk1 = NULL;
 int32_t*                  m_vk0 = NULL;
 int32_t*                  m_vk1 = NULL;
-int32_t*                  m_imTable = NULL;
+int32_t*                  m_lm_imTable = NULL;
+uint8_t*                  m_imTable = NULL;
 uint8_t*                  m_patchBorders = NULL;
 sbr_hfadj_info_t*         m_adj = NULL;
 int32_t*                  m_Q_M_lim = NULL;
@@ -79,7 +80,8 @@ void alloc_mem() {
     m_vDk1 = (int32_t*)faad_calloc(64, sizeof(int32_t));
     m_vk0 = (int32_t*)faad_calloc(64, sizeof(int32_t));
     m_vk1 = (int32_t*)faad_calloc(64, sizeof(int32_t));
-
+    m_lm_imTable = (int32_t*)faad_malloc(100 * sizeof(int32_t));
+    m_patchBorders = (uint8_t*)faad_malloc(64 * sizeof(uint8_t));
 
 
     uint32_t sum = 1 * sizeof(mp4AudioSpecificConfig_t);
@@ -128,6 +130,8 @@ void free_mem() {
     if(m_vk0)              {free(m_vk0); m_vk0 = NULL;}
     if(m_vDk1)             {free(m_vDk1); m_vDk1 = NULL;}
     if(m_vDk0)             {free(m_vDk0); m_vDk0 = NULL;}
+    if(m_patchBorders)     {free(m_patchBorders); m_patchBorders = NULL;}
+    if(m_lm_imTable)       {free(m_lm_imTable); m_lm_imTable = NULL;}
 
     printf(ANSI_ESC_ORANGE "free mem\n" ANSI_ESC_WHITE);
     // clang-format on
@@ -6443,20 +6447,20 @@ void limiter_frequency_table(sbr_info_t* sbr) {
     sbr->f_table_lim[0][1] = sbr->f_table_res[LO_RES][sbr->N_low] - sbr->kx;
     sbr->N_L[0] = 1;
 
-    int32_t* limTable = (int32_t*)faad_malloc(100 * sizeof(int32_t));
-    uint8_t* patchBorders = (uint8_t*)faad_malloc(64 * sizeof(uint8_t));
+    int32_t* m_lm_imTable = (int32_t*)faad_malloc(100 * sizeof(int32_t));
+    uint8_t* m_patchBorders = (uint8_t*)faad_malloc(64 * sizeof(uint8_t));
     for(s = 1; s < 4; s++) {
-        //    int32_t limTable[100 /*TODO*/] = {0};  // ⏫⏫⏫
-        //    uint8_t patchBorders[64 /*??*/] = {0};
-        memset(limTable, 0, 100 * sizeof(int32_t));
-        memset(patchBorders, 0, 64 * sizeof(uint8_t));
+        //    int32_t m_lm_imTable[100 /*TODO*/] = {0};  // ⏫⏫⏫
+        //    uint8_t m_patchBorders[64 /*??*/] = {0};
+        memset(m_lm_imTable, 0, 100 * sizeof(int32_t));
+        memset(m_patchBorders, 0, 64 * sizeof(uint8_t));
 
-        patchBorders[0] = sbr->kx;
-        for(k = 1; k <= sbr->noPatches; k++) { patchBorders[k] = patchBorders[k - 1] + sbr->patchNoSubbands[k - 1]; }
-        for(k = 0; k <= sbr->N_low; k++) { limTable[k] = sbr->f_table_res[LO_RES][k]; }
-        for(k = 1; k < sbr->noPatches; k++) { limTable[k + sbr->N_low] = patchBorders[k]; }
+        m_patchBorders[0] = sbr->kx;
+        for(k = 1; k <= sbr->noPatches; k++) { m_patchBorders[k] = m_patchBorders[k - 1] + sbr->patchNoSubbands[k - 1]; }
+        for(k = 0; k <= sbr->N_low; k++) { m_lm_imTable[k] = sbr->f_table_res[LO_RES][k]; }
+        for(k = 1; k < sbr->noPatches; k++) { m_lm_imTable[k + sbr->N_low] = m_patchBorders[k]; }
         /* needed */
-        qsort(limTable, sbr->noPatches + sbr->N_low, sizeof(limTable[0]), longcmp);
+        qsort(m_lm_imTable, sbr->noPatches + sbr->N_low, sizeof(m_lm_imTable[0]), longcmp);
         k = 1;
         nrLim = sbr->noPatches + sbr->N_low - 1;
         if(nrLim < 0) // TODO: BIG FAT PROBLEM
@@ -6466,20 +6470,20 @@ void limiter_frequency_table(sbr_info_t* sbr) {
         if(k <= nrLim) {
             int32_t nOctaves;
 
-            if(limTable[k - 1] != 0) nOctaves = DIV_R((limTable[k] << REAL_BITS), REAL_CONST(limTable[k - 1]));
+            if(m_lm_imTable[k - 1] != 0) nOctaves = DIV_R((m_lm_imTable[k] << REAL_BITS), REAL_CONST(m_lm_imTable[k - 1]));
             else
                 nOctaves = 0;
             if(nOctaves < limiterBandsCompare[s - 1]) {
                 uint8_t i;
-                if(limTable[k] != limTable[k - 1]) {
+                if(m_lm_imTable[k] != m_lm_imTable[k - 1]) {
                     uint8_t found = 0, found2 = 0;
                     for(i = 0; i <= sbr->noPatches; i++) {
-                        if(limTable[k] == patchBorders[i]) found = 1;
+                        if(m_lm_imTable[k] == m_patchBorders[i]) found = 1;
                     }
                     if(found) {
                         found2 = 0;
                         for(i = 0; i <= sbr->noPatches; i++) {
-                            if(limTable[k - 1] == patchBorders[i]) found2 = 1;
+                            if(m_lm_imTable[k - 1] == m_patchBorders[i]) found2 = 1;
                         }
                         if(found2) {
                             k++;
@@ -6487,16 +6491,16 @@ void limiter_frequency_table(sbr_info_t* sbr) {
                         }
                         else {
                             /* remove (k-1)th element */
-                            limTable[k - 1] = sbr->f_table_res[LO_RES][sbr->N_low];
-                            qsort(limTable, sbr->noPatches + sbr->N_low, sizeof(limTable[0]), longcmp);
+                            m_lm_imTable[k - 1] = sbr->f_table_res[LO_RES][sbr->N_low];
+                            qsort(m_lm_imTable, sbr->noPatches + sbr->N_low, sizeof(m_lm_imTable[0]), longcmp);
                             nrLim--;
                             goto restart;
                         }
                     }
                 }
                 /* remove kth element */
-                limTable[k] = sbr->f_table_res[LO_RES][sbr->N_low];
-                qsort(limTable, nrLim, sizeof(limTable[0]), longcmp);
+                m_lm_imTable[k] = sbr->f_table_res[LO_RES][sbr->N_low];
+                qsort(m_lm_imTable, nrLim, sizeof(m_lm_imTable[0]), longcmp);
                 nrLim--;
                 goto restart;
             }
@@ -6506,16 +6510,16 @@ void limiter_frequency_table(sbr_info_t* sbr) {
             }
         }
         sbr->N_L[s] = nrLim;
-        for(k = 0; k <= nrLim; k++) { sbr->f_table_lim[s][k] = limTable[k] - sbr->kx; }
+        for(k = 0; k <= nrLim; k++) { sbr->f_table_lim[s][k] = m_lm_imTable[k] - sbr->kx; }
     }
-    if(patchBorders) {
-        free(patchBorders);
-        patchBorders = NULL;
-    }
-    if(limTable) {
-        free(limTable);
-        limTable = NULL;
-    }
+    // if(m_patchBorders) {
+    //     free(m_patchBorders);
+    //     m_patchBorders = NULL;
+    // }
+    // if(m_lm_imTable) {
+    //     free(m_lm_imTable);
+    //     m_lm_imTable = NULL;
+    // }
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
