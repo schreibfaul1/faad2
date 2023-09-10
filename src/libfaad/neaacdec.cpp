@@ -3222,7 +3222,6 @@ void pns_decode(ic_stream_t* ics_left, ic_stream_t* ics_right, int32_t* spec_lef
     }     /* g */
 }
 
-#ifdef PS_DEC
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static hyb_info_t* hybrid_init(uint8_t numTimeSlotsRate) {
     uint8_t     i;
@@ -4336,13 +4335,7 @@ ps_info_t* ps_init(uint8_t sr_index, uint8_t numTimeSlotsRate) {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* main Parametric Stereo decoding function */
 uint8_t ps_decode(ps_info_t* ps, complex_t* X_left[64], complex_t* X_right[64]) {
-    // complex_t m_X_hybrid_left[32][32] = {{0}};  // ⏫⏫⏫
-    // complex_t m_X_hybrid_right[32][32] = {{0}}; // ⏫⏫⏫
 
-    // complex_t** m_X_hybrid_left = (complex_t**)faad_calloc(32 * sizeof(m_X_hybrid_left));
-    // for(uint8_t i = 0; i < 32; i++) m_X_hybrid_left[i] = (complex_t*)faad_calloc(34 * sizeof(*(m_X_hybrid_left[i])));
-    // complex_t** m_X_hybrid_right = (complex_t**)faad_calloc(32, sizeof(m_X_hybrid_right));
-    // for(uint8_t i = 0; i < 32; i++) m_X_hybrid_right[i] = (complex_t*)faad_calloc(34, sizeof(*(m_X_hybrid_right[i])));
     for(uint8_t i = 0; i < 32; i++) memset(m_X_hybrid_left[i], 0, 34 * sizeof(*(m_X_hybrid_left[i])));
     for(uint8_t i = 0; i < 32; i++) memset(m_X_hybrid_right[i], 0, 34 * sizeof(*(m_X_hybrid_right[i])));
 
@@ -4376,22 +4369,8 @@ uint8_t ps_decode(ps_info_t* ps, complex_t* X_left[64], complex_t* X_right[64]) 
     /* hybrid synthesis, to rebuild the SBR QMF matrices */
     hybrid_synthesis((hyb_info_t*)ps->hyb, X_left, m_X_hybrid_left, ps->use34hybrid_bands, ps->numTimeSlotsRate);
     hybrid_synthesis((hyb_info_t*)ps->hyb, X_right, m_X_hybrid_right, ps->use34hybrid_bands, ps->numTimeSlotsRate);
-
-    // for(uint8_t i = 0; i < 32; i++) {
-    //     free(m_X_hybrid_left[i]);
-    //     m_X_hybrid_left[i] = NULL;
-    // }
-    // free(m_X_hybrid_left);
-    // m_X_hybrid_left = NULL;
-    // for(uint8_t i = 0; i < 32; i++) {
-    //     free(m_X_hybrid_right[i]);
-    //     m_X_hybrid_right[i] = NULL;
-    // }
-    // free(m_X_hybrid_right);
-    // m_X_hybrid_right = NULL;
     return 0;
 }
-#endif
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t is_ltp_ot(uint8_t object_type) { /* check if the object type is an object type that can have LTP */
@@ -4537,8 +4516,6 @@ void faad_imdct(mdct_info_t* mdct, int32_t* X_in, int32_t* X_out) {
 #ifdef ALLOW_SMALL_FRAMELENGTH
     int32_t scale, b_scale = 0;
 #endif
-    // complex_t  m_Z1_imdct[512]; // ⏫⏫⏫
-    //  complex_t* m_Z1_imdct = (complex_t*)faad_malloc(512 * sizeof(complex_t));
     complex_t* sincos = mdct->sincos;
     uint16_t   N = mdct->N;
     uint16_t   N2 = N >> 1;
@@ -4590,7 +4567,6 @@ void faad_imdct(mdct_info_t* mdct, int32_t* X_in, int32_t* X_out) {
         X_out[N2 + N4 + 3 + 2 * k] = RE(m_Z1_imdct[N4 - 2 - k]);
     }
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void faad_mdct(mdct_info_t* mdct, int32_t* X_in, int32_t* X_out) {
     uint16_t  k;
@@ -8619,10 +8595,6 @@ static uint8_t decode_scale_factors(ic_stream_t* ics, bitfile_t* ld) {
             switch(ics->sfb_cb[g][sfb]) {
             case ZERO_HCB: /* zero book */
                 ics->scale_factors[g][sfb] = 0;
-// #define SF_PRINT
-#ifdef SF_PRINT
-                printf("%d\n", ics->scale_factors[g][sfb]);
-#endif
                 break;
             case INTENSITY_HCB: /* intensity books */
             case INTENSITY_HCB2:
@@ -8631,9 +8603,6 @@ static uint8_t decode_scale_factors(ic_stream_t* ics, bitfile_t* ld) {
                 t = huffman_scale_factor(ld);
                 is_position += (t - 60);
                 ics->scale_factors[g][sfb] = is_position;
-#ifdef SF_PRINT
-                printf("%d\n", ics->scale_factors[g][sfb]);
-#endif
                 break;
             case NOISE_HCB: /* noise books */
                 /* decode noise energy */
@@ -8647,9 +8616,6 @@ static uint8_t decode_scale_factors(ic_stream_t* ics, bitfile_t* ld) {
                 }
                 noise_energy += t;
                 ics->scale_factors[g][sfb] = noise_energy;
-#ifdef SF_PRINT
-                printf("%d\n", ics->scale_factors[g][sfb]);
-#endif
                 break;
             default: /* spectral books */
 
@@ -8662,9 +8628,6 @@ static uint8_t decode_scale_factors(ic_stream_t* ics, bitfile_t* ld) {
                 scale_factor += (t - 60);
                 if(scale_factor < 0 || scale_factor > 255) return 4;
                 ics->scale_factors[g][sfb] = scale_factor;
-#ifdef SF_PRINT
-                printf("%d\n", ics->scale_factors[g][sfb]);
-#endif
                 break;
             }
         }
@@ -9589,72 +9552,28 @@ uint8_t reconstruct_single_channel(NeAACDecStruct_t* hDecoder, ic_stream_t* ics,
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t reconstruct_channel_pair(NeAACDecStruct_t* hDecoder, ic_stream_t* ics1, ic_stream_t* ics2, element_t* cpe, int16_t* spec_data1, int16_t* spec_data2) {
     uint8_t retval;
-    // int32_t m_spec_coef1[1024]; // ⏫⏫⏫
-    // int32_t m_spec_coef2[1024]; // ⏫⏫⏫
-    // int32_t* m_spec_coef1 = (int32_t*)faad_malloc(1024 * sizeof(int32_t));
-    // int32_t* m_spec_coef2 = (int32_t*)faad_malloc(1024 * sizeof(int32_t));
 
     if(hDecoder->element_alloced[hDecoder->fr_ch_ele] != 2) {
         retval = allocate_channel_pair(hDecoder, cpe->channel, (uint8_t)cpe->paired_channel);
         if(retval > 0) {
-            // if(m_spec_coef1) {
-            //     free(m_spec_coef1);
-            //     m_spec_coef1 = NULL;
-            // }
-            // if(m_spec_coef2) {
-            //     free(m_spec_coef2);
-            //     m_spec_coef2 = NULL;
-            // }
             return retval;
         }
         hDecoder->element_alloced[hDecoder->fr_ch_ele] = 2;
     }
     /* sanity check, CVE-2018-20199, CVE-2018-20360 */
     if(!hDecoder->time_out[cpe->channel] || !hDecoder->time_out[cpe->paired_channel]) {
-        // if(m_spec_coef1) {
-        //     free(m_spec_coef1);
-        //     m_spec_coef1 = NULL;
-        // }
-        // if(m_spec_coef2) {
-        //     free(m_spec_coef2);
-        //     m_spec_coef2 = NULL;
-        // }
-        return 15;
+         return 15;
     }
     if(!hDecoder->fb_intermed[cpe->channel] || !hDecoder->fb_intermed[cpe->paired_channel]) {
-        // if(m_spec_coef1) {
-        //     free(m_spec_coef1);
-        //     m_spec_coef1 = NULL;
-        // }
-        // if(m_spec_coef2) {
-        //     free(m_spec_coef2);
-        //     m_spec_coef2 = NULL;
-        // }
         return 15;
     }
     /* dequantisation and scaling */
     retval = quant_to_spec(hDecoder, ics1, spec_data1, m_spec_coef1, hDecoder->frameLength);
     if(retval > 0) {
-        // if(m_spec_coef1) {
-        //     free(m_spec_coef1);
-        //     m_spec_coef1 = NULL;
-        // }
-        // if(m_spec_coef2) {
-        //     free(m_spec_coef2);
-        //     m_spec_coef2 = NULL;
-        // }
         return retval;
     }
     retval = quant_to_spec(hDecoder, ics2, spec_data2, m_spec_coef2, hDecoder->frameLength);
     if(retval > 0) {
-        // if(m_spec_coef1) {
-        //     free(m_spec_coef1);
-        //     m_spec_coef1 = NULL;
-        // }
-        // if(m_spec_coef2) {
-        //     free(m_spec_coef2);
-        //     m_spec_coef2 = NULL;
-        // }
         return retval;
     }
     /* pns decoding */
@@ -9712,14 +9631,6 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct_t* hDecoder, ic_stream_t* ics1, 
         /* following case can happen when forceUpSampling == 1 */
         if(hDecoder->sbr[ele] == NULL) { hDecoder->sbr[ele] = sbrDecodeInit(hDecoder->frameLength, hDecoder->element_id[ele], 2 * get_sample_rate(hDecoder->sf_index), hDecoder->downSampledSBR); }
         if(!hDecoder->sbr[ele]) {
-            // if(m_spec_coef1) {
-            //     free(m_spec_coef1);
-            //     m_spec_coef1 = NULL;
-            // }
-            // if(m_spec_coef2) {
-            //     free(m_spec_coef2);
-            //     m_spec_coef2 = NULL;
-            // }
             return 19;
         }
         if(cpe->ics1.window_sequence == EIGHT_SHORT_SEQUENCE) hDecoder->sbr[ele]->maxAACLine = 8 * min(cpe->ics1.swb_offset[max(cpe->ics1.max_sfb - 1, 0)], cpe->ics1.swb_offset_max);
@@ -9727,37 +9638,13 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct_t* hDecoder, ic_stream_t* ics1, 
             hDecoder->sbr[ele]->maxAACLine = min(cpe->ics1.swb_offset[max(cpe->ics1.max_sfb - 1, 0)], cpe->ics1.swb_offset_max);
         retval = sbrDecodeCoupleFrame(hDecoder->sbr[ele], hDecoder->time_out[ch0], hDecoder->time_out[ch1], hDecoder->postSeekResetFlag, hDecoder->downSampledSBR);
         if(retval > 0) {
-            // if(m_spec_coef1) {
-            //     free(m_spec_coef1);
-            //     m_spec_coef1 = NULL;
-            // }
-            // if(m_spec_coef2) {
-            //     free(m_spec_coef2);
-            //     m_spec_coef2 = NULL;
-            // }
             return retval;
         }
     }
     else if(((hDecoder->sbr_present_flag == 1) || (hDecoder->forceUpSampling == 1)) && !hDecoder->sbr_alloced[hDecoder->fr_ch_ele]) {
-        // if(m_spec_coef1) {
-        //     free(m_spec_coef1);
-        //     m_spec_coef1 = NULL;
-        // }
-        // if(m_spec_coef2) {
-        //     free(m_spec_coef2);
-        //     m_spec_coef2 = NULL;
-        // }
         return 23;
     }
 #endif
-    // if(m_spec_coef1) {
-    //     free(m_spec_coef1);
-    //     m_spec_coef1 = NULL;
-    // }
-    // if(m_spec_coef2) {
-    //     free(m_spec_coef2);
-    //     m_spec_coef2 = NULL;
-    // }
     return 0;
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
