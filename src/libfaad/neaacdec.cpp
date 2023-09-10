@@ -63,7 +63,8 @@ void alloc_mem() {
     for(uint8_t i = 0; i < 32; i++) m_X_hybrid_left[i] = (complex_t*)faad_malloc(34 * sizeof(*(m_X_hybrid_left[i])));
     m_X_hybrid_right = (complex_t**)faad_calloc(32, sizeof(m_X_hybrid_right));
     for(uint8_t i = 0; i < 32; i++) m_X_hybrid_right[i] = (complex_t*)faad_calloc(34, sizeof(*(m_X_hybrid_right[i])));
-
+    m_x_est = (int32_t*)faad_malloc(2048 * sizeof(int32_t));
+    m_X_est = (int32_t*)faad_malloc(2048 * sizeof(int32_t));
 
 
 
@@ -75,6 +76,8 @@ void alloc_mem() {
     sum += 32 * 34 * sizeof(int32_t) + 32 * sizeof(int32_t*);
     sum += 32 * 34 * sizeof(int32_t) + 32 * sizeof(int32_t*);
     sum += 32 * 34 * sizeof(complex_t) + 32 * sizeof(complex_t*);
+    sum += 2048 * sizeof(int32_t);
+    sum += 2048 * sizeof(int32_t);
     printf(ANSI_ESC_ORANGE "alloc %d bytes\n" ANSI_ESC_WHITE, sum);
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -85,11 +88,12 @@ void free_mem() {
     if(m_windowed_buf)     {free(m_windowed_buf); m_windowed_buf = NULL;}
     if(m_codeword)         {free(m_codeword);     m_codeword = NULL;}
     if(m_segment)          {free(m_segment);      m_segment = NULL;}
-    if(m_P_dec)            {for(uint8_t i = 0; i < 32; i++){free(m_P_dec[i]); m_P_dec[i] = NULL;} free(m_P_dec); m_P_dec = NULL;}
+    if(m_P_dec)            {for(uint8_t i = 0; i < 32; i++){free(m_P_dec[i]);            m_P_dec[i] = NULL;}            free(m_P_dec);            m_P_dec = NULL;}
     if(m_G_TransientRatio) {for(uint8_t i = 0; i < 32; i++){free(m_G_TransientRatio[i]); m_G_TransientRatio[i] = NULL;} free(m_G_TransientRatio); m_G_TransientRatio = NULL;}
-    if(m_X_hybrid_left)    {for(uint8_t i = 0; i < 32; i++){free(m_X_hybrid_left[i]); m_X_hybrid_left[i] = NULL;} free(m_X_hybrid_left); m_X_hybrid_left = NULL;}
-    if(m_X_hybrid_right)   {for(uint8_t i = 0; i < 32; i++){free(m_X_hybrid_right[i]); m_X_hybrid_right[i] = NULL;} free(m_X_hybrid_right); m_X_hybrid_right = NULL;}
-
+    if(m_X_hybrid_left)    {for(uint8_t i = 0; i < 32; i++){free(m_X_hybrid_left[i]);    m_X_hybrid_left[i] = NULL;}    free(m_X_hybrid_left);    m_X_hybrid_left = NULL;}
+    if(m_X_hybrid_right)   {for(uint8_t i = 0; i < 32; i++){free(m_X_hybrid_right[i]);   m_X_hybrid_right[i] = NULL;}   free(m_X_hybrid_right);   m_X_hybrid_right = NULL;}
+    if(m_x_est)            {free(m_x_est);        m_x_est = NULL;}
+    if(m_X_est)            {free(m_X_est);        m_X_est = NULL;}
 
 
     printf(ANSI_ESC_ORANGE "free mem\n" ANSI_ESC_WHITE);
@@ -4621,10 +4625,12 @@ uint8_t ps_decode(ps_info_t* ps, complex_t* X_left[64], complex_t* X_right[64]) 
     // complex_t m_X_hybrid_left[32][32] = {{0}};  // ⏫⏫⏫
     // complex_t m_X_hybrid_right[32][32] = {{0}}; // ⏫⏫⏫
 
-    // complex_t** m_X_hybrid_left = (complex_t**)faad_malloc(32 * sizeof(m_X_hybrid_left));
-    // for(uint8_t i = 0; i < 32; i++) m_X_hybrid_left[i] = (complex_t*)faad_malloc(34 * sizeof(*(m_X_hybrid_left[i])));
+    // complex_t** m_X_hybrid_left = (complex_t**)faad_calloc(32 * sizeof(m_X_hybrid_left));
+    // for(uint8_t i = 0; i < 32; i++) m_X_hybrid_left[i] = (complex_t*)faad_calloc(34 * sizeof(*(m_X_hybrid_left[i])));
     // complex_t** m_X_hybrid_right = (complex_t**)faad_calloc(32, sizeof(m_X_hybrid_right));
     // for(uint8_t i = 0; i < 32; i++) m_X_hybrid_right[i] = (complex_t*)faad_calloc(34, sizeof(*(m_X_hybrid_right[i])));
+    for(uint8_t i = 0; i < 32; i++) memset(m_X_hybrid_left[i], 0, 34 * sizeof(*(m_X_hybrid_left[i])));
+    for(uint8_t i = 0; i < 32; i++) memset(m_X_hybrid_right[i], 0, 34 * sizeof(*(m_X_hybrid_right[i])));
 
     /* delta decoding of the bitstream data */
     ps_data_decode(ps);
@@ -4695,39 +4701,39 @@ void lt_prediction(ic_stream_t* ics, ltp_info_t* ltp, int32_t* spec, int16_t* lt
                    uint16_t frame_len) {
     uint8_t  sfb;
     uint16_t bin, i, num_samples;
-    //    int32_t  x_est[2048]; // ⏫⏫⏫
-    //    int32_t  X_est[2048]; // ⏫⏫⏫
+    //    int32_t  m_x_est[2048]; // ⏫⏫⏫
+    //    int32_t  m_X_est[2048]; // ⏫⏫⏫
 
-    int32_t* x_est = (int32_t*)faad_malloc(2048 * sizeof(int32_t));
-    int32_t* X_est = (int32_t*)faad_malloc(2048 * sizeof(int32_t));
+    // int32_t* m_x_est = (int32_t*)faad_malloc(2048 * sizeof(int32_t));
+    // int32_t* m_X_est = (int32_t*)faad_malloc(2048 * sizeof(int32_t));
 
     if(ics->window_sequence != EIGHT_SHORT_SEQUENCE) {
         if(ltp->data_present) {
             num_samples = frame_len << 1;
             for(i = 0; i < num_samples; i++) {
                 /* The extra lookback M (N/2 for LD, 0 for LTP) is handled in the buffer updating */
-                /* lt_pred_stat is a 16 bit int32_t, multiplied with the fixed point real this gives a real for x_est */
-                x_est[i] = (int32_t)lt_pred_stat[num_samples + i - ltp->lag] * codebook[ltp->coef];
+                /* lt_pred_stat is a 16 bit int32_t, multiplied with the fixed point real this gives a real for m_x_est */
+                m_x_est[i] = (int32_t)lt_pred_stat[num_samples + i - ltp->lag] * codebook[ltp->coef];
             }
-            filter_bank_ltp(fb, ics->window_sequence, win_shape, win_shape_prev, x_est, X_est, object_type, frame_len);
-            tns_encode_frame(ics, &(ics->tns), sr_index, object_type, X_est, frame_len);
+            filter_bank_ltp(fb, ics->window_sequence, win_shape, win_shape_prev, m_x_est, m_X_est, object_type, frame_len);
+            tns_encode_frame(ics, &(ics->tns), sr_index, object_type, m_X_est, frame_len);
             for(sfb = 0; sfb < ltp->last_band; sfb++) {
                 if(ltp->long_used[sfb]) {
                     uint16_t low = ics->swb_offset[sfb];
                     uint16_t high = min(ics->swb_offset[sfb + 1], ics->swb_offset_max);
-                    for(bin = low; bin < high; bin++) { spec[bin] += X_est[bin]; }
+                    for(bin = low; bin < high; bin++) { spec[bin] += m_X_est[bin]; }
                 }
             }
         }
     }
-    if(x_est) {
-        free(x_est);
-        x_est = NULL;
-    }
-    if(X_est) {
-        free(X_est);
-        X_est = NULL;
-    }
+    // if(m_x_est) {
+    //     free(m_x_est);
+    //     m_x_est = NULL;
+    // }
+    // if(m_X_est) {
+    //     free(m_X_est);
+    //     m_X_est = NULL;
+    // }
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
