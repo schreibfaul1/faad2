@@ -49,9 +49,24 @@ int32_t*                  m_spec_coef1 = NULL;
 int32_t*                  m_spec_coef2 = NULL;
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-void alloc_mem() {}
+void alloc_mem() {
+    m_mp4ASC = (mp4AudioSpecificConfig_t*)faad_malloc(1 * sizeof(mp4AudioSpecificConfig_t));
+    m_transf_buf = (int32_t*)faad_malloc(2 * 1024 * sizeof(int32_t));
+
+    uint16_t sum = 1 * sizeof(mp4AudioSpecificConfig_t);
+    printf(ANSI_ESC_ORANGE "alloc %d bytes\n" ANSI_ESC_WHITE, sum);
+}
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-void free_mem() {}
+void free_mem() {
+    // clang-format off
+    if(m_mp4ASC) {free(m_mp4ASC); m_mp4ASC = NULL;}
+    if(m_transf_buf) {free(m_transf_buf);  m_transf_buf = NULL; }
+
+
+    printf(ANSI_ESC_ORANGE "free mem\n" ANSI_ESC_WHITE);
+    // clang-format on
+
+}
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* common free function */
 static void faad_free(void* b) { free(b); }
@@ -1399,7 +1414,7 @@ const uint8_t mes[] = {0x67, 0x20, 0x61, 0x20, 0x20, 0x20, 0x6f, 0x20, 0x72, 0x2
 NeAACDecHandle NeAACDecOpen(void) {
     uint8_t           i;
     NeAACDecStruct_t* hDecoder = NULL;
-
+    alloc_mem();
     if((hDecoder = (NeAACDecStruct_t*)faad_malloc(sizeof(NeAACDecStruct_t))) == NULL) return NULL;
     memset(hDecoder, 0, sizeof(NeAACDecStruct_t));
     hDecoder->cmes = mes;
@@ -1595,7 +1610,7 @@ int8_t NeAACDecInit2(NeAACDecHandle hpDecoder, uint8_t* pBuffer, uint32_t SizeOf
     int8_t            ret = 0;
     //    mp4AudioSpecificConfig_t mp4ASC; // ⏫⏫⏫
 
-    mp4AudioSpecificConfig_t* mp4ASC = (mp4AudioSpecificConfig_t*)faad_malloc(1 * sizeof(mp4AudioSpecificConfig_t));
+    //mp4AudioSpecificConfig_t* mp4ASC = (mp4AudioSpecificConfig_t*)faad_malloc(1 * sizeof(mp4AudioSpecificConfig_t));
 
     if((hDecoder == NULL) || (pBuffer == NULL) || (SizeOfDecoderSpecificInfo < 2) || (samplerate == NULL) || (channels == NULL)) {
         ret = -1;
@@ -1604,10 +1619,10 @@ int8_t NeAACDecInit2(NeAACDecHandle hpDecoder, uint8_t* pBuffer, uint32_t SizeOf
     hDecoder->adif_header_t_present = 0;
     hDecoder->adts_header_t_present = 0;
     /* decode the audio specific config */
-    rc = AudioSpecificConfig2(pBuffer, SizeOfDecoderSpecificInfo, mp4ASC, &(hDecoder->pce), hDecoder->latm_header_t_present);
+    rc = AudioSpecificConfig2(pBuffer, SizeOfDecoderSpecificInfo, m_mp4ASC, &(hDecoder->pce), hDecoder->latm_header_t_present);
     /* copy the relevant info to the decoder handle */
-    *samplerate = mp4ASC->samplingFrequency;
-    if(mp4ASC->channelsConfiguration) { *channels = mp4ASC->channelsConfiguration; }
+    *samplerate = m_mp4ASC->samplingFrequency;
+    if(m_mp4ASC->channelsConfiguration) { *channels = m_mp4ASC->channelsConfiguration; }
     else {
         *channels = hDecoder->pce.channels;
         hDecoder->pce_set = 1;
@@ -1619,29 +1634,29 @@ int8_t NeAACDecInit2(NeAACDecHandle hpDecoder, uint8_t* pBuffer, uint32_t SizeOf
         *channels = 2;
     }
 #endif
-    hDecoder->sf_index = mp4ASC->samplingFrequencyIndex;
-    hDecoder->object_type = mp4ASC->objectTypeIndex;
+    hDecoder->sf_index = m_mp4ASC->samplingFrequencyIndex;
+    hDecoder->object_type = m_mp4ASC->objectTypeIndex;
 #ifdef ERROR_RESILIENCE
-    hDecoder->aacSectionDataResilienceFlag = mp4ASC->aacSectionDataResilienceFlag;
-    hDecoder->aacScalefactorDataResilienceFlag = mp4ASC->aacScalefactorDataResilienceFlag;
-    hDecoder->aacSpectralDataResilienceFlag = mp4ASC->aacSpectralDataResilienceFlag;
+    hDecoder->aacSectionDataResilienceFlag = m_mp4ASC->aacSectionDataResilienceFlag;
+    hDecoder->aacScalefactorDataResilienceFlag = m_mp4ASC->aacScalefactorDataResilienceFlag;
+    hDecoder->aacSpectralDataResilienceFlag = m_mp4ASC->aacSpectralDataResilienceFlag;
 #endif
 #ifdef SBR_DEC
-    hDecoder->sbr_present_flag = mp4ASC->sbr_present_flag;
-    hDecoder->downSampledSBR = mp4ASC->downSampledSBR;
-    if(hDecoder->config.dontUpSampleImplicitSBR == 0) hDecoder->forceUpSampling = mp4ASC->forceUpSampling;
+    hDecoder->sbr_present_flag = m_mp4ASC->sbr_present_flag;
+    hDecoder->downSampledSBR = m_mp4ASC->downSampledSBR;
+    if(hDecoder->config.dontUpSampleImplicitSBR == 0) hDecoder->forceUpSampling = m_mp4ASC->forceUpSampling;
     else
         hDecoder->forceUpSampling = 0;
 
     /* AAC core decoder samplerate is 2 times as low */
-    if(((hDecoder->sbr_present_flag == 1) && (!hDecoder->downSampledSBR)) || hDecoder->forceUpSampling == 1) { hDecoder->sf_index = get_sr_index(mp4ASC->samplingFrequency / 2); }
+    if(((hDecoder->sbr_present_flag == 1) && (!hDecoder->downSampledSBR)) || hDecoder->forceUpSampling == 1) { hDecoder->sf_index = get_sr_index(m_mp4ASC->samplingFrequency / 2); }
 #endif
     if(rc != 0) {
         ret = rc;
         goto exit;
     }
-    hDecoder->channelConfiguration = mp4ASC->channelsConfiguration;
-    if(mp4ASC->frameLengthFlag)
+    hDecoder->channelConfiguration = m_mp4ASC->channelsConfiguration;
+    if(m_mp4ASC->frameLengthFlag)
 #ifdef ALLOW_SMALL_FRAMELENGTH
         hDecoder->frameLength = 960;
 #else
@@ -1657,10 +1672,10 @@ int8_t NeAACDecInit2(NeAACDecHandle hpDecoder, uint8_t* pBuffer, uint32_t SizeOf
     goto exit;
 
 exit:
-    if(mp4ASC) {
-        free(mp4ASC);
-        mp4ASC = NULL;
-    }
+    // if(mp4ASC) {
+    //     free(mp4ASC);
+    //     mp4ASC = NULL;
+    // }
     return ret;
 }
 
@@ -1686,6 +1701,7 @@ void NeAACDecClose(NeAACDecHandle hpDecoder) {
     }
 #endif
     if(hDecoder) faad_free(hDecoder);
+    free_mem();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2246,8 +2262,9 @@ void ifilter_bank(fb_info_t* fb, uint8_t window_sequence, uint8_t window_shape, 
                   uint16_t frame_len) {
     (void)object_type;
     int16_t i;
-    // int32_t        transf_buf[2 * 1024] = {0}; // ⏫⏫⏫
-    int32_t*       transf_buf = (int32_t*)faad_calloc(2 * 1024, sizeof(int32_t));
+    // int32_t        m_transf_buf[2 * 1024] = {0}; // ⏫⏫⏫
+  //  int32_t*       m_transf_buf = (int32_t*)faad_calloc(2 * 1024, sizeof(int32_t));
+    memset(m_transf_buf, 0, 2 * 1024 * sizeof(int32_t));
     const int32_t* window_long = NULL;
     const int32_t* window_long_prev = NULL;
     const int32_t* window_short = NULL;
@@ -2275,88 +2292,88 @@ void ifilter_bank(fb_info_t* fb, uint8_t window_sequence, uint8_t window_shape, 
     switch(window_sequence) {
     case ONLY_LONG_SEQUENCE:
         /* perform iMDCT */
-        imdct_long(fb, freq_in, transf_buf, 2 * nlong);
+        imdct_long(fb, freq_in, m_transf_buf, 2 * nlong);
         /* add second half output of previous frame to windowed output of current frame */
         for(i = 0; i < nlong; i += 4) {
-            time_out[i] = overlap[i] + MUL_F(transf_buf[i], window_long_prev[i]);
-            time_out[i + 1] = overlap[i + 1] + MUL_F(transf_buf[i + 1], window_long_prev[i + 1]);
-            time_out[i + 2] = overlap[i + 2] + MUL_F(transf_buf[i + 2], window_long_prev[i + 2]);
-            time_out[i + 3] = overlap[i + 3] + MUL_F(transf_buf[i + 3], window_long_prev[i + 3]);
+            time_out[i] = overlap[i] + MUL_F(m_transf_buf[i], window_long_prev[i]);
+            time_out[i + 1] = overlap[i + 1] + MUL_F(m_transf_buf[i + 1], window_long_prev[i + 1]);
+            time_out[i + 2] = overlap[i + 2] + MUL_F(m_transf_buf[i + 2], window_long_prev[i + 2]);
+            time_out[i + 3] = overlap[i + 3] + MUL_F(m_transf_buf[i + 3], window_long_prev[i + 3]);
         }
         /* window the second half and save as overlap for next frame */
         for(i = 0; i < nlong; i += 4) {
-            overlap[i] = MUL_F(transf_buf[nlong + i], window_long[nlong - 1 - i]);
-            overlap[i + 1] = MUL_F(transf_buf[nlong + i + 1], window_long[nlong - 2 - i]);
-            overlap[i + 2] = MUL_F(transf_buf[nlong + i + 2], window_long[nlong - 3 - i]);
-            overlap[i + 3] = MUL_F(transf_buf[nlong + i + 3], window_long[nlong - 4 - i]);
+            overlap[i] = MUL_F(m_transf_buf[nlong + i], window_long[nlong - 1 - i]);
+            overlap[i + 1] = MUL_F(m_transf_buf[nlong + i + 1], window_long[nlong - 2 - i]);
+            overlap[i + 2] = MUL_F(m_transf_buf[nlong + i + 2], window_long[nlong - 3 - i]);
+            overlap[i + 3] = MUL_F(m_transf_buf[nlong + i + 3], window_long[nlong - 4 - i]);
         }
         break;
     case LONG_START_SEQUENCE:
         /* perform iMDCT */
-        imdct_long(fb, freq_in, transf_buf, 2 * nlong);
+        imdct_long(fb, freq_in, m_transf_buf, 2 * nlong);
         /* add second half output of previous frame to windowed output of current frame */
         for(i = 0; i < nlong; i += 4) {
-            time_out[i] = overlap[i] + MUL_F(transf_buf[i], window_long_prev[i]);
-            time_out[i + 1] = overlap[i + 1] + MUL_F(transf_buf[i + 1], window_long_prev[i + 1]);
-            time_out[i + 2] = overlap[i + 2] + MUL_F(transf_buf[i + 2], window_long_prev[i + 2]);
-            time_out[i + 3] = overlap[i + 3] + MUL_F(transf_buf[i + 3], window_long_prev[i + 3]);
+            time_out[i] = overlap[i] + MUL_F(m_transf_buf[i], window_long_prev[i]);
+            time_out[i + 1] = overlap[i + 1] + MUL_F(m_transf_buf[i + 1], window_long_prev[i + 1]);
+            time_out[i + 2] = overlap[i + 2] + MUL_F(m_transf_buf[i + 2], window_long_prev[i + 2]);
+            time_out[i + 3] = overlap[i + 3] + MUL_F(m_transf_buf[i + 3], window_long_prev[i + 3]);
         }
         /* window the second half and save as overlap for next frame */
         /* construct second half window using padding with 1's and 0's */
-        for(i = 0; i < nflat_ls; i++) overlap[i] = transf_buf[nlong + i];
-        for(i = 0; i < nshort; i++) overlap[nflat_ls + i] = MUL_F(transf_buf[nlong + nflat_ls + i], window_short[nshort - i - 1]);
+        for(i = 0; i < nflat_ls; i++) overlap[i] = m_transf_buf[nlong + i];
+        for(i = 0; i < nshort; i++) overlap[nflat_ls + i] = MUL_F(m_transf_buf[nlong + nflat_ls + i], window_short[nshort - i - 1]);
         for(i = 0; i < nflat_ls; i++) overlap[nflat_ls + nshort + i] = 0;
         break;
     case EIGHT_SHORT_SEQUENCE:
         /* perform iMDCT for each short block */
-        faad_imdct(fb->mdct256, freq_in + 0 * nshort, transf_buf + 2 * nshort * 0);
-        faad_imdct(fb->mdct256, freq_in + 1 * nshort, transf_buf + 2 * nshort * 1);
-        faad_imdct(fb->mdct256, freq_in + 2 * nshort, transf_buf + 2 * nshort * 2);
-        faad_imdct(fb->mdct256, freq_in + 3 * nshort, transf_buf + 2 * nshort * 3);
-        faad_imdct(fb->mdct256, freq_in + 4 * nshort, transf_buf + 2 * nshort * 4);
-        faad_imdct(fb->mdct256, freq_in + 5 * nshort, transf_buf + 2 * nshort * 5);
-        faad_imdct(fb->mdct256, freq_in + 6 * nshort, transf_buf + 2 * nshort * 6);
-        faad_imdct(fb->mdct256, freq_in + 7 * nshort, transf_buf + 2 * nshort * 7);
+        faad_imdct(fb->mdct256, freq_in + 0 * nshort, m_transf_buf + 2 * nshort * 0);
+        faad_imdct(fb->mdct256, freq_in + 1 * nshort, m_transf_buf + 2 * nshort * 1);
+        faad_imdct(fb->mdct256, freq_in + 2 * nshort, m_transf_buf + 2 * nshort * 2);
+        faad_imdct(fb->mdct256, freq_in + 3 * nshort, m_transf_buf + 2 * nshort * 3);
+        faad_imdct(fb->mdct256, freq_in + 4 * nshort, m_transf_buf + 2 * nshort * 4);
+        faad_imdct(fb->mdct256, freq_in + 5 * nshort, m_transf_buf + 2 * nshort * 5);
+        faad_imdct(fb->mdct256, freq_in + 6 * nshort, m_transf_buf + 2 * nshort * 6);
+        faad_imdct(fb->mdct256, freq_in + 7 * nshort, m_transf_buf + 2 * nshort * 7);
         /* add second half output of previous frame to windowed output of current frame */
         for(i = 0; i < nflat_ls; i++) time_out[i] = overlap[i];
         for(i = 0; i < nshort; i++) {
-            time_out[nflat_ls + i] = overlap[nflat_ls + i] + MUL_F(transf_buf[nshort * 0 + i], window_short_prev[i]);
+            time_out[nflat_ls + i] = overlap[nflat_ls + i] + MUL_F(m_transf_buf[nshort * 0 + i], window_short_prev[i]);
             time_out[nflat_ls + 1 * nshort + i] =
-                overlap[nflat_ls + nshort * 1 + i] + MUL_F(transf_buf[nshort * 1 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 2 + i], window_short[i]);
+                overlap[nflat_ls + nshort * 1 + i] + MUL_F(m_transf_buf[nshort * 1 + i], window_short[nshort - 1 - i]) + MUL_F(m_transf_buf[nshort * 2 + i], window_short[i]);
             time_out[nflat_ls + 2 * nshort + i] =
-                overlap[nflat_ls + nshort * 2 + i] + MUL_F(transf_buf[nshort * 3 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 4 + i], window_short[i]);
+                overlap[nflat_ls + nshort * 2 + i] + MUL_F(m_transf_buf[nshort * 3 + i], window_short[nshort - 1 - i]) + MUL_F(m_transf_buf[nshort * 4 + i], window_short[i]);
             time_out[nflat_ls + 3 * nshort + i] =
-                overlap[nflat_ls + nshort * 3 + i] + MUL_F(transf_buf[nshort * 5 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 6 + i], window_short[i]);
+                overlap[nflat_ls + nshort * 3 + i] + MUL_F(m_transf_buf[nshort * 5 + i], window_short[nshort - 1 - i]) + MUL_F(m_transf_buf[nshort * 6 + i], window_short[i]);
             if(i < trans)
                 time_out[nflat_ls + 4 * nshort + i] =
-                    overlap[nflat_ls + nshort * 4 + i] + MUL_F(transf_buf[nshort * 7 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 8 + i], window_short[i]);
+                    overlap[nflat_ls + nshort * 4 + i] + MUL_F(m_transf_buf[nshort * 7 + i], window_short[nshort - 1 - i]) + MUL_F(m_transf_buf[nshort * 8 + i], window_short[i]);
         }
         /* window the second half and save as overlap for next frame */
         for(i = 0; i < nshort; i++) {
-            if(i >= trans) overlap[nflat_ls + 4 * nshort + i - nlong] = MUL_F(transf_buf[nshort * 7 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 8 + i], window_short[i]);
-            overlap[nflat_ls + 5 * nshort + i - nlong] = MUL_F(transf_buf[nshort * 9 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 10 + i], window_short[i]);
-            overlap[nflat_ls + 6 * nshort + i - nlong] = MUL_F(transf_buf[nshort * 11 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 12 + i], window_short[i]);
-            overlap[nflat_ls + 7 * nshort + i - nlong] = MUL_F(transf_buf[nshort * 13 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 14 + i], window_short[i]);
-            overlap[nflat_ls + 8 * nshort + i - nlong] = MUL_F(transf_buf[nshort * 15 + i], window_short[nshort - 1 - i]);
+            if(i >= trans) overlap[nflat_ls + 4 * nshort + i - nlong] = MUL_F(m_transf_buf[nshort * 7 + i], window_short[nshort - 1 - i]) + MUL_F(m_transf_buf[nshort * 8 + i], window_short[i]);
+            overlap[nflat_ls + 5 * nshort + i - nlong] = MUL_F(m_transf_buf[nshort * 9 + i], window_short[nshort - 1 - i]) + MUL_F(m_transf_buf[nshort * 10 + i], window_short[i]);
+            overlap[nflat_ls + 6 * nshort + i - nlong] = MUL_F(m_transf_buf[nshort * 11 + i], window_short[nshort - 1 - i]) + MUL_F(m_transf_buf[nshort * 12 + i], window_short[i]);
+            overlap[nflat_ls + 7 * nshort + i - nlong] = MUL_F(m_transf_buf[nshort * 13 + i], window_short[nshort - 1 - i]) + MUL_F(m_transf_buf[nshort * 14 + i], window_short[i]);
+            overlap[nflat_ls + 8 * nshort + i - nlong] = MUL_F(m_transf_buf[nshort * 15 + i], window_short[nshort - 1 - i]);
         }
         for(i = 0; i < nflat_ls; i++) overlap[nflat_ls + nshort + i] = 0;
         break;
     case LONG_STOP_SEQUENCE:
         /* perform iMDCT */
-        imdct_long(fb, freq_in, transf_buf, 2 * nlong);
+        imdct_long(fb, freq_in, m_transf_buf, 2 * nlong);
         /* add second half output of previous frame to windowed output of current frame */
         /* construct first half window using padding with 1's and 0's */
         for(i = 0; i < nflat_ls; i++) time_out[i] = overlap[i];
-        for(i = 0; i < nshort; i++) time_out[nflat_ls + i] = overlap[nflat_ls + i] + MUL_F(transf_buf[nflat_ls + i], window_short_prev[i]);
-        for(i = 0; i < nflat_ls; i++) time_out[nflat_ls + nshort + i] = overlap[nflat_ls + nshort + i] + transf_buf[nflat_ls + nshort + i];
+        for(i = 0; i < nshort; i++) time_out[nflat_ls + i] = overlap[nflat_ls + i] + MUL_F(m_transf_buf[nflat_ls + i], window_short_prev[i]);
+        for(i = 0; i < nflat_ls; i++) time_out[nflat_ls + nshort + i] = overlap[nflat_ls + nshort + i] + m_transf_buf[nflat_ls + nshort + i];
         /* window the second half and save as overlap for next frame */
-        for(i = 0; i < nlong; i++) overlap[i] = MUL_F(transf_buf[nlong + i], window_long[nlong - 1 - i]);
+        for(i = 0; i < nlong; i++) overlap[i] = MUL_F(m_transf_buf[nlong + i], window_long[nlong - 1 - i]);
         break;
     }
-    if(transf_buf) {
-        free(transf_buf);
-        transf_buf = NULL;
-    }
+    // if(m_transf_buf) {
+    //     free(m_transf_buf);
+    //     m_transf_buf = NULL;
+    // }
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
