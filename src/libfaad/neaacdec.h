@@ -202,7 +202,9 @@ typedef const int8_t (*sbr_huff_tab)[2];
 #define ESC_VAL              7
 #define MAX_ASC_BYTES        64
 #define NOISE_FLOOR_OFFSET   6
+#define TABLE_BITS           6  /* just take the maximum number of bits for interpolation */
 
+#define INTERP_BITS    (REAL_BITS - TABLE_BITS)
 #define bit2byte(a)    ((a + 7) >> BYTE_NUMBIT_LD)
 #define COEF_BITS      28
 #define COEF_PRECISION (1 << COEF_BITS)
