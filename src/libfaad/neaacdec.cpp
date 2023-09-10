@@ -11,7 +11,7 @@ int32_t*                  m_transf_buf = NULL;
 int32_t*                  m_windowed_buf = NULL;
 codeword_t*               m_codeword = NULL;
 bits_t_t*                 m_segment = NULL;
-int32_t**                 m_P = NULL;
+int32_t**                 m_P_dec = NULL;
 int32_t**                 m_G_TransientRatio = NULL;
 complex_t**               m_X_hybrid_left = NULL;
 complex_t**               m_X_hybrid_right = NULL;
@@ -53,23 +53,39 @@ void alloc_mem() {
     m_mp4ASC = (mp4AudioSpecificConfig_t*)faad_malloc(1 * sizeof(mp4AudioSpecificConfig_t));
     m_transf_buf = (int32_t*)faad_malloc(2 * 1024 * sizeof(int32_t));
     m_windowed_buf = (int32_t*)faad_malloc(2 * 1024 * sizeof(int32_t));
+    m_codeword = (codeword_t*)faad_malloc(512 * sizeof(codeword_t));
+    m_segment = (bits_t_t*)faad_malloc(512 * sizeof(bits_t_t));
+    m_P_dec = (int32_t**)faad_malloc(32 * sizeof(m_P_dec));
+    for(uint8_t i = 0; i < 32; i++) m_P_dec[i] = (int32_t*)faad_malloc(34 * sizeof(*(m_P_dec[i])));
+    m_G_TransientRatio = (int32_t**)faad_calloc(32, sizeof(m_G_TransientRatio));
+    for(uint8_t i = 0; i < 32; i++) m_G_TransientRatio[i] = (int32_t*)faad_calloc(34, sizeof(*(m_G_TransientRatio[i])));
 
     uint16_t sum = 1 * sizeof(mp4AudioSpecificConfig_t);
     sum += 2 * 1024 * sizeof(int32_t);
     sum += 2 * 1024 * sizeof(int32_t);
+    sum += 512 * sizeof(codeword_t);
+    sum += 512 * sizeof(bits_t_t);
+    sum += 32 * 34 * sizeof(int32_t) + 32 * sizeof(int32_t*);
+    sum += 32 * 34 * sizeof(int32_t) + 32 * sizeof(int32_t*);
     printf(ANSI_ESC_ORANGE "alloc %d bytes\n" ANSI_ESC_WHITE, sum);
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void free_mem() {
     // clang-format off
-    if(m_mp4ASC) {free(m_mp4ASC); m_mp4ASC = NULL;}
-    if(m_transf_buf) {free(m_transf_buf);  m_transf_buf = NULL; }
-    if(m_windowed_buf) {free(m_windowed_buf); m_windowed_buf = NULL;}
+    if(m_mp4ASC)           {free(m_mp4ASC);       m_mp4ASC = NULL;}
+    if(m_transf_buf)       {free(m_transf_buf);   m_transf_buf = NULL; }
+    if(m_windowed_buf)     {free(m_windowed_buf); m_windowed_buf = NULL;}
+    if(m_codeword)         {free(m_codeword);     m_codeword = NULL;}
+    if(m_segment)          {free(m_segment);      m_segment = NULL;}
+    if(m_P_dec)            {for(uint8_t i = 0; i < 32; i++){free(m_P_dec[i]); m_P_dec[i] = NULL;} free(m_P_dec); m_P_dec = NULL;}
+    if(m_G_TransientRatio) {for(uint8_t i = 0; i < 32; i++){free(m_G_TransientRatio[i]); m_G_TransientRatio[i] = NULL;} free(m_G_TransientRatio); m_G_TransientRatio = NULL;}
+
+
+
 
 
     printf(ANSI_ESC_ORANGE "free mem\n" ANSI_ESC_WHITE);
     // clang-format on
-
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* common free function */
@@ -1614,7 +1630,7 @@ int8_t NeAACDecInit2(NeAACDecHandle hpDecoder, uint8_t* pBuffer, uint32_t SizeOf
     int8_t            ret = 0;
     //    mp4AudioSpecificConfig_t mp4ASC; // ⏫⏫⏫
 
-    //mp4AudioSpecificConfig_t* mp4ASC = (mp4AudioSpecificConfig_t*)faad_malloc(1 * sizeof(mp4AudioSpecificConfig_t));
+    // mp4AudioSpecificConfig_t* mp4ASC = (mp4AudioSpecificConfig_t*)faad_malloc(1 * sizeof(mp4AudioSpecificConfig_t));
 
     if((hDecoder == NULL) || (pBuffer == NULL) || (SizeOfDecoderSpecificInfo < 2) || (samplerate == NULL) || (channels == NULL)) {
         ret = -1;
@@ -1931,7 +1947,7 @@ static void* aac_frame_decode(NeAACDecStruct_t* hDecoder, NeAACDecFrameInfo_t* h
     uint16_t  i;
     uint8_t   channels = 0;
     uint8_t   output_channels = 0;
-    bitfile_t ld = {0, 0, 0, 0, 0, 0, 0, 0, 0};  // ⏫⏫⏫ size only 48
+    bitfile_t ld = {0, 0, 0, 0, 0, 0, 0, 0, 0}; // ⏫⏫⏫ size only 48
     uint32_t  bitsconsumed;
     uint16_t  frame_len;
     void*     sample_buffer;
@@ -2267,7 +2283,7 @@ void ifilter_bank(fb_info_t* fb, uint8_t window_sequence, uint8_t window_shape, 
     (void)object_type;
     int16_t i;
     // int32_t        m_transf_buf[2 * 1024] = {0}; // ⏫⏫⏫
-  //  int32_t*       m_transf_buf = (int32_t*)faad_calloc(2 * 1024, sizeof(int32_t));
+    //  int32_t*       m_transf_buf = (int32_t*)faad_calloc(2 * 1024, sizeof(int32_t));
     memset(m_transf_buf, 0, 2 * 1024 * sizeof(int32_t));
     const int32_t* window_long = NULL;
     const int32_t* window_long_prev = NULL;
@@ -3012,8 +3028,8 @@ static void fill_in_codeword(codeword_t* codeword, uint16_t index, uint16_t sp, 
 uint8_t reordered_spectral_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bitfile_t* ld, int16_t* spectral_data) {
     uint16_t PCWs_done;
     uint16_t numberOfSegments, numberOfSets, numberOfCodewords;
-    //    codeword_t codeword[512]; // ⏫⏫⏫
-    //    bits_t_t     segment[512];  // ⏫⏫⏫
+    //    codeword_t m_codeword[512]; // ⏫⏫⏫
+    //    bits_t_t     m_segment[512];  // ⏫⏫⏫
     uint16_t sp_offset[8];
     uint16_t g, i, sortloop, set, bitsread;
     /*uint16_t bitsleft, codewordsleft*/;
@@ -3029,8 +3045,8 @@ uint8_t reordered_spectral_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bi
     if(ics->length_of_longest_codeword == 0) return 10;
     if(sp_data_len < ics->length_of_longest_codeword) return 10;
 
-    codeword_t* codeword = (codeword_t*)faad_malloc(512 * sizeof(codeword_t));
-    bits_t_t*   segment = (bits_t_t*)faad_malloc(512 * sizeof(bits_t_t));
+    codeword_t* m_codeword = (codeword_t*)faad_malloc(512 * sizeof(codeword_t));
+    bits_t_t*   m_segment = (bits_t_t*)faad_malloc(512 * sizeof(bits_t_t));
 
     sp_offset[0] = 0;
     for(g = 1; g < ics->num_window_groups; g++) { sp_offset[g] = sp_offset[g - 1] + nshort * ics->window_group_length[g - 1]; }
@@ -3075,40 +3091,40 @@ uint8_t reordered_spectral_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bi
                                     if(!PCWs_done) {
                                         /* read in normal segments */
                                         if(bitsread + segwidth <= sp_data_len) {
-                                            read_segment(&segment[numberOfSegments], segwidth, ld);
+                                            read_segment(&m_segment[numberOfSegments], segwidth, ld);
                                             bitsread += segwidth;
-                                            huffman_spectral_data_2(this_sec_CB, &segment[numberOfSegments], &spectral_data[sp]);
+                                            huffman_spectral_data_2(this_sec_CB, &m_segment[numberOfSegments], &spectral_data[sp]);
                                             /* keep leftover bits */
-                                            rewrev_bits(&segment[numberOfSegments]);
+                                            rewrev_bits(&m_segment[numberOfSegments]);
                                             numberOfSegments++;
                                         }
                                         else {
-                                            /* remaining stuff after last segment, we unfortunately couldn't read
+                                            /* remaining stuff after last m_segment, we unfortunately couldn't read
                                                this in earlier because it might not fit in 64 bits. since we already
                                                decoded (and removed) the PCW it is now guaranteed to fit */
                                             if(bitsread < sp_data_len) {
                                                 const uint8_t additional_bits = sp_data_len - bitsread;
-                                                read_segment(&segment[numberOfSegments], additional_bits, ld);
-                                                segment[numberOfSegments].len += segment[numberOfSegments - 1].len;
-                                                rewrev_bits(&segment[numberOfSegments]);
-                                                if(segment[numberOfSegments - 1].len > 32) {
-                                                    segment[numberOfSegments - 1].bufb =
-                                                        segment[numberOfSegments].bufb + showbits_hcr(&segment[numberOfSegments - 1], segment[numberOfSegments - 1].len - 32);
-                                                    segment[numberOfSegments - 1].bufa = segment[numberOfSegments].bufa + showbits_hcr(&segment[numberOfSegments - 1], 32);
+                                                read_segment(&m_segment[numberOfSegments], additional_bits, ld);
+                                                m_segment[numberOfSegments].len += m_segment[numberOfSegments - 1].len;
+                                                rewrev_bits(&m_segment[numberOfSegments]);
+                                                if(m_segment[numberOfSegments - 1].len > 32) {
+                                                    m_segment[numberOfSegments - 1].bufb =
+                                                        m_segment[numberOfSegments].bufb + showbits_hcr(&m_segment[numberOfSegments - 1], m_segment[numberOfSegments - 1].len - 32);
+                                                    m_segment[numberOfSegments - 1].bufa = m_segment[numberOfSegments].bufa + showbits_hcr(&m_segment[numberOfSegments - 1], 32);
                                                 }
                                                 else {
-                                                    segment[numberOfSegments - 1].bufa =
-                                                        segment[numberOfSegments].bufa + showbits_hcr(&segment[numberOfSegments - 1], segment[numberOfSegments - 1].len);
-                                                    segment[numberOfSegments - 1].bufb = segment[numberOfSegments].bufb;
+                                                    m_segment[numberOfSegments - 1].bufa =
+                                                        m_segment[numberOfSegments].bufa + showbits_hcr(&m_segment[numberOfSegments - 1], m_segment[numberOfSegments - 1].len);
+                                                    m_segment[numberOfSegments - 1].bufb = m_segment[numberOfSegments].bufb;
                                                 }
-                                                segment[numberOfSegments - 1].len += additional_bits;
+                                                m_segment[numberOfSegments - 1].len += additional_bits;
                                             }
                                             bitsread = sp_data_len;
                                             PCWs_done = 1;
-                                            fill_in_codeword(codeword, 0, sp, this_sec_CB);
+                                            fill_in_codeword(m_codeword, 0, sp, this_sec_CB);
                                         }
                                     }
-                                    else { fill_in_codeword(codeword, numberOfCodewords - numberOfSegments, sp, this_sec_CB); }
+                                    else { fill_in_codeword(m_codeword, numberOfCodewords - numberOfSegments, sp, this_sec_CB); }
                                     numberOfCodewords++;
                                 }
                             }
@@ -3119,14 +3135,14 @@ uint8_t reordered_spectral_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bi
         }
     }
     if(numberOfSegments == 0) {
-        if(segment) {
-            free(codeword);
-            segment = NULL;
-        }
-        if(codeword) {
-            free(codeword);
-            codeword = NULL;
-        }
+        // if(m_segment) {
+        //     free(m_segment);
+        //     m_segment = NULL;
+        // }
+        // if(m_codeword) {
+        //     free(m_codeword);
+        //     m_codeword = NULL;
+        // }
         return 10;
     }
     numberOfSets = numberOfCodewords / numberOfSegments;
@@ -3140,28 +3156,28 @@ uint8_t reordered_spectral_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bi
                 const uint16_t codeword_idx = codewordBase + set * numberOfSegments - numberOfSegments;
                 /* data up */
                 if(codeword_idx >= numberOfCodewords - numberOfSegments) break;
-                if(!codeword[codeword_idx].decoded && segment[segment_idx].len > 0) {
+                if(!m_codeword[codeword_idx].decoded && m_segment[segment_idx].len > 0) {
                     uint8_t tmplen;
-                    if(codeword[codeword_idx].bits.len != 0) concat_bits(&segment[segment_idx], &codeword[codeword_idx].bits);
-                    tmplen = segment[segment_idx].len;
-                    if(huffman_spectral_data_2(codeword[codeword_idx].cb, &segment[segment_idx], &spectral_data[codeword[codeword_idx].sp_offset]) >= 0) { codeword[codeword_idx].decoded = 1; }
+                    if(m_codeword[codeword_idx].bits.len != 0) concat_bits(&m_segment[segment_idx], &m_codeword[codeword_idx].bits);
+                    tmplen = m_segment[segment_idx].len;
+                    if(huffman_spectral_data_2(m_codeword[codeword_idx].cb, &m_segment[segment_idx], &spectral_data[m_codeword[codeword_idx].sp_offset]) >= 0) { m_codeword[codeword_idx].decoded = 1; }
                     else {
-                        codeword[codeword_idx].bits = segment[segment_idx];
-                        codeword[codeword_idx].bits.len = tmplen;
+                        m_codeword[codeword_idx].bits = m_segment[segment_idx];
+                        m_codeword[codeword_idx].bits.len = tmplen;
                     }
                 }
             }
         }
-        for(i = 0; i < numberOfSegments; i++) rewrev_bits(&segment[i]);
+        for(i = 0; i < numberOfSegments; i++) rewrev_bits(&m_segment[i]);
     }
-    if(segment) {
-        free(segment);
-        segment = NULL;
-    }
-    if(codeword) {
-        free(codeword);
-        codeword = NULL;
-    }
+    // if(m_segment) {
+    //     free(m_segment);
+    //     m_segment = NULL;
+    // }
+    // if(m_codeword) {
+    //     free(m_codeword);
+    //     m_codeword = NULL;
+    // }
     return 0;
 }
 #endif
@@ -3976,21 +3992,21 @@ static void ps_decorrelate(ps_info_t* ps, complex_t* X_left[64], complex_t* X_ri
     const complex_t* Phi_Fract_SubQmf;
     uint8_t          temp_delay_ser[NO_ALLPASS_LINKS];
     int32_t          P_SmoothPeakDecayDiffNrg, nrg;
-    //    int32_t          P[32][34];                        // ⏫⏫⏫
-    //    int32_t          G_TransientRatio[32][34] = {{0}}; // ⏫⏫⏫
+    //    int32_t          m_P_dec[32][34];                        // ⏫⏫⏫
+    //    int32_t          m_G_TransientRatio[32][34] = {{0}}; // ⏫⏫⏫
     complex_t inputLeft;
 
-    int32_t** P = (int32_t**)faad_malloc(32 * sizeof(P));
-    for(uint8_t i = 0; i < 32; i++) P[i] = (int32_t*)faad_malloc(34 * sizeof(*(P[i])));
-    int32_t** G_TransientRatio = (int32_t**)faad_calloc(32, sizeof(G_TransientRatio));
-    for(uint8_t i = 0; i < 32; i++) G_TransientRatio[i] = (int32_t*)faad_calloc(34, sizeof(*(G_TransientRatio[i])));
+    // int32_t** m_P_dec = (int32_t**)faad_malloc(32 * sizeof(m_P_dec));
+    // for(uint8_t i = 0; i < 32; i++) m_P_dec[i] = (int32_t*)faad_malloc(34 * sizeof(*(m_P_dec[i])));
+    //int32_t** m_G_TransientRatio = (int32_t**)faad_calloc(32, sizeof(m_G_TransientRatio));
+    //for(uint8_t i = 0; i < 32; i++) m_G_TransientRatio[i] = (int32_t*)faad_calloc(34, sizeof(*(m_G_TransientRatio[i])));
 
     /* chose hybrid filterbank: 20 or 34 band case */
     if(ps->use34hybrid_bands) { Phi_Fract_SubQmf = Phi_Fract_SubQmf34; }
     else { Phi_Fract_SubQmf = Phi_Fract_SubQmf20; }
     /* clear the energy values */
     for(n = 0; n < 32; n++) {
-        for(bk = 0; bk < 34; bk++) { P[n][bk] = 0; }
+        for(bk = 0; bk < 34; bk++) { m_P_dec[n][bk] = 0; }
     }
 
     /* calculate the energy in each parameter band b(k) */
@@ -4013,11 +4029,11 @@ static void ps_decorrelate(ps_info_t* ps, complex_t* X_left[64], complex_t* X_ri
                 }
                 /* accumulate energy */
                 /* NOTE: all input is scaled by 2^(-5) because of fixed point QMF
-                 * meaning that P will be scaled by 2^(-10) compared to floating point version
+                 * meaning that m_P_dec will be scaled by 2^(-10) compared to floating point version
                  */
                 in_re = ((abs(RE(inputLeft)) + (1 << (REAL_BITS - 1))) >> REAL_BITS);
                 in_im = ((abs(IM(inputLeft)) + (1 << (REAL_BITS - 1))) >> REAL_BITS);
-                P[n][bk] += in_re * in_re + in_im * in_im;
+                m_P_dec[n][bk] += in_re * in_re + in_im * in_im;
             }
         }
     }
@@ -4026,18 +4042,18 @@ static void ps_decorrelate(ps_info_t* ps, complex_t* X_left[64], complex_t* X_ri
         for(n = ps->border_position[0]; n < ps->border_position[ps->num_env]; n++) {
             const int32_t gamma = COEF_CONST(1.5);
             ps->P_PeakDecayNrg[bk] = MUL_F(ps->P_PeakDecayNrg[bk], ps->alpha_decay);
-            if(ps->P_PeakDecayNrg[bk] < P[n][bk]) ps->P_PeakDecayNrg[bk] = P[n][bk];
+            if(ps->P_PeakDecayNrg[bk] < m_P_dec[n][bk]) ps->P_PeakDecayNrg[bk] = m_P_dec[n][bk];
             /* apply smoothing filter to peak decay energy */
             P_SmoothPeakDecayDiffNrg = ps->P_SmoothPeakDecayDiffNrg_prev[bk];
-            P_SmoothPeakDecayDiffNrg += MUL_F((ps->P_PeakDecayNrg[bk] - P[n][bk] - ps->P_SmoothPeakDecayDiffNrg_prev[bk]), ps->alpha_smooth);
+            P_SmoothPeakDecayDiffNrg += MUL_F((ps->P_PeakDecayNrg[bk] - m_P_dec[n][bk] - ps->P_SmoothPeakDecayDiffNrg_prev[bk]), ps->alpha_smooth);
             ps->P_SmoothPeakDecayDiffNrg_prev[bk] = P_SmoothPeakDecayDiffNrg;
             /* apply smoothing filter to energy */
             nrg = ps->P_prev[bk];
-            nrg += MUL_F((P[n][bk] - ps->P_prev[bk]), ps->alpha_smooth);
+            nrg += MUL_F((m_P_dec[n][bk] - ps->P_prev[bk]), ps->alpha_smooth);
             ps->P_prev[bk] = nrg;
             /* calculate transient ratio */
-            if(MUL_C(P_SmoothPeakDecayDiffNrg, gamma) <= nrg) { G_TransientRatio[n][bk] = REAL_CONST(1.0); }
-            else { G_TransientRatio[n][bk] = DIV_R(nrg, (MUL_C(P_SmoothPeakDecayDiffNrg, gamma))); }
+            if(MUL_C(P_SmoothPeakDecayDiffNrg, gamma) <= nrg) { m_G_TransientRatio[n][bk] = REAL_CONST(1.0); }
+            else { m_G_TransientRatio[n][bk] = DIV_R(nrg, (MUL_C(P_SmoothPeakDecayDiffNrg, gamma))); }
         }
     }
     /* apply stereo decorrelation filter to the signal */
@@ -4162,8 +4178,8 @@ static void ps_decorrelate(ps_info_t* ps, complex_t* X_left[64], complex_t* X_ri
                 /* select b(k) for reading the transient ratio */
                 bk = (~NEGATE_IPD_MASK) & ps->map_group2bk[gr];
                 /* duck if a past transient is found */
-                RE(R0) = MUL_R(G_TransientRatio[n][bk], RE(R0));
-                IM(R0) = MUL_R(G_TransientRatio[n][bk], IM(R0));
+                RE(R0) = MUL_R(m_G_TransientRatio[n][bk], RE(R0));
+                IM(R0) = MUL_R(m_G_TransientRatio[n][bk], IM(R0));
                 if(gr < ps->num_hybrid_groups) {
                     /* hybrid */
                     QMF_RE(X_hybrid_right[n][sb]) = RE(R0);
@@ -4191,18 +4207,18 @@ static void ps_decorrelate(ps_info_t* ps, complex_t* X_left[64], complex_t* X_ri
     ps->saved_delay = temp_delay;
     for(m = 0; m < NO_ALLPASS_LINKS; m++) ps->delay_buf_index_ser[m] = temp_delay_ser[m];
 
-    for(uint8_t i = 0; i < 32; i++) {
-        free(G_TransientRatio[i]);
-        G_TransientRatio[i] = NULL;
-    }
-    free(G_TransientRatio);
-    G_TransientRatio = NULL;
-    for(uint8_t i = 0; i < 32; i++) {
-        free(P[i]);
-        P[i] = NULL;
-    }
-    free(P);
-    P = NULL;
+    // for(uint8_t i = 0; i < 32; i++) {
+    //     free(m_G_TransientRatio[i]);
+    //     m_G_TransientRatio[i] = NULL;
+    // }
+    // free(m_G_TransientRatio);
+    // m_G_TransientRatio = NULL;
+    // for(uint8_t i = 0; i < 32; i++) {
+    //     free(m_P_dec[i]);
+    //     m_P_dec[i] = NULL;
+    // }
+    // free(m_P_dec);
+    // m_P_dec = NULL;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
