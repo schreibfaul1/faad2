@@ -52,14 +52,20 @@
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #pragma GCC diagnostic ignored "-Wunused-function"
 
+//------------------------------------------------------
+//  MEMORY USAGE without SBR ~19KB
+//                  with SBR and PS ~59KB
+//                  with SBR no PS  ~35KB
+//------------------------------------------------------
+
 /* COMPILE TIME DEFINITIONS */
-// #define PREFER_POINTERS
-// #define ERROR_RESILIENCE
-#define LTP_DEC /* Allow decoding of LTP (long term prediction) profile AAC */
-// #define LD_DEC  /* Allow decoding of LD (low delay) profile AAC */
- #define SBR_DEC /* Allow decoding of SBR (spectral band replication) */
- #define PS_DEC /* Allow decoding of PS (parametric stereo */
-#define ALLOW_SMALL_FRAMELENGTH
+//#define PREFER_POINTERS
+//#define ERROR_RESILIENCE
+//#define LTP_DEC /* Allow decoding of LTP (long term prediction) profile AAC */
+//#define LD_DEC  /* Allow decoding of LD (low delay) profile AAC */
+#define SBR_DEC /* Allow decoding of SBR (spectral band replication) */
+#define PS_DEC /* Allow decoding of PS (parametric stereo) */
+//#define ALLOW_SMALL_FRAMELENGTH
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* LD can't do without LTP */
 #ifdef LD_DEC
@@ -300,7 +306,6 @@ static uint8_t             channel_pair_element(NeAACDecStruct_t* hDecoder, bitf
 static void                create_channel_config(NeAACDecStruct_t* hDecoder, NeAACDecFrameInfo_t* hInfo);
 static uint16_t            data_stream_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld);
 static void                DCT3_4_unscaled(int32_t* y, int32_t* x);
-static void                DCT3_4_unscaled(int32_t* y, int32_t* x);
 static void                DCT4_32(int32_t* y, int32_t* x);
 void                       dct4_kernel(int32_t* in_real, int32_t* in_imag, int32_t* out_real, int32_t* out_imag);
 static void                decode_cpe(NeAACDecStruct_t* hDecoder, NeAACDecFrameInfo_t* hInfo, bitfile_t* ld, uint8_t id_syn_ele);
@@ -320,25 +325,25 @@ static uint8_t             excluded_channels(bitfile_t* ld, drc_info_t* drc);
 static uint16_t            extension_payload(bitfile_t* ld, drc_info_t* drc, uint16_t count);
 void                       extract_envelope_data(sbr_info_t* sbr, uint8_t ch);
 void                       extract_noise_floor_data(sbr_info_t* sbr, uint8_t ch);
-uint8_t                    faad_byte_align(bitfile_t* ld);
+static uint8_t             faad_byte_align(bitfile_t* ld);
 void*                      faad_calloc(size_t a, size_t s);
-void                       faad_flushbits_ex(bitfile_t* ld, uint32_t bits);
+static void                faad_flushbits_ex(bitfile_t* ld, uint32_t bits);
 static void                faad_flushbits_rev(bitfile_t* ld, uint32_t bits);
-void                       faad_free(void* b);
-uint32_t                   faad_get_processed_bits(bitfile_t* ld);
-uint8_t*                   faad_getbitbuffer(bitfile_t* ld, uint32_t bits);
+static void                faad_free(void* b);
+static uint32_t            faad_get_processed_bits(bitfile_t* ld);
+static uint8_t*            faad_getbitbuffer(bitfile_t* ld, uint32_t bits);
 static uint32_t            faad_getbits(bitfile_t* ld, uint32_t n);
 static uint32_t            faad_getbits_rev(bitfile_t* ld, uint32_t n);
-void                       faad_imdct(mdct_info_t* mdct, int32_t* X_in, int32_t* X_out);
-void                       faad_initbits_rev(bitfile_t* ld, void* buffer, uint32_t bits_in_buffer);
-void                       faad_initbits(bitfile_t* ld, const void* buffer, const uint32_t buffer_size);
+static void                faad_imdct(mdct_info_t* mdct, int32_t* X_in, int32_t* X_out);
+static void                faad_initbits_rev(bitfile_t* ld, void* buffer, uint32_t bits_in_buffer);
+static void                faad_initbits(bitfile_t* ld, const void* buffer, const uint32_t buffer_size);
 uint32_t                   faad_latm_frame(latm_header_t* latm, bitfile_t* ld);
 void*                      faad_malloc(size_t size);
 void                       faad_mdct_end(mdct_info_t* mdct);
 mdct_info_t*               faad_mdct_init(uint16_t N);
 void                       faad_mdct(mdct_info_t* mdct, int32_t* X_in, int32_t* X_out);
-void                       faad_resetbits(bitfile_t* ld, int32_t bits);
-void                       faad_rewindbits(bitfile_t* ld);
+static void                faad_resetbits(bitfile_t* ld, int32_t bits);
+static void                faad_rewindbits(bitfile_t* ld);
 static uint32_t            faad_showbits(bitfile_t* ld, uint32_t bits);
 static uint8_t             fill_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld, drc_info_t* drc, uint8_t sbr_ele);
 void                       filter_bank_end(fb_info_t* fb);

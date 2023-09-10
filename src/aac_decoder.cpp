@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 #include "libfaad/neaacdec.h"
 
 // Declaration of the required global variables
@@ -16,7 +17,7 @@ bool f_firstCall = false;
 uint32_t aacSamplerate = 0;
 uint8_t aacChannels = 0;
 static uint16_t validSamples = 0;
-
+clock_t before;
 
 //----------------------------------------------------------------------------------------------------------------------
 bool AACDecoder_IsInit(){
@@ -24,7 +25,7 @@ bool AACDecoder_IsInit(){
 }
 //----------------------------------------------------------------------------------------------------------------------
 bool AACDecoder_AllocateBuffers(){
-
+    before = clock();
     // #define MAIN       1 /* MAIN */
     // #define LC         2 /* Low Complexity (default) */
     // #define SSR        3 /* Scalable SampleRate */
@@ -33,6 +34,9 @@ bool AACDecoder_AllocateBuffers(){
     // #define ER_LC     17 /* Error Resilient Low Complexity */
     // #define ER_LTP    19 /* Error Resilient Long Term Prediction */
     // #define LD        23 /* Low Delay */
+
+ //   printf(ANSI_ESC_ORANGE "sizeof NeAACDecFrameInfo_t %d\n" ANSI_ESC_WHITE, sizeof(NeAACDecFrameInfo_t));
+ //   printf(ANSI_ESC_ORANGE "sizeof NeAACDecConfigurationPtr_t %d\n" ANSI_ESC_WHITE, sizeof(NeAACDecConfigurationPtr_t));
 
     hAac = NeAACDecOpen();
     conf = NeAACDecGetCurrentConfiguration(hAac);
@@ -78,6 +82,9 @@ void AACDecoder_FreeBuffers(){
     hAac = NULL;
     f_decoderIsInit = false;
     f_firstCall = false;
+    clock_t difference = clock() - before;
+    int msec = difference  / CLOCKS_PER_SEC;
+    printf("ms %li\n", difference);
 }
 //----------------------------------------------------------------------------------------------------------------------
 uint8_t AACGetFormat(){
@@ -98,10 +105,16 @@ uint8_t AACGetParametricStereo(){  // not used (0) or used (1)
 }
 //----------------------------------------------------------------------------------------------------------------------
 int AACFindSyncWord(uint8_t *buf, int nBytes){
+    (void) buf;
+    (void)nBytes;
     return 0;
 }
 //----------------------------------------------------------------------------------------------------------------------
 int AACSetRawBlockParams(int copyLast, int nChans, int sampRateCore, int profile){
+    (void)copyLast;
+    (void)nChans;
+    (void)sampRateCore;
+    (void)profile;
     return 0;
 }
 //----------------------------------------------------------------------------------------------------------------------

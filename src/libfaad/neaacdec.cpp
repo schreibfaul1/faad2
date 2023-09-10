@@ -5,14 +5,61 @@
 #pragma GCC diagnostic warning "-Wunused-function"
 #define UNUSED_FUNCTION __attribute__((unused)) // maybe sometimes unused (depends on defines)
 // ⏫⏫⏫
+// global vars
+mp4AudioSpecificConfig_t* m_mp4ASC = NULL;
+int32_t*                  m_transf_buf = NULL;
+int32_t*                  m_windowed_buf = NULL;
+codeword_t*               m_codeword = NULL;
+bits_t_t*                 m_segment = NULL;
+int32_t**                 m_P = NULL;
+int32_t**                 m_G_TransientRatio = NULL;
+complex_t**               m_X_hybrid_left = NULL;
+complex_t**               m_X_hybrid_right = NULL;
+int32_t*                  m_x_est = NULL;
+int32_t*                  m_X_est = NULL;
+complex_t*                m_Z1_imdct = NULL;
+complex_t*                m_Z1_mdct = NULL;
+complex_t**               m_X_dcf = NULL;
+complex_t**               m_X_dsf = NULL;
+complex_t**               m_X_left = NULL;
+complex_t**               m_X_right = NULL;
+int32_t*                  m_vDk0 = NULL;
+int32_t*                  m_vDk1 = NULL;
+int32_t*                  m_vk0 = NULL;
+int32_t*                  m_vk1 = NULL;
+int32_t*                  m_imTable = NULL;
+uint8_t*                  m_patchBorders = NULL;
+sbr_hfadj_info_t*         m_adj = NULL;
+int32_t*                  m_Q_M_lim = NULL;
+int32_t*                  m_G_lim = NULL;
+int32_t*                  m_S_M = NULL;
+// complex_t alpha_0[64], alpha_1[64];
+// int32_t  in_real[32], in_imag[32], out_real[32], out_imag[32];
+// int32_t x1[32], x2[32];
+// int32_t in_real1[32], in_imag1[32], out_real1[32], out_imag1[32];
+// int32_t in_real2[32], in_imag2[32], out_real2[32], out_imag2[32];
+element_t*                m_sce = NULL;
+int16_t*                  m_spec_data = NULL;
+element_t*                m_cpe = NULL;
+int16_t*                  m_spec_data1 = NULL;
+int16_t*                  m_spec_data2 = NULL;
+mp4AudioSpecificConfig_t* m_mp4ASC_ame = NULL;
+int32_t*                  m_spec_coef = NULL;
+int32_t*                  m_spec_coef1 = NULL;
+int32_t*                  m_spec_coef2 = NULL;
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+void alloc_mem() {}
+//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+void free_mem() {}
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* common free function */
-void faad_free(void* b) { free(b); }
+static void faad_free(void* b) { free(b); }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* initialize buffer, call once before first getbits or showbits */
-void faad_initbits(bitfile_t* ld, const void* _buffer, const uint32_t buffer_size) {
-//    printf(ANSI_ESC_YELLOW"faad_initbits\n"ANSI_ESC_WHITE);
+static void faad_initbits(bitfile_t* ld, const void* _buffer, const uint32_t buffer_size) {
+    //    printf(ANSI_ESC_YELLOW"faad_initbits\n"ANSI_ESC_WHITE);
     uint32_t tmp;
 
     if(ld == NULL) return;
@@ -50,10 +97,10 @@ void faad_initbits(bitfile_t* ld, const void* _buffer, const uint32_t buffer_siz
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-uint32_t faad_get_processed_bits(bitfile_t* ld) { return (uint32_t)(8 * (4 * (ld->tail - ld->start) - 4) - (ld->bits_left)); }
+static uint32_t faad_get_processed_bits(bitfile_t* ld) { return (uint32_t)(8 * (4 * (ld->tail - ld->start) - 4) - (ld->bits_left)); }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-uint8_t faad_byte_align(bitfile_t* ld) {
+static uint8_t faad_byte_align(bitfile_t* ld) {
     int32_t remainder = (32 - ld->bits_left) & 0x7;
 
     if(remainder) {
@@ -64,7 +111,7 @@ uint8_t faad_byte_align(bitfile_t* ld) {
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-void faad_flushbits_ex(bitfile_t* ld, uint32_t bits) {
+static void faad_flushbits_ex(bitfile_t* ld, uint32_t bits) {
     uint32_t tmp;
 
     ld->bufa = ld->bufb;
@@ -88,7 +135,7 @@ void faad_flushbits_ex(bitfile_t* ld, uint32_t bits) {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* rewind to beginning */
-void faad_rewindbits(bitfile_t* ld) {
+static void faad_rewindbits(bitfile_t* ld) {
     uint32_t tmp;
 
     ld->bytes_left = ld->buffer_size;
@@ -116,7 +163,7 @@ void faad_rewindbits(bitfile_t* ld) {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* reset to a certain point */
-void faad_resetbits(bitfile_t* ld, int32_t bits) {
+static void faad_resetbits(bitfile_t* ld, int32_t bits) {
     uint32_t tmp;
     uint32_t words = bits >> 5;
     int32_t  remainder = bits & 0x1F;
@@ -152,7 +199,7 @@ void faad_resetbits(bitfile_t* ld, int32_t bits) {
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-uint8_t* faad_getbitbuffer(bitfile_t* ld, uint32_t bits) {
+static uint8_t* faad_getbitbuffer(bitfile_t* ld, uint32_t bits) {
     int32_t  i;
     uint32_t temp;
     int32_t  bytes = bits >> 3;
@@ -169,7 +216,7 @@ uint8_t* faad_getbitbuffer(bitfile_t* ld, uint32_t bits) {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* reversed bit reading routines, used for RVLC and HCR */
-void faad_initbits_rev(bitfile_t* ld, void* buffer, uint32_t bits_in_buffer) {
+UNUSED_FUNCTION static void faad_initbits_rev(bitfile_t* ld, void* buffer, uint32_t bits_in_buffer) {
     uint32_t tmp;
     int32_t  index;
 
@@ -248,12 +295,11 @@ static void passf2neg(const uint16_t ido, const uint16_t l1, const complex_t* cc
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-static void passf3(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2,
-                   const int8_t isign) {
-    static int32_t taur = FRAC_CONST(-0.5);
-    static int32_t taui = FRAC_CONST(0.866025403784439);
-    uint16_t       i, k, ac, ah;
-    complex_t      c2, c3, d2, d3, t2;
+static void passf3(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2, const int8_t isign) {
+    const int32_t taur = FRAC_CONST(-0.5);
+    const int32_t taui = FRAC_CONST(0.866025403784439);
+    uint16_t      i, k, ac, ah;
+    complex_t     c2, c3, d2, d3, t2;
 
     if(ido == 1) {
         if(isign == 1) {
@@ -342,8 +388,7 @@ static void passf3(const uint16_t ido, const uint16_t l1, const complex_t* cc, c
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-static void passf4pos(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2,
-                      const complex_t* wa3) {
+static void passf4pos(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2, const complex_t* wa3) {
     uint16_t i, k, ac, ah;
 
     if(ido == 1) {
@@ -400,8 +445,7 @@ static void passf4pos(const uint16_t ido, const uint16_t l1, const complex_t* cc
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-static void passf4neg(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2,
-                      const complex_t* wa3) {
+static void passf4neg(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2, const complex_t* wa3) {
     uint16_t i, k, ac, ah;
 
     if(ido == 1) {
@@ -458,14 +502,14 @@ static void passf4neg(const uint16_t ido, const uint16_t l1, const complex_t* cc
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-static void passf5(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2,
-                   const complex_t* wa3, const complex_t* wa4, const int8_t isign) {
-    static int32_t tr11 = FRAC_CONST(0.309016994374947);
-    static int32_t ti11 = FRAC_CONST(0.951056516295154);
-    static int32_t tr12 = FRAC_CONST(-0.809016994374947);
-    static int32_t ti12 = FRAC_CONST(0.587785252292473);
-    uint16_t       i, k, ac, ah;
-    complex_t      c2, c3, c4, c5, d3, d4, d5, d2, t2, t3, t4, t5;
+static void passf5(const uint16_t ido, const uint16_t l1, const complex_t* cc, complex_t* ch, const complex_t* wa1, const complex_t* wa2, const complex_t* wa3, const complex_t* wa4,
+                   const int8_t isign) {
+    int32_t   tr11 = FRAC_CONST(0.309016994374947);
+    int32_t   ti11 = FRAC_CONST(0.951056516295154);
+    int32_t   tr12 = FRAC_CONST(-0.809016994374947);
+    int32_t   ti12 = FRAC_CONST(0.587785252292473);
+    uint16_t  i, k, ac, ah;
+    complex_t c2, c3, c4, c5, d3, d4, d5, d2, t2, t3, t4, t5;
 
     if(ido == 1) {
         if(isign == 1) {
@@ -729,10 +773,10 @@ void cfftb(cfft_info_t* cfft, complex_t* c) { cfftf1pos(cfft->n, c, cfft->work, 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static void cffti1(uint16_t n, complex_t* wa, uint16_t* ifac) {
-    static uint16_t ntryh[4] = {3, 4, 2, 5};
-    uint16_t        ntry = 0, i, j;
-    uint16_t        ib;
-    uint16_t        nf, nl, nq, nr;
+    const uint16_t ntryh[4] = {3, 4, 2, 5};
+    uint16_t       ntry = 0, i, j;
+    uint16_t       ib;
+    uint16_t       nf, nl, nq, nr;
 
     nl = n;
     nf = 0;
@@ -812,14 +856,14 @@ uint8_t get_sr_index(const uint32_t samplerate) { /* Returns the sample rate ind
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 uint32_t get_sample_rate(const uint8_t sr_index) { /* Returns the sample rate based on the sample rate index */
-    static const uint32_t sample_rates[] = {96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000};
+    const uint32_t sample_rates[] = {96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000};
     if(sr_index < 12) return sample_rates[sr_index];
     return 0;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t max_pred_sfb(const uint8_t sr_index) {
-    static const uint8_t pred_sfb_max[] = {33, 33, 38, 40, 40, 40, 41, 41, 37, 37, 37, 34};
+    const uint8_t pred_sfb_max[] = {33, 33, 38, 40, 40, 40, 41, 41, 37, 37, 37, 34};
     if(sr_index < 12) return pred_sfb_max[sr_index];
     return 0;
 }
@@ -832,21 +876,21 @@ uint8_t max_tns_sfb(const uint8_t sr_index, const uint8_t object_type, const uin
      * 3    SSR long window
      * 4    SSR short window
      */
-    static const uint8_t tns_sbf_max[][4] = {{31, 9, 28, 7},  /* 96000 */
-                                             {31, 9, 28, 7},  /* 88200 */
-                                             {34, 10, 27, 7}, /* 64000 */
-                                             {40, 14, 26, 6}, /* 48000 */
-                                             {42, 14, 26, 6}, /* 44100 */
-                                             {51, 14, 26, 6}, /* 32000 */
-                                             {46, 14, 29, 7}, /* 24000 */
-                                             {46, 14, 29, 7}, /* 22050 */
-                                             {42, 14, 23, 8}, /* 16000 */
-                                             {42, 14, 23, 8}, /* 12000 */
-                                             {42, 14, 23, 8}, /* 11025 */
-                                             {39, 14, 19, 7}, /*  8000 */
-                                             {39, 14, 19, 7}, /*  7350 */
-                                             {0, 0, 0, 0},    {0, 0, 0, 0}, {0, 0, 0, 0}};
-    uint8_t              i = 0;
+    const uint8_t tns_sbf_max[][4] = {{31, 9, 28, 7},  /* 96000 */
+                                      {31, 9, 28, 7},  /* 88200 */
+                                      {34, 10, 27, 7}, /* 64000 */
+                                      {40, 14, 26, 6}, /* 48000 */
+                                      {42, 14, 26, 6}, /* 44100 */
+                                      {51, 14, 26, 6}, /* 32000 */
+                                      {46, 14, 29, 7}, /* 24000 */
+                                      {46, 14, 29, 7}, /* 22050 */
+                                      {42, 14, 23, 8}, /* 16000 */
+                                      {42, 14, 23, 8}, /* 12000 */
+                                      {42, 14, 23, 8}, /* 11025 */
+                                      {39, 14, 19, 7}, /*  8000 */
+                                      {39, 14, 19, 7}, /*  7350 */
+                                      {0, 0, 0, 0},    {0, 0, 0, 0}, {0, 0, 0, 0}};
+    uint8_t       i = 0;
     if(is_short) i++;
     if(object_type == SSR) i += 2;
     return tns_sbf_max[sr_index][i];
@@ -885,7 +929,7 @@ int8_t can_decode_ot(const uint8_t object_type) { /* Returns 0 if an object type
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#ifdef ESP32
+#ifdef ESP32_
 
 void* faad_malloc(size_t size) { return ps_malloc(size); }
 void* faad_calloc(size_t a, size_t s) { return ps_calloc(a, s); }
@@ -896,16 +940,14 @@ void* faad_calloc(size_t a, size_t s) { return calloc(a, s); }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-static const uint8_t Parity[256] = { // parity
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1,
-    0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0,
-    0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1,
-    0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1,
-    0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
+const uint8_t Parity[256] = { // parity
+    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
 
-// static uint32_t __r1 = 1;
-// static uint32_t __r2 = 1;
+// uint32_t __r1 = 1;
+// uint32_t __r2 = 1;
 
 /*
  *  This is a simple random number generator with good quality for audio purposes.
@@ -988,43 +1030,31 @@ uint32_t wl_min_lzc(uint32_t x) {
 /* just take the maximum number of bits for interpolation */
 #define INTERP_BITS (REAL_BITS - TABLE_BITS)
 
-static const int32_t pow2_tab[] = {
-    REAL_CONST(1.000000000000000), REAL_CONST(1.010889286051701), REAL_CONST(1.021897148654117), REAL_CONST(1.033024879021228),
-    REAL_CONST(1.044273782427414), REAL_CONST(1.055645178360557), REAL_CONST(1.067140400676824), REAL_CONST(1.078760797757120),
-    REAL_CONST(1.090507732665258), REAL_CONST(1.102382583307841), REAL_CONST(1.114386742595892), REAL_CONST(1.126521618608242),
-    REAL_CONST(1.138788634756692), REAL_CONST(1.151189229952983), REAL_CONST(1.163724858777578), REAL_CONST(1.176396991650281),
-    REAL_CONST(1.189207115002721), REAL_CONST(1.202156731452703), REAL_CONST(1.215247359980469), REAL_CONST(1.228480536106870),
-    REAL_CONST(1.241857812073484), REAL_CONST(1.255380757024691), REAL_CONST(1.269050957191733), REAL_CONST(1.282870016078778),
-    REAL_CONST(1.296839554651010), REAL_CONST(1.310961211524764), REAL_CONST(1.325236643159741), REAL_CONST(1.339667524053303),
-    REAL_CONST(1.354255546936893), REAL_CONST(1.369002422974591), REAL_CONST(1.383909881963832), REAL_CONST(1.398979672538311),
-    REAL_CONST(1.414213562373095), REAL_CONST(1.429613338391970), REAL_CONST(1.445180806977047), REAL_CONST(1.460917794180647),
-    REAL_CONST(1.476826145939499), REAL_CONST(1.492907728291265), REAL_CONST(1.509164427593423), REAL_CONST(1.525598150744538),
-    REAL_CONST(1.542210825407941), REAL_CONST(1.559004400237837), REAL_CONST(1.575980845107887), REAL_CONST(1.593142151342267),
-    REAL_CONST(1.610490331949254), REAL_CONST(1.628027421857348), REAL_CONST(1.645755478153965), REAL_CONST(1.663676580326736),
-    REAL_CONST(1.681792830507429), REAL_CONST(1.700106353718524), REAL_CONST(1.718619298122478), REAL_CONST(1.737333835273706),
-    REAL_CONST(1.756252160373300), REAL_CONST(1.775376492526521), REAL_CONST(1.794709075003107), REAL_CONST(1.814252175500399),
-    REAL_CONST(1.834008086409342), REAL_CONST(1.853979125083386), REAL_CONST(1.874167634110300), REAL_CONST(1.894575981586966),
-    REAL_CONST(1.915206561397147), REAL_CONST(1.936061793492294), REAL_CONST(1.957144124175400), REAL_CONST(1.978456026387951),
-    REAL_CONST(2.000000000000000)};
+const int32_t pow2_tab[] = {
+    REAL_CONST(1.000000000000000), REAL_CONST(1.010889286051701), REAL_CONST(1.021897148654117), REAL_CONST(1.033024879021228), REAL_CONST(1.044273782427414), REAL_CONST(1.055645178360557),
+    REAL_CONST(1.067140400676824), REAL_CONST(1.078760797757120), REAL_CONST(1.090507732665258), REAL_CONST(1.102382583307841), REAL_CONST(1.114386742595892), REAL_CONST(1.126521618608242),
+    REAL_CONST(1.138788634756692), REAL_CONST(1.151189229952983), REAL_CONST(1.163724858777578), REAL_CONST(1.176396991650281), REAL_CONST(1.189207115002721), REAL_CONST(1.202156731452703),
+    REAL_CONST(1.215247359980469), REAL_CONST(1.228480536106870), REAL_CONST(1.241857812073484), REAL_CONST(1.255380757024691), REAL_CONST(1.269050957191733), REAL_CONST(1.282870016078778),
+    REAL_CONST(1.296839554651010), REAL_CONST(1.310961211524764), REAL_CONST(1.325236643159741), REAL_CONST(1.339667524053303), REAL_CONST(1.354255546936893), REAL_CONST(1.369002422974591),
+    REAL_CONST(1.383909881963832), REAL_CONST(1.398979672538311), REAL_CONST(1.414213562373095), REAL_CONST(1.429613338391970), REAL_CONST(1.445180806977047), REAL_CONST(1.460917794180647),
+    REAL_CONST(1.476826145939499), REAL_CONST(1.492907728291265), REAL_CONST(1.509164427593423), REAL_CONST(1.525598150744538), REAL_CONST(1.542210825407941), REAL_CONST(1.559004400237837),
+    REAL_CONST(1.575980845107887), REAL_CONST(1.593142151342267), REAL_CONST(1.610490331949254), REAL_CONST(1.628027421857348), REAL_CONST(1.645755478153965), REAL_CONST(1.663676580326736),
+    REAL_CONST(1.681792830507429), REAL_CONST(1.700106353718524), REAL_CONST(1.718619298122478), REAL_CONST(1.737333835273706), REAL_CONST(1.756252160373300), REAL_CONST(1.775376492526521),
+    REAL_CONST(1.794709075003107), REAL_CONST(1.814252175500399), REAL_CONST(1.834008086409342), REAL_CONST(1.853979125083386), REAL_CONST(1.874167634110300), REAL_CONST(1.894575981586966),
+    REAL_CONST(1.915206561397147), REAL_CONST(1.936061793492294), REAL_CONST(1.957144124175400), REAL_CONST(1.978456026387951), REAL_CONST(2.000000000000000)};
 
-static const int32_t log2_tab[] = {
-    REAL_CONST(0.000000000000000), REAL_CONST(0.022367813028455), REAL_CONST(0.044394119358453), REAL_CONST(0.066089190457772),
-    REAL_CONST(0.087462841250339), REAL_CONST(0.108524456778169), REAL_CONST(0.129283016944966), REAL_CONST(0.149747119504682),
-    REAL_CONST(0.169925001442312), REAL_CONST(0.189824558880017), REAL_CONST(0.209453365628950), REAL_CONST(0.228818690495881),
-    REAL_CONST(0.247927513443585), REAL_CONST(0.266786540694901), REAL_CONST(0.285402218862248), REAL_CONST(0.303780748177103),
-    REAL_CONST(0.321928094887362), REAL_CONST(0.339850002884625), REAL_CONST(0.357552004618084), REAL_CONST(0.375039431346925),
-    REAL_CONST(0.392317422778760), REAL_CONST(0.409390936137702), REAL_CONST(0.426264754702098), REAL_CONST(0.442943495848728),
-    REAL_CONST(0.459431618637297), REAL_CONST(0.475733430966398), REAL_CONST(0.491853096329675), REAL_CONST(0.507794640198696),
-    REAL_CONST(0.523561956057013), REAL_CONST(0.539158811108031), REAL_CONST(0.554588851677637), REAL_CONST(0.569855608330948),
-    REAL_CONST(0.584962500721156), REAL_CONST(0.599912842187128), REAL_CONST(0.614709844115208), REAL_CONST(0.629356620079610),
-    REAL_CONST(0.643856189774725), REAL_CONST(0.658211482751795), REAL_CONST(0.672425341971496), REAL_CONST(0.686500527183218),
-    REAL_CONST(0.700439718141092), REAL_CONST(0.714245517666123), REAL_CONST(0.727920454563199), REAL_CONST(0.741466986401147),
-    REAL_CONST(0.754887502163469), REAL_CONST(0.768184324776926), REAL_CONST(0.781359713524660), REAL_CONST(0.794415866350106),
-    REAL_CONST(0.807354922057604), REAL_CONST(0.820178962415188), REAL_CONST(0.832890014164742), REAL_CONST(0.845490050944375),
-    REAL_CONST(0.857980995127572), REAL_CONST(0.870364719583405), REAL_CONST(0.882643049361841), REAL_CONST(0.894817763307943),
-    REAL_CONST(0.906890595608519), REAL_CONST(0.918863237274595), REAL_CONST(0.930737337562886), REAL_CONST(0.942514505339240),
-    REAL_CONST(0.954196310386875), REAL_CONST(0.965784284662087), REAL_CONST(0.977279923499917), REAL_CONST(0.988684686772166),
-    REAL_CONST(1.000000000000000)};
+const int32_t log2_tab[] = {
+    REAL_CONST(0.000000000000000), REAL_CONST(0.022367813028455), REAL_CONST(0.044394119358453), REAL_CONST(0.066089190457772), REAL_CONST(0.087462841250339), REAL_CONST(0.108524456778169),
+    REAL_CONST(0.129283016944966), REAL_CONST(0.149747119504682), REAL_CONST(0.169925001442312), REAL_CONST(0.189824558880017), REAL_CONST(0.209453365628950), REAL_CONST(0.228818690495881),
+    REAL_CONST(0.247927513443585), REAL_CONST(0.266786540694901), REAL_CONST(0.285402218862248), REAL_CONST(0.303780748177103), REAL_CONST(0.321928094887362), REAL_CONST(0.339850002884625),
+    REAL_CONST(0.357552004618084), REAL_CONST(0.375039431346925), REAL_CONST(0.392317422778760), REAL_CONST(0.409390936137702), REAL_CONST(0.426264754702098), REAL_CONST(0.442943495848728),
+    REAL_CONST(0.459431618637297), REAL_CONST(0.475733430966398), REAL_CONST(0.491853096329675), REAL_CONST(0.507794640198696), REAL_CONST(0.523561956057013), REAL_CONST(0.539158811108031),
+    REAL_CONST(0.554588851677637), REAL_CONST(0.569855608330948), REAL_CONST(0.584962500721156), REAL_CONST(0.599912842187128), REAL_CONST(0.614709844115208), REAL_CONST(0.629356620079610),
+    REAL_CONST(0.643856189774725), REAL_CONST(0.658211482751795), REAL_CONST(0.672425341971496), REAL_CONST(0.686500527183218), REAL_CONST(0.700439718141092), REAL_CONST(0.714245517666123),
+    REAL_CONST(0.727920454563199), REAL_CONST(0.741466986401147), REAL_CONST(0.754887502163469), REAL_CONST(0.768184324776926), REAL_CONST(0.781359713524660), REAL_CONST(0.794415866350106),
+    REAL_CONST(0.807354922057604), REAL_CONST(0.820178962415188), REAL_CONST(0.832890014164742), REAL_CONST(0.845490050944375), REAL_CONST(0.857980995127572), REAL_CONST(0.870364719583405),
+    REAL_CONST(0.882643049361841), REAL_CONST(0.894817763307943), REAL_CONST(0.906890595608519), REAL_CONST(0.918863237274595), REAL_CONST(0.930737337562886), REAL_CONST(0.942514505339240),
+    REAL_CONST(0.954196310386875), REAL_CONST(0.965784284662087), REAL_CONST(0.977279923499917), REAL_CONST(0.988684686772166), REAL_CONST(1.000000000000000)};
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 int32_t pow2_fix(int32_t val) {
@@ -1460,45 +1490,59 @@ uint8_t NeAACDecSetConfiguration(NeAACDecHandle hpDecoder, NeAACDecConfiguration
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 long NeAACDecInit(NeAACDecHandle hpDecoder, uint8_t* buffer, uint32_t buffer_size, uint32_t* samplerate, uint8_t* channels) {
-    uint32_t          bits = 0;
-    bitfile_t         ld;
-    adif_header_t     adif;
-    adts_header_t     adts;
+    uint32_t bits = 0;
+    int32_t  ret = 0;
+    // bitfile_t         ld;
+    // adif_header_t     adif;
+    // adts_header_t     adts;
     NeAACDecStruct_t* hDecoder = (NeAACDecStruct_t*)hpDecoder;
 
-    if((hDecoder == NULL) || (samplerate == NULL) || (channels == NULL) || (buffer_size == 0)) return -1;
+    adif_header_t* adif = (adif_header_t*)faad_malloc(1 * sizeof(adif_header_t));
+    adts_header_t* adts = (adts_header_t*)faad_malloc(1 * sizeof(adts_header_t));
+    bitfile_t*     ld = (bitfile_t*)faad_malloc(1 * sizeof(bitfile_t));
+
+    if((hDecoder == NULL) || (samplerate == NULL) || (channels == NULL) || (buffer_size == 0)) {
+        ret = -1;
+        goto exit;
+    }
     hDecoder->sf_index = get_sr_index(hDecoder->config.defSampleRate);
     hDecoder->object_type = hDecoder->config.defObjectType;
     *samplerate = get_sample_rate(hDecoder->sf_index);
     *channels = 1;
     if(buffer != NULL) {
-        faad_initbits(&ld, buffer, buffer_size);
+        faad_initbits(ld, buffer, buffer_size);
         /* Check if an ADIF header is present */
         if((buffer[0] == 'A') && (buffer[1] == 'D') && (buffer[2] == 'I') && (buffer[3] == 'F')) {
             hDecoder->adif_header_t_present = 1;
-            get_adif_header_t(&adif, &ld);
-            faad_byte_align(&ld);
-            hDecoder->sf_index = adif.pce[0].sf_index;
-            hDecoder->object_type = adif.pce[0].object_type + 1;
+            get_adif_header_t(adif, ld);
+            faad_byte_align(ld);
+            hDecoder->sf_index = adif->pce[0].sf_index;
+            hDecoder->object_type = adif->pce[0].object_type + 1;
             *samplerate = get_sample_rate(hDecoder->sf_index);
-            *channels = adif.pce[0].channels;
-            memcpy(&(hDecoder->pce), &(adif.pce[0]), sizeof(program_config_t));
+            *channels = adif->pce[0].channels;
+            memcpy(&(hDecoder->pce), &(adif->pce[0]), sizeof(program_config_t));
             hDecoder->pce_set = 1;
-            bits = bit2byte(faad_get_processed_bits(&ld));
+            bits = bit2byte(faad_get_processed_bits(ld));
             /* Check if an ADTS header is present */
         }
-        else if(faad_showbits(&ld, 12) == 0xfff) {
+        else if(faad_showbits(ld, 12) == 0xfff) {
             hDecoder->adts_header_t_present = 1;
-            adts.old_format = hDecoder->config.useOldADTSFormat;
-            adts_frame(&adts, &ld);
-            hDecoder->sf_index = adts.sf_index;
-            hDecoder->object_type = adts.profile + 1;
+            adts->old_format = hDecoder->config.useOldADTSFormat;
+            adts_frame(adts, ld);
+            hDecoder->sf_index = adts->sf_index;
+            hDecoder->object_type = adts->profile + 1;
             *samplerate = get_sample_rate(hDecoder->sf_index);
-            *channels = (adts.channel_configuration > 6) ? 2 : adts.channel_configuration;
+            *channels = (adts->channel_configuration > 6) ? 2 : adts->channel_configuration;
         }
-        if(ld.error) { return -1; }
+        if(ld->error) {
+            ret = -1;
+            goto exit;
+        }
     }
-    if(!*samplerate) return -1;
+    if(!*samplerate) {
+        ret = -1;
+        goto exit;
+    }
 #if(defined(PS_DEC))
     /* check if we have a mono file */
     if(*channels == 1) {
@@ -1520,25 +1564,50 @@ long NeAACDecInit(NeAACDecHandle hpDecoder, uint8_t* buffer, uint32_t buffer_siz
 #ifdef LD_DEC
     if(hDecoder->object_type == LD) hDecoder->frameLength >>= 1;
 #endif
-    if(can_decode_ot(hDecoder->object_type) < 0) return -1;
-    return bits;
+    if(can_decode_ot(hDecoder->object_type) < 0) {
+        ret = -1;
+        goto exit;
+    }
+    ret = bits;
+    goto exit;
+
+exit:
+    if(ld) {
+        free(ld);
+        ld = NULL;
+    }
+    if(adts) {
+        free(adts);
+        adts = NULL;
+    }
+    if(adif) {
+        free(adif);
+        adif = NULL;
+    }
+    return ret;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* Init the library using a DecoderSpecificInfo */
 int8_t NeAACDecInit2(NeAACDecHandle hpDecoder, uint8_t* pBuffer, uint32_t SizeOfDecoderSpecificInfo, uint32_t* samplerate, uint8_t* channels) {
-    NeAACDecStruct_t*        hDecoder = (NeAACDecStruct_t*)hpDecoder;
-    int8_t                   rc;
-    mp4AudioSpecificConfig_t mp4ASC;
+    NeAACDecStruct_t* hDecoder = (NeAACDecStruct_t*)hpDecoder;
+    int8_t            rc;
+    int8_t            ret = 0;
+    //    mp4AudioSpecificConfig_t mp4ASC; // ⏫⏫⏫
 
-    if((hDecoder == NULL) || (pBuffer == NULL) || (SizeOfDecoderSpecificInfo < 2) || (samplerate == NULL) || (channels == NULL)) { return -1; }
+    mp4AudioSpecificConfig_t* mp4ASC = (mp4AudioSpecificConfig_t*)faad_malloc(1 * sizeof(mp4AudioSpecificConfig_t));
+
+    if((hDecoder == NULL) || (pBuffer == NULL) || (SizeOfDecoderSpecificInfo < 2) || (samplerate == NULL) || (channels == NULL)) {
+        ret = -1;
+        goto exit;
+    }
     hDecoder->adif_header_t_present = 0;
     hDecoder->adts_header_t_present = 0;
     /* decode the audio specific config */
-    rc = AudioSpecificConfig2(pBuffer, SizeOfDecoderSpecificInfo, &mp4ASC, &(hDecoder->pce), hDecoder->latm_header_t_present);
+    rc = AudioSpecificConfig2(pBuffer, SizeOfDecoderSpecificInfo, mp4ASC, &(hDecoder->pce), hDecoder->latm_header_t_present);
     /* copy the relevant info to the decoder handle */
-    *samplerate = mp4ASC.samplingFrequency;
-    if(mp4ASC.channelsConfiguration) { *channels = mp4ASC.channelsConfiguration; }
+    *samplerate = mp4ASC->samplingFrequency;
+    if(mp4ASC->channelsConfiguration) { *channels = mp4ASC->channelsConfiguration; }
     else {
         *channels = hDecoder->pce.channels;
         hDecoder->pce_set = 1;
@@ -1550,39 +1619,49 @@ int8_t NeAACDecInit2(NeAACDecHandle hpDecoder, uint8_t* pBuffer, uint32_t SizeOf
         *channels = 2;
     }
 #endif
-    hDecoder->sf_index = mp4ASC.samplingFrequencyIndex;
-    hDecoder->object_type = mp4ASC.objectTypeIndex;
+    hDecoder->sf_index = mp4ASC->samplingFrequencyIndex;
+    hDecoder->object_type = mp4ASC->objectTypeIndex;
 #ifdef ERROR_RESILIENCE
-    hDecoder->aacSectionDataResilienceFlag = mp4ASC.aacSectionDataResilienceFlag;
-    hDecoder->aacScalefactorDataResilienceFlag = mp4ASC.aacScalefactorDataResilienceFlag;
-    hDecoder->aacSpectralDataResilienceFlag = mp4ASC.aacSpectralDataResilienceFlag;
+    hDecoder->aacSectionDataResilienceFlag = mp4ASC->aacSectionDataResilienceFlag;
+    hDecoder->aacScalefactorDataResilienceFlag = mp4ASC->aacScalefactorDataResilienceFlag;
+    hDecoder->aacSpectralDataResilienceFlag = mp4ASC->aacSpectralDataResilienceFlag;
 #endif
 #ifdef SBR_DEC
-    hDecoder->sbr_present_flag = mp4ASC.sbr_present_flag;
-    hDecoder->downSampledSBR = mp4ASC.downSampledSBR;
-    if(hDecoder->config.dontUpSampleImplicitSBR == 0) hDecoder->forceUpSampling = mp4ASC.forceUpSampling;
+    hDecoder->sbr_present_flag = mp4ASC->sbr_present_flag;
+    hDecoder->downSampledSBR = mp4ASC->downSampledSBR;
+    if(hDecoder->config.dontUpSampleImplicitSBR == 0) hDecoder->forceUpSampling = mp4ASC->forceUpSampling;
     else
         hDecoder->forceUpSampling = 0;
 
     /* AAC core decoder samplerate is 2 times as low */
-    if(((hDecoder->sbr_present_flag == 1) && (!hDecoder->downSampledSBR)) || hDecoder->forceUpSampling == 1) {
-        hDecoder->sf_index = get_sr_index(mp4ASC.samplingFrequency / 2);
-    }
+    if(((hDecoder->sbr_present_flag == 1) && (!hDecoder->downSampledSBR)) || hDecoder->forceUpSampling == 1) { hDecoder->sf_index = get_sr_index(mp4ASC->samplingFrequency / 2); }
 #endif
-    if(rc != 0) { return rc; }
-    hDecoder->channelConfiguration = mp4ASC.channelsConfiguration;
-    if(mp4ASC.frameLengthFlag)
+    if(rc != 0) {
+        ret = rc;
+        goto exit;
+    }
+    hDecoder->channelConfiguration = mp4ASC->channelsConfiguration;
+    if(mp4ASC->frameLengthFlag)
 #ifdef ALLOW_SMALL_FRAMELENGTH
         hDecoder->frameLength = 960;
 #else
-        return -1;
+        ret = -1;
+    goto exit;
 #endif
     /* must be done before frameLength is divided by 2 for LD */
     hDecoder->fb = filter_bank_init(hDecoder->frameLength);
 #ifdef LD_DEC
     if(hDecoder->object_type == LD) hDecoder->frameLength >>= 1;
 #endif
-    return 0;
+    ret = 0;
+    goto exit;
+
+exit:
+    if(mp4ASC) {
+        free(mp4ASC);
+        mp4ASC = NULL;
+    }
+    return ret;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1818,8 +1897,7 @@ void* NeAACDecDecode(NeAACDecHandle hpDecoder, NeAACDecFrameInfo_t* hInfo, uint8
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-void* NeAACDecDecode2(NeAACDecHandle hpDecoder, NeAACDecFrameInfo_t* hInfo, uint8_t* buffer, uint32_t buffer_size, void** sample_buffer,
-                      uint32_t sample_buffer_size) {
+void* NeAACDecDecode2(NeAACDecHandle hpDecoder, NeAACDecFrameInfo_t* hInfo, uint8_t* buffer, uint32_t buffer_size, void** sample_buffer, uint32_t sample_buffer_size) {
     NeAACDecStruct_t* hDecoder = (NeAACDecStruct_t*)hpDecoder;
     if((sample_buffer == NULL) || (sample_buffer_size == 0)) {
         hInfo->error = 27;
@@ -1829,12 +1907,11 @@ void* NeAACDecDecode2(NeAACDecHandle hpDecoder, NeAACDecFrameInfo_t* hInfo, uint
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-static void* aac_frame_decode(NeAACDecStruct_t* hDecoder, NeAACDecFrameInfo_t* hInfo, uint8_t* buffer, uint32_t buffer_size, void** sample_buffer2,
-                              uint32_t sample_buffer_size) {
+static void* aac_frame_decode(NeAACDecStruct_t* hDecoder, NeAACDecFrameInfo_t* hInfo, uint8_t* buffer, uint32_t buffer_size, void** sample_buffer2, uint32_t sample_buffer_size) {
     uint16_t  i;
     uint8_t   channels = 0;
     uint8_t   output_channels = 0;
-    bitfile_t ld = {0, 0, 0, 0, 0, 0, 0, 0, 0}; // ⏫⏫⏫ size only 48
+    bitfile_t ld = {0, 0, 0, 0, 0, 0, 0, 0, 0};  // ⏫⏫⏫ size only 48
     uint32_t  bitsconsumed;
     uint16_t  frame_len;
     void*     sample_buffer;
@@ -1934,18 +2011,7 @@ static void* aac_frame_decode(NeAACDecStruct_t* hDecoder, NeAACDecFrameInfo_t* h
     }
     /* allocate the buffer for the final samples */
     if((hDecoder->sample_buffer == NULL) || (hDecoder->alloced_channels != output_channels)) {
-        static const uint8_t str[] = {sizeof(int16_t),
-                                      sizeof(int32_t),
-                                      sizeof(int32_t),
-                                      sizeof(float),
-                                      sizeof(double),
-                                      sizeof(int16_t),
-                                      sizeof(int16_t),
-                                      sizeof(int16_t),
-                                      sizeof(int16_t),
-                                      0,
-                                      0,
-                                      0};
+        static const uint8_t str[] = {sizeof(int16_t), sizeof(int32_t), sizeof(int32_t), sizeof(float), sizeof(double), sizeof(int16_t), sizeof(int16_t), sizeof(int16_t), sizeof(int16_t), 0, 0, 0};
         uint8_t              stride = str[hDecoder->config.outputFormat - 1];
 #ifdef SBR_DEC
         if(((hDecoder->sbr_present_flag == 1) && (!hDecoder->downSampledSBR)) || (hDecoder->forceUpSampling == 1)) { stride = 2 * stride; }
@@ -2041,17 +2107,14 @@ void drc_end(drc_info_t* drc) {
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-static int32_t drc_pow2_table[] = {
-    COEF_CONST(0.5146511183), COEF_CONST(0.5297315472), COEF_CONST(0.5452538663), COEF_CONST(0.5612310242), COEF_CONST(0.5776763484),
-    COEF_CONST(0.5946035575), COEF_CONST(0.6120267717), COEF_CONST(0.6299605249), COEF_CONST(0.6484197773), COEF_CONST(0.6674199271),
-    COEF_CONST(0.6869768237), COEF_CONST(0.7071067812), COEF_CONST(0.7278265914), COEF_CONST(0.7491535384), COEF_CONST(0.7711054127),
-    COEF_CONST(0.7937005260), COEF_CONST(0.8169577266), COEF_CONST(0.8408964153), COEF_CONST(0.8655365610), COEF_CONST(0.8908987181),
-    COEF_CONST(0.9170040432), COEF_CONST(0.9438743127), COEF_CONST(0.9715319412), COEF_CONST(1.0000000000), COEF_CONST(1.0293022366),
-    COEF_CONST(1.0594630944), COEF_CONST(1.0905077327), COEF_CONST(1.1224620483), COEF_CONST(1.1553526969), COEF_CONST(1.1892071150),
-    COEF_CONST(1.2240535433), COEF_CONST(1.2599210499), COEF_CONST(1.2968395547), COEF_CONST(1.3348398542), COEF_CONST(1.3739536475),
-    COEF_CONST(1.4142135624), COEF_CONST(1.4556531828), COEF_CONST(1.4983070769), COEF_CONST(1.5422108254), COEF_CONST(1.5874010520),
-    COEF_CONST(1.6339154532), COEF_CONST(1.6817928305), COEF_CONST(1.7310731220), COEF_CONST(1.7817974363), COEF_CONST(1.8340080864),
-    COEF_CONST(1.8877486254), COEF_CONST(1.9430638823)};
+const int32_t drc_pow2_table[] = {COEF_CONST(0.5146511183), COEF_CONST(0.5297315472), COEF_CONST(0.5452538663), COEF_CONST(0.5612310242), COEF_CONST(0.5776763484), COEF_CONST(0.5946035575),
+                                  COEF_CONST(0.6120267717), COEF_CONST(0.6299605249), COEF_CONST(0.6484197773), COEF_CONST(0.6674199271), COEF_CONST(0.6869768237), COEF_CONST(0.7071067812),
+                                  COEF_CONST(0.7278265914), COEF_CONST(0.7491535384), COEF_CONST(0.7711054127), COEF_CONST(0.7937005260), COEF_CONST(0.8169577266), COEF_CONST(0.8408964153),
+                                  COEF_CONST(0.8655365610), COEF_CONST(0.8908987181), COEF_CONST(0.9170040432), COEF_CONST(0.9438743127), COEF_CONST(0.9715319412), COEF_CONST(1.0000000000),
+                                  COEF_CONST(1.0293022366), COEF_CONST(1.0594630944), COEF_CONST(1.0905077327), COEF_CONST(1.1224620483), COEF_CONST(1.1553526969), COEF_CONST(1.1892071150),
+                                  COEF_CONST(1.2240535433), COEF_CONST(1.2599210499), COEF_CONST(1.2968395547), COEF_CONST(1.3348398542), COEF_CONST(1.3739536475), COEF_CONST(1.4142135624),
+                                  COEF_CONST(1.4556531828), COEF_CONST(1.4983070769), COEF_CONST(1.5422108254), COEF_CONST(1.5874010520), COEF_CONST(1.6339154532), COEF_CONST(1.6817928305),
+                                  COEF_CONST(1.7310731220), COEF_CONST(1.7817974363), COEF_CONST(1.8340080864), COEF_CONST(1.8877486254), COEF_CONST(1.9430638823)};
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void drc_decode(drc_info_t* drc, int32_t* spec) {
     uint16_t i, bd, top;
@@ -2179,8 +2242,8 @@ static inline void mdct(fb_info_t* fb, int32_t* in_data, int32_t* out_data, uint
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-void ifilter_bank(fb_info_t* fb, uint8_t window_sequence, uint8_t window_shape, uint8_t window_shape_prev, int32_t* freq_in, int32_t* time_out,
-                  int32_t* overlap, uint8_t object_type, uint16_t frame_len) {
+void ifilter_bank(fb_info_t* fb, uint8_t window_sequence, uint8_t window_shape, uint8_t window_shape_prev, int32_t* freq_in, int32_t* time_out, int32_t* overlap, uint8_t object_type,
+                  uint16_t frame_len) {
     (void)object_type;
     int16_t i;
     // int32_t        transf_buf[2 * 1024] = {0}; // ⏫⏫⏫
@@ -2258,31 +2321,22 @@ void ifilter_bank(fb_info_t* fb, uint8_t window_sequence, uint8_t window_shape, 
         for(i = 0; i < nflat_ls; i++) time_out[i] = overlap[i];
         for(i = 0; i < nshort; i++) {
             time_out[nflat_ls + i] = overlap[nflat_ls + i] + MUL_F(transf_buf[nshort * 0 + i], window_short_prev[i]);
-            time_out[nflat_ls + 1 * nshort + i] = overlap[nflat_ls + nshort * 1 + i] +
-                                                  MUL_F(transf_buf[nshort * 1 + i], window_short[nshort - 1 - i]) +
-                                                  MUL_F(transf_buf[nshort * 2 + i], window_short[i]);
-            time_out[nflat_ls + 2 * nshort + i] = overlap[nflat_ls + nshort * 2 + i] +
-                                                  MUL_F(transf_buf[nshort * 3 + i], window_short[nshort - 1 - i]) +
-                                                  MUL_F(transf_buf[nshort * 4 + i], window_short[i]);
-            time_out[nflat_ls + 3 * nshort + i] = overlap[nflat_ls + nshort * 3 + i] +
-                                                  MUL_F(transf_buf[nshort * 5 + i], window_short[nshort - 1 - i]) +
-                                                  MUL_F(transf_buf[nshort * 6 + i], window_short[i]);
+            time_out[nflat_ls + 1 * nshort + i] =
+                overlap[nflat_ls + nshort * 1 + i] + MUL_F(transf_buf[nshort * 1 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 2 + i], window_short[i]);
+            time_out[nflat_ls + 2 * nshort + i] =
+                overlap[nflat_ls + nshort * 2 + i] + MUL_F(transf_buf[nshort * 3 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 4 + i], window_short[i]);
+            time_out[nflat_ls + 3 * nshort + i] =
+                overlap[nflat_ls + nshort * 3 + i] + MUL_F(transf_buf[nshort * 5 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 6 + i], window_short[i]);
             if(i < trans)
-                time_out[nflat_ls + 4 * nshort + i] = overlap[nflat_ls + nshort * 4 + i] +
-                                                      MUL_F(transf_buf[nshort * 7 + i], window_short[nshort - 1 - i]) +
-                                                      MUL_F(transf_buf[nshort * 8 + i], window_short[i]);
+                time_out[nflat_ls + 4 * nshort + i] =
+                    overlap[nflat_ls + nshort * 4 + i] + MUL_F(transf_buf[nshort * 7 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 8 + i], window_short[i]);
         }
         /* window the second half and save as overlap for next frame */
         for(i = 0; i < nshort; i++) {
-            if(i >= trans)
-                overlap[nflat_ls + 4 * nshort + i - nlong] =
-                    MUL_F(transf_buf[nshort * 7 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 8 + i], window_short[i]);
-            overlap[nflat_ls + 5 * nshort + i - nlong] =
-                MUL_F(transf_buf[nshort * 9 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 10 + i], window_short[i]);
-            overlap[nflat_ls + 6 * nshort + i - nlong] =
-                MUL_F(transf_buf[nshort * 11 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 12 + i], window_short[i]);
-            overlap[nflat_ls + 7 * nshort + i - nlong] =
-                MUL_F(transf_buf[nshort * 13 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 14 + i], window_short[i]);
+            if(i >= trans) overlap[nflat_ls + 4 * nshort + i - nlong] = MUL_F(transf_buf[nshort * 7 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 8 + i], window_short[i]);
+            overlap[nflat_ls + 5 * nshort + i - nlong] = MUL_F(transf_buf[nshort * 9 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 10 + i], window_short[i]);
+            overlap[nflat_ls + 6 * nshort + i - nlong] = MUL_F(transf_buf[nshort * 11 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 12 + i], window_short[i]);
+            overlap[nflat_ls + 7 * nshort + i - nlong] = MUL_F(transf_buf[nshort * 13 + i], window_short[nshort - 1 - i]) + MUL_F(transf_buf[nshort * 14 + i], window_short[i]);
             overlap[nflat_ls + 8 * nshort + i - nlong] = MUL_F(transf_buf[nshort * 15 + i], window_short[nshort - 1 - i]);
         }
         for(i = 0; i < nflat_ls; i++) overlap[nflat_ls + nshort + i] = 0;
@@ -2308,8 +2362,7 @@ void ifilter_bank(fb_info_t* fb, uint8_t window_sequence, uint8_t window_shape, 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 /* only works for LTP -> no overlapping, no short blocks */
-void filter_bank_ltp(fb_info_t* fb, uint8_t window_sequence, uint8_t window_shape, uint8_t window_shape_prev, int32_t* in_data, int32_t* out_mdct,
-                     uint8_t object_type, uint16_t frame_len) {
+void filter_bank_ltp(fb_info_t* fb, uint8_t window_sequence, uint8_t window_shape, uint8_t window_shape_prev, int32_t* in_data, int32_t* out_mdct, uint8_t object_type, uint16_t frame_len) {
     (void)object_type;
     int16_t i;
     //    int32_t        windowed_buf[2 * 1024] = {0}; // ⏫⏫⏫
@@ -2388,15 +2441,13 @@ const hcb_t*          hcb_table[] = {0, hcb1_1, hcb2_1, 0, hcb4_1, 0, hcb6_1, 0,
 const hcb_2_quad_t*   hcb_2_quad_table[] = {0, hcb1_2, hcb2_2, 0, hcb4_2, 0, 0, 0, 0, 0, 0, 0};
 const hcb_2_pair_t*   hcb_2_pair_table[] = {0, 0, 0, 0, 0, 0, hcb6_2, 0, hcb8_2, 0, hcb10_2, hcb11_2};
 const hcb_bin_pair_t* hcb_bin_table[] = {0, 0, 0, 0, 0, hcb5, 0, hcb7, 0, hcb9, 0, 0};
-uint8_t         hcbN[] = {0, 5, 5, 0, 5, 0, 5, 0, 5, 0, 6, 5};
+const uint8_t         hcbN[] = {0, 5, 5, 0, 5, 0, 5, 0, 5, 0, 6, 5};
 
-/* defines whether a huffman codebook is unsigned or not */
-/* Table 4.6.2 */
-uint8_t unsigned_cb[] = {0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-
-int32_t hcb_2_quad_table_size[] = {0, 114, 86, 0, 185, 0, 0, 0, 0, 0, 0, 0};
-int32_t hcb_2_pair_table_size[] = {0, 0, 0, 0, 0, 0, 126, 0, 83, 0, 210, 373};
-int32_t hcb_bin_table_size[] = {0, 0, 0, 161, 0, 161, 0, 127, 0, 337, 0, 0};
+/* defines whether a huffman codebook is unsigned or not  Table 4.6.2 */
+const uint8_t unsigned_cb[] = {0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+const int32_t hcb_2_quad_table_size[] = {0, 114, 86, 0, 185, 0, 0, 0, 0, 0, 0, 0};
+const int32_t hcb_2_pair_table_size[] = {0, 0, 0, 0, 0, 0, 126, 0, 83, 0, 210, 373};
+const int32_t hcb_bin_table_size[] = {0, 0, 0, 161, 0, 161, 0, 127, 0, 337, 0, 0};
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static void huffman_sign_bits(bitfile_t* ld, int16_t* sp, uint8_t len) {
@@ -2567,8 +2618,8 @@ static int16_t huffman_codebook(uint8_t i) {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static void vcb11_check_LAV(uint8_t cb, int16_t* sp) {
     (void)vcb11_check_LAV; // -Wunused-function
-    static const uint16_t vcb11_LAV_tab[] = {16, 31, 47, 63, 95, 127, 159, 191, 223, 255, 319, 383, 511, 767, 1023, 2047};
-    uint16_t              max = 0;
+    const uint16_t vcb11_LAV_tab[] = {16, 31, 47, 63, 95, 127, 159, 191, 223, 255, 319, 383, 511, 767, 1023, 2047};
+    uint16_t       max = 0;
 
     if(cb < 16 || cb > 31) return;
     max = vcb11_LAV_tab[cb - 16];
@@ -2779,7 +2830,7 @@ int8_t huffman_spectral_data_2(uint8_t cb, bits_t_t* ld, int16_t* sp) {
 #endif
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-static int32_t pow05_table[] = {
+const int32_t pow05_table[] = {
     COEF_CONST(1.68179283050743), /* 0.5^(-3/4) */
     COEF_CONST(1.41421356237310), /* 0.5^(-2/4) */
     COEF_CONST(1.18920711500272), /* 0.5^(-1/4) */
@@ -3020,15 +3071,12 @@ uint8_t reordered_spectral_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bi
                                                 rewrev_bits(&segment[numberOfSegments]);
                                                 if(segment[numberOfSegments - 1].len > 32) {
                                                     segment[numberOfSegments - 1].bufb =
-                                                        segment[numberOfSegments].bufb +
-                                                        showbits_hcr(&segment[numberOfSegments - 1], segment[numberOfSegments - 1].len - 32);
-                                                    segment[numberOfSegments - 1].bufa =
-                                                        segment[numberOfSegments].bufa + showbits_hcr(&segment[numberOfSegments - 1], 32);
+                                                        segment[numberOfSegments].bufb + showbits_hcr(&segment[numberOfSegments - 1], segment[numberOfSegments - 1].len - 32);
+                                                    segment[numberOfSegments - 1].bufa = segment[numberOfSegments].bufa + showbits_hcr(&segment[numberOfSegments - 1], 32);
                                                 }
                                                 else {
                                                     segment[numberOfSegments - 1].bufa =
-                                                        segment[numberOfSegments].bufa +
-                                                        showbits_hcr(&segment[numberOfSegments - 1], segment[numberOfSegments - 1].len);
+                                                        segment[numberOfSegments].bufa + showbits_hcr(&segment[numberOfSegments - 1], segment[numberOfSegments - 1].len);
                                                     segment[numberOfSegments - 1].bufb = segment[numberOfSegments].bufb;
                                                 }
                                                 segment[numberOfSegments - 1].len += additional_bits;
@@ -3074,10 +3122,7 @@ uint8_t reordered_spectral_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bi
                     uint8_t tmplen;
                     if(codeword[codeword_idx].bits.len != 0) concat_bits(&segment[segment_idx], &codeword[codeword_idx].bits);
                     tmplen = segment[segment_idx].len;
-                    if(huffman_spectral_data_2(codeword[codeword_idx].cb, &segment[segment_idx], &spectral_data[codeword[codeword_idx].sp_offset]) >=
-                       0) {
-                        codeword[codeword_idx].decoded = 1;
-                    }
+                    if(huffman_spectral_data_2(codeword[codeword_idx].cb, &segment[segment_idx], &spectral_data[codeword[codeword_idx].sp_offset]) >= 0) { codeword[codeword_idx].decoded = 1; }
                     else {
                         codeword[codeword_idx].bits = segment[segment_idx];
                         codeword[codeword_idx].bits.len = tmplen;
@@ -3088,7 +3133,7 @@ uint8_t reordered_spectral_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bi
         for(i = 0; i < numberOfSegments; i++) rewrev_bits(&segment[i]);
     }
     if(segment) {
-        free(codeword);
+        free(segment);
         segment = NULL;
     }
     if(codeword) {
@@ -3130,8 +3175,7 @@ void ms_decode(ic_stream_t* ics, ic_stream_t* icsr, int32_t* l_spec, int32_t* r_
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-static inline int32_t get_sample(int32_t** input, uint8_t channel, uint16_t sample, uint8_t down_matrix, uint8_t up_matrix,
-                                 uint8_t* internal_channel) {
+static inline int32_t get_sample(int32_t** input, uint8_t channel, uint16_t sample, uint8_t down_matrix, uint8_t up_matrix, uint8_t* internal_channel) {
     if(up_matrix == 1) return input[internal_channel[0]][sample];
 
     if(!down_matrix) return input[internal_channel[channel]][sample];
@@ -3276,8 +3320,7 @@ static inline void gen_rand_vector(int32_t* spec, int16_t scale_factor, uint16_t
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-void pns_decode(ic_stream_t* ics_left, ic_stream_t* ics_right, int32_t* spec_left, int32_t* spec_right, uint16_t frame_len, uint8_t channel_pair,
-                uint8_t                    object_type,
+void pns_decode(ic_stream_t* ics_left, ic_stream_t* ics_right, int32_t* spec_left, int32_t* spec_right, uint16_t frame_len, uint8_t channel_pair, uint8_t object_type,
                 /* RNG states */ uint32_t* __r1, uint32_t* __r2) {
     uint8_t  g, sfb, b;
     uint16_t size, offs;
@@ -3326,8 +3369,7 @@ void pns_decode(ic_stream_t* ics_left, ic_stream_t* ics_right, int32_t* spec_lef
                     ics_right->ltp.long_used[sfb] = 0;
                     ics_right->ltp2.long_used[sfb] = 0;
 #endif
-                    if(channel_pair && is_noise(ics_left, g, sfb) &&
-                       (((ics_left->ms_mask_present == 1) && (ics_left->ms_used[g][sfb])) || (ics_left->ms_mask_present == 2))) {
+                    if(channel_pair && is_noise(ics_left, g, sfb) && (((ics_left->ms_mask_present == 1) && (ics_left->ms_used[g][sfb])) || (ics_left->ms_mask_present == 2))) {
                         /*uint16_t c;*/
                         offs = ics_right->swb_offset[sfb];
                         size = min(ics_right->swb_offset[sfb + 1], ics_right->swb_offset_max) - offs;
@@ -3430,22 +3472,16 @@ static void channel_filter4(hyb_info_t* hyb, uint8_t frame_len, const int32_t* f
 
     for(i = 0; i < frame_len; i++) {
         input_re1[0] = -MUL_F(filter[2], (QMF_RE(buffer[i + 2]) + QMF_RE(buffer[i + 10]))) + MUL_F(filter[6], QMF_RE(buffer[i + 6]));
-        input_re1[1] = MUL_F(FRAC_CONST(-0.70710678118655), (MUL_F(filter[1], (QMF_RE(buffer[i + 1]) + QMF_RE(buffer[i + 11]))) +
-                                                             MUL_F(filter[3], (QMF_RE(buffer[i + 3]) + QMF_RE(buffer[i + 9]))) -
+        input_re1[1] = MUL_F(FRAC_CONST(-0.70710678118655), (MUL_F(filter[1], (QMF_RE(buffer[i + 1]) + QMF_RE(buffer[i + 11]))) + MUL_F(filter[3], (QMF_RE(buffer[i + 3]) + QMF_RE(buffer[i + 9]))) -
                                                              MUL_F(filter[5], (QMF_RE(buffer[i + 5]) + QMF_RE(buffer[i + 7])))));
-        input_im1[0] =
-            MUL_F(filter[0], (QMF_IM(buffer[i + 0]) - QMF_IM(buffer[i + 12]))) - MUL_F(filter[4], (QMF_IM(buffer[i + 4]) - QMF_IM(buffer[i + 8])));
-        input_im1[1] = MUL_F(FRAC_CONST(0.70710678118655), (MUL_F(filter[1], (QMF_IM(buffer[i + 1]) - QMF_IM(buffer[i + 11]))) -
-                                                            MUL_F(filter[3], (QMF_IM(buffer[i + 3]) - QMF_IM(buffer[i + 9]))) -
+        input_im1[0] = MUL_F(filter[0], (QMF_IM(buffer[i + 0]) - QMF_IM(buffer[i + 12]))) - MUL_F(filter[4], (QMF_IM(buffer[i + 4]) - QMF_IM(buffer[i + 8])));
+        input_im1[1] = MUL_F(FRAC_CONST(0.70710678118655), (MUL_F(filter[1], (QMF_IM(buffer[i + 1]) - QMF_IM(buffer[i + 11]))) - MUL_F(filter[3], (QMF_IM(buffer[i + 3]) - QMF_IM(buffer[i + 9]))) -
                                                             MUL_F(filter[5], (QMF_IM(buffer[i + 5]) - QMF_IM(buffer[i + 7])))));
-        input_re2[0] =
-            MUL_F(filter[0], (QMF_RE(buffer[i + 0]) - QMF_RE(buffer[i + 12]))) - MUL_F(filter[4], (QMF_RE(buffer[i + 4]) - QMF_RE(buffer[i + 8])));
-        input_re2[1] = MUL_F(FRAC_CONST(0.70710678118655), (MUL_F(filter[1], (QMF_RE(buffer[i + 1]) - QMF_RE(buffer[i + 11]))) -
-                                                            MUL_F(filter[3], (QMF_RE(buffer[i + 3]) - QMF_RE(buffer[i + 9]))) -
+        input_re2[0] = MUL_F(filter[0], (QMF_RE(buffer[i + 0]) - QMF_RE(buffer[i + 12]))) - MUL_F(filter[4], (QMF_RE(buffer[i + 4]) - QMF_RE(buffer[i + 8])));
+        input_re2[1] = MUL_F(FRAC_CONST(0.70710678118655), (MUL_F(filter[1], (QMF_RE(buffer[i + 1]) - QMF_RE(buffer[i + 11]))) - MUL_F(filter[3], (QMF_RE(buffer[i + 3]) - QMF_RE(buffer[i + 9]))) -
                                                             MUL_F(filter[5], (QMF_RE(buffer[i + 5]) - QMF_RE(buffer[i + 7])))));
         input_im2[0] = -MUL_F(filter[2], (QMF_IM(buffer[i + 2]) + QMF_IM(buffer[i + 10]))) + MUL_F(filter[6], QMF_IM(buffer[i + 6]));
-        input_im2[1] = MUL_F(FRAC_CONST(-0.70710678118655), (MUL_F(filter[1], (QMF_IM(buffer[i + 1]) + QMF_IM(buffer[i + 11]))) +
-                                                             MUL_F(filter[3], (QMF_IM(buffer[i + 3]) + QMF_IM(buffer[i + 9]))) -
+        input_im2[1] = MUL_F(FRAC_CONST(-0.70710678118655), (MUL_F(filter[1], (QMF_IM(buffer[i + 1]) + QMF_IM(buffer[i + 11]))) + MUL_F(filter[3], (QMF_IM(buffer[i + 3]) + QMF_IM(buffer[i + 9]))) -
                                                              MUL_F(filter[5], (QMF_IM(buffer[i + 5]) + QMF_IM(buffer[i + 7])))));
         /* q == 0 */
         QMF_RE(X_hybrid[i][0]) = input_re1[0] + input_re1[1] + input_im1[0] + input_im1[1];
@@ -3473,15 +3509,11 @@ static void channel_filter8(hyb_info_t* hyb, uint8_t frame_len, const int32_t* f
     for(i = 0; i < frame_len; i++) {
         input_re1[0] = MUL_F(filter[6], QMF_RE(buffer[6 + i]));
         input_re1[1] = MUL_F(filter[5], (QMF_RE(buffer[5 + i]) + QMF_RE(buffer[7 + i])));
-        input_re1[2] =
-            -MUL_F(filter[0], (QMF_RE(buffer[0 + i]) + QMF_RE(buffer[12 + i]))) + MUL_F(filter[4], (QMF_RE(buffer[4 + i]) + QMF_RE(buffer[8 + i])));
-        input_re1[3] =
-            -MUL_F(filter[1], (QMF_RE(buffer[1 + i]) + QMF_RE(buffer[11 + i]))) + MUL_F(filter[3], (QMF_RE(buffer[3 + i]) + QMF_RE(buffer[9 + i])));
+        input_re1[2] = -MUL_F(filter[0], (QMF_RE(buffer[0 + i]) + QMF_RE(buffer[12 + i]))) + MUL_F(filter[4], (QMF_RE(buffer[4 + i]) + QMF_RE(buffer[8 + i])));
+        input_re1[3] = -MUL_F(filter[1], (QMF_RE(buffer[1 + i]) + QMF_RE(buffer[11 + i]))) + MUL_F(filter[3], (QMF_RE(buffer[3 + i]) + QMF_RE(buffer[9 + i])));
         input_im1[0] = MUL_F(filter[5], (QMF_IM(buffer[7 + i]) - QMF_IM(buffer[5 + i])));
-        input_im1[1] =
-            MUL_F(filter[0], (QMF_IM(buffer[12 + i]) - QMF_IM(buffer[0 + i]))) + MUL_F(filter[4], (QMF_IM(buffer[8 + i]) - QMF_IM(buffer[4 + i])));
-        input_im1[2] =
-            MUL_F(filter[1], (QMF_IM(buffer[11 + i]) - QMF_IM(buffer[1 + i]))) + MUL_F(filter[3], (QMF_IM(buffer[9 + i]) - QMF_IM(buffer[3 + i])));
+        input_im1[1] = MUL_F(filter[0], (QMF_IM(buffer[12 + i]) - QMF_IM(buffer[0 + i]))) + MUL_F(filter[4], (QMF_IM(buffer[8 + i]) - QMF_IM(buffer[4 + i])));
+        input_im1[2] = MUL_F(filter[1], (QMF_IM(buffer[11 + i]) - QMF_IM(buffer[1 + i]))) + MUL_F(filter[3], (QMF_IM(buffer[9 + i]) - QMF_IM(buffer[3 + i])));
         input_im1[3] = MUL_F(filter[2], (QMF_IM(buffer[10 + i]) - QMF_IM(buffer[2 + i])));
 
         for(n = 0; n < 4; n++) { x[n] = input_re1[n] - input_im1[3 - n]; }
@@ -3499,15 +3531,11 @@ static void channel_filter8(hyb_info_t* hyb, uint8_t frame_len, const int32_t* f
 
         input_im2[0] = MUL_F(filter[6], QMF_IM(buffer[6 + i]));
         input_im2[1] = MUL_F(filter[5], (QMF_IM(buffer[5 + i]) + QMF_IM(buffer[7 + i])));
-        input_im2[2] =
-            -MUL_F(filter[0], (QMF_IM(buffer[0 + i]) + QMF_IM(buffer[12 + i]))) + MUL_F(filter[4], (QMF_IM(buffer[4 + i]) + QMF_IM(buffer[8 + i])));
-        input_im2[3] =
-            -MUL_F(filter[1], (QMF_IM(buffer[1 + i]) + QMF_IM(buffer[11 + i]))) + MUL_F(filter[3], (QMF_IM(buffer[3 + i]) + QMF_IM(buffer[9 + i])));
+        input_im2[2] = -MUL_F(filter[0], (QMF_IM(buffer[0 + i]) + QMF_IM(buffer[12 + i]))) + MUL_F(filter[4], (QMF_IM(buffer[4 + i]) + QMF_IM(buffer[8 + i])));
+        input_im2[3] = -MUL_F(filter[1], (QMF_IM(buffer[1 + i]) + QMF_IM(buffer[11 + i]))) + MUL_F(filter[3], (QMF_IM(buffer[3 + i]) + QMF_IM(buffer[9 + i])));
         input_re2[0] = MUL_F(filter[5], (QMF_RE(buffer[7 + i]) - QMF_RE(buffer[5 + i])));
-        input_re2[1] =
-            MUL_F(filter[0], (QMF_RE(buffer[12 + i]) - QMF_RE(buffer[0 + i]))) + MUL_F(filter[4], (QMF_RE(buffer[8 + i]) - QMF_RE(buffer[4 + i])));
-        input_re2[2] =
-            MUL_F(filter[1], (QMF_RE(buffer[11 + i]) - QMF_RE(buffer[1 + i]))) + MUL_F(filter[3], (QMF_RE(buffer[9 + i]) - QMF_RE(buffer[3 + i])));
+        input_re2[1] = MUL_F(filter[0], (QMF_RE(buffer[12 + i]) - QMF_RE(buffer[0 + i]))) + MUL_F(filter[4], (QMF_RE(buffer[8 + i]) - QMF_RE(buffer[4 + i])));
+        input_re2[2] = MUL_F(filter[1], (QMF_RE(buffer[11 + i]) - QMF_RE(buffer[1 + i]))) + MUL_F(filter[3], (QMF_RE(buffer[9 + i]) - QMF_RE(buffer[3 + i])));
         input_re2[3] = MUL_F(filter[2], (QMF_RE(buffer[10 + i]) - QMF_RE(buffer[2 + i])));
 
         for(n = 0; n < 4; n++) { x[n] = input_im2[n] + input_re2[3 - n]; }
@@ -3681,8 +3709,7 @@ static int8_t delta_clip(int8_t i, int8_t min, int8_t max) {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* delta decode array */
-static void delta_decode(uint8_t enable, int8_t* index, int8_t* index_prev, uint8_t dt_flag, uint8_t nr_par, uint8_t stride, int8_t min_index,
-                         int8_t max_index) {
+static void delta_decode(uint8_t enable, int8_t* index, int8_t* index_prev, uint8_t dt_flag, uint8_t nr_par, uint8_t stride, int8_t min_index, int8_t max_index) {
     int8_t i;
 
     if(enable == 1) {
@@ -3728,8 +3755,7 @@ static void delta_decode(uint8_t enable, int8_t* index, int8_t* index_prev, uint
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* delta modulo decode array */
 /* in: log2 value of the modulo value to allow using AND instead of MOD */
-static void delta_modulo_decode(uint8_t enable, int8_t* index, int8_t* index_prev, uint8_t dt_flag, uint8_t nr_par, uint8_t stride,
-                                int8_t and_modulo) {
+static void delta_modulo_decode(uint8_t enable, int8_t* index, int8_t* index_prev, uint8_t dt_flag, uint8_t nr_par, uint8_t stride, int8_t and_modulo) {
     int8_t i;
 
     if(enable == 1) {
@@ -3831,12 +3857,10 @@ static void ps_data_decode(ps_info_t* ps) {
         }
         //        iid = 1;
         /* delta decode iid parameters */
-        delta_decode(ps->enable_iid, ps->iid_index[env], iid_index_prev, ps->iid_dt[env], ps->nr_iid_par,
-                     (ps->iid_mode == 0 || ps->iid_mode == 3) ? 2 : 1, -num_iid_steps, num_iid_steps);
+        delta_decode(ps->enable_iid, ps->iid_index[env], iid_index_prev, ps->iid_dt[env], ps->nr_iid_par, (ps->iid_mode == 0 || ps->iid_mode == 3) ? 2 : 1, -num_iid_steps, num_iid_steps);
         //        iid = 0;
         /* delta decode icc parameters */
-        delta_decode(ps->enable_icc, ps->icc_index[env], icc_index_prev, ps->icc_dt[env], ps->nr_icc_par,
-                     (ps->icc_mode == 0 || ps->icc_mode == 3) ? 2 : 1, 0, 7);
+        delta_decode(ps->enable_icc, ps->icc_index[env], icc_index_prev, ps->icc_dt[env], ps->nr_icc_par, (ps->icc_mode == 0 || ps->icc_mode == 3) ? 2 : 1, 0, 7);
         /* delta modulo decode ipd parameters */
         delta_modulo_decode(ps->enable_ipdopd, ps->ipd_index[env], ipd_index_prev, ps->ipd_dt[env], ps->nr_ipdopd_par, 1, 7);
         /* delta modulo decode opd parameters */
@@ -3923,8 +3947,7 @@ static void ps_data_decode(ps_info_t* ps) {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* decorrelate the mono signal using an allpass filter */
-static void ps_decorrelate(ps_info_t* ps, complex_t* X_left[64], complex_t* X_right[64], complex_t* X_hybrid_left[32],
-                           complex_t* X_hybrid_right[32]) {
+static void ps_decorrelate(ps_info_t* ps, complex_t* X_left[64], complex_t* X_right[64], complex_t* X_hybrid_left[32], complex_t* X_hybrid_right[32]) {
     uint8_t          gr, n, m, bk;
     uint8_t          temp_delay = 0;
     uint8_t          sb, maxsb;
@@ -4193,12 +4216,10 @@ static void ps_decorrelate(ps_info_t* ps, complex_t* X_left[64], complex_t* X_ri
 // }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-static const int32_t ipdopd_cos_tab[] = {FRAC_CONST(1.000000000000000),  FRAC_CONST(0.707106781186548),  FRAC_CONST(0.000000000000000),
-                                         FRAC_CONST(-0.707106781186547), FRAC_CONST(-1.000000000000000), FRAC_CONST(-0.707106781186548),
-                                         FRAC_CONST(-0.000000000000000), FRAC_CONST(0.707106781186547),  FRAC_CONST(1.000000000000000)};
-static const int32_t ipdopd_sin_tab[] = {FRAC_CONST(0.000000000000000),  FRAC_CONST(0.707106781186547),  FRAC_CONST(1.000000000000000),
-                                         FRAC_CONST(0.707106781186548),  FRAC_CONST(0.000000000000000),  FRAC_CONST(-0.707106781186547),
-                                         FRAC_CONST(-1.000000000000000), FRAC_CONST(-0.707106781186548), FRAC_CONST(-0.000000000000000)};
+const int32_t ipdopd_cos_tab[] = {FRAC_CONST(1.000000000000000),  FRAC_CONST(0.707106781186548),  FRAC_CONST(0.000000000000000), FRAC_CONST(-0.707106781186547), FRAC_CONST(-1.000000000000000),
+                                  FRAC_CONST(-0.707106781186548), FRAC_CONST(-0.000000000000000), FRAC_CONST(0.707106781186547), FRAC_CONST(1.000000000000000)};
+const int32_t ipdopd_sin_tab[] = {FRAC_CONST(0.000000000000000),  FRAC_CONST(0.707106781186547),  FRAC_CONST(1.000000000000000),  FRAC_CONST(0.707106781186548), FRAC_CONST(0.000000000000000),
+                                  FRAC_CONST(-0.707106781186547), FRAC_CONST(-1.000000000000000), FRAC_CONST(-0.707106781186548), FRAC_CONST(-0.000000000000000)};
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static int32_t magnitude_c(complex_t c) {
@@ -4624,8 +4645,8 @@ uint8_t is_ltp_ot(uint8_t object_type) { /* check if the object type is an objec
     return 0;
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-void lt_prediction(ic_stream_t* ics, ltp_info_t* ltp, int32_t* spec, int16_t* lt_pred_stat, fb_info_t* fb, uint8_t win_shape, uint8_t win_shape_prev,
-                   uint8_t sr_index, uint8_t object_type, uint16_t frame_len) {
+void lt_prediction(ic_stream_t* ics, ltp_info_t* ltp, int32_t* spec, int16_t* lt_pred_stat, fb_info_t* fb, uint8_t win_shape, uint8_t win_shape_prev, uint8_t sr_index, uint8_t object_type,
+                   uint16_t frame_len) {
     uint8_t  sfb;
     uint16_t bin, i, num_samples;
     //    int32_t  x_est[2048]; // ⏫⏫⏫
@@ -4936,12 +4957,9 @@ static uint8_t ObjectTypesTable[32] = {
 };
 /* Table 1.6.1 */
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-int8_t NeAACDecAudioSpecificConfig(uint8_t* pBuffer, uint32_t buffer_size, mp4AudioSpecificConfig_t* mp4ASC) {
-    return AudioSpecificConfig2(pBuffer, buffer_size, mp4ASC, NULL, 0);
-}
+int8_t NeAACDecAudioSpecificConfig(uint8_t* pBuffer, uint32_t buffer_size, mp4AudioSpecificConfig_t* mp4ASC) { return AudioSpecificConfig2(pBuffer, buffer_size, mp4ASC, NULL, 0); }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-int8_t AudioSpecificConfigFrombitfile_t(bitfile_t* ld, mp4AudioSpecificConfig_t* mp4ASC, program_config_t* pce, uint32_t buffer_size,
-                                        uint8_t short_form) {
+int8_t AudioSpecificConfigFrombitfile_t(bitfile_t* ld, mp4AudioSpecificConfig_t* mp4ASC, program_config_t* pce, uint32_t buffer_size, uint8_t short_form) {
     int8_t   result = 0;
     uint32_t startpos = faad_get_processed_bits(ld);
     (void)startpos;
@@ -4982,8 +5000,7 @@ int8_t AudioSpecificConfigFrombitfile_t(bitfile_t* ld, mp4AudioSpecificConfig_t*
     }
 #endif
     /* get GASpecificConfig */
-    if(mp4ASC->objectTypeIndex == 1 || mp4ASC->objectTypeIndex == 2 || mp4ASC->objectTypeIndex == 3 || mp4ASC->objectTypeIndex == 4 ||
-       mp4ASC->objectTypeIndex == 6 || mp4ASC->objectTypeIndex == 7) {
+    if(mp4ASC->objectTypeIndex == 1 || mp4ASC->objectTypeIndex == 2 || mp4ASC->objectTypeIndex == 3 || mp4ASC->objectTypeIndex == 4 || mp4ASC->objectTypeIndex == 6 || mp4ASC->objectTypeIndex == 7) {
         result = GASpecificConfig(ld, mp4ASC, pce);
 #ifdef ERROR_RESILIENCE
     }
@@ -5081,8 +5098,7 @@ void extract_envelope_data(sbr_info_t* sbr, uint8_t ch) {
                 uint8_t i;
                 for(k = 0; k < sbr->n[sbr->f[ch][l]]; k++) {
                     for(i = 0; i < sbr->N_low; i++) {
-                        if((sbr->f_table_res[LO_RES][i] <= sbr->f_table_res[HI_RES][k]) &&
-                           (sbr->f_table_res[HI_RES][k] < sbr->f_table_res[LO_RES][i + 1])) {
+                        if((sbr->f_table_res[LO_RES][i] <= sbr->f_table_res[HI_RES][k]) && (sbr->f_table_res[HI_RES][k] < sbr->f_table_res[LO_RES][i + 1])) {
                             if(l == 0) E_prev = sbr->E_prev[ch][i];
                             else
                                 E_prev = sbr->E[ch][i][l - 1];
@@ -5357,9 +5373,9 @@ static uint8_t rvlc_decode_sf_forward(ic_stream_t* ics, bitfile_t* ld_sf, bitfil
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static int8_t rvlc_huffman_sf(bitfile_t* ld_sf, bitfile_t* ld_esc, int8_t direction) {
-    uint8_t            i, j;
-    int8_t             index;
-    uint32_t           cw;
+    uint8_t                  i, j;
+    int8_t                   index;
+    uint32_t                 cw;
     const rvlc_huff_table_t* h = book_rvlc;
 
     i = h->len;
@@ -5390,8 +5406,8 @@ static int8_t rvlc_huffman_sf(bitfile_t* ld_sf, bitfile_t* ld_esc, int8_t direct
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static int8_t rvlc_huffman_esc(bitfile_t* ld, int8_t direction) {
-    uint8_t            i, j;
-    uint32_t           cw;
+    uint8_t                  i, j;
+    uint32_t                 cw;
     const rvlc_huff_table_t* h = book_escape;
 
     i = h->len;
@@ -5557,8 +5573,7 @@ static void fft_dif(int32_t* Real, int32_t* Imag) {
 /* size 64 only! */
 void dct4_kernel(int32_t* in_real, int32_t* in_imag, int32_t* out_real, int32_t* out_imag) {
     // Tables with bit reverse values for 5 bits, bit reverse of i at i-th position
-    const uint8_t bit_rev_tab[32] = {0, 16, 8, 24, 4, 20, 12, 28, 2, 18, 10, 26, 6, 22, 14, 30,
-                                     1, 17, 9, 25, 5, 21, 13, 29, 3, 19, 11, 27, 7, 23, 15, 31};
+    const uint8_t bit_rev_tab[32] = {0, 16, 8, 24, 4, 20, 12, 28, 2, 18, 10, 26, 6, 22, 14, 30, 1, 17, 9, 25, 5, 21, 13, 29, 3, 19, 11, 27, 7, 23, 15, 31};
     uint32_t      i, i_rev;
 
     /* Step 2: modulate */
@@ -5782,8 +5797,7 @@ static void sbr_save_matrix(sbr_info_t* sbr, uint8_t ch) {
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-static uint8_t sbr_process_channel(sbr_info_t* sbr, int32_t* channel_buf, complex_t* X[64], uint8_t ch, uint8_t dont_process,
-                                   const uint8_t downSampledSBR) {
+static uint8_t sbr_process_channel(sbr_info_t* sbr, int32_t* channel_buf, complex_t* X[64], uint8_t ch, uint8_t dont_process, const uint8_t downSampledSBR) {
     (void)downSampledSBR;
     int16_t k, l;
     uint8_t ret = 0;
@@ -5845,17 +5859,18 @@ static uint8_t sbr_process_channel(sbr_info_t* sbr, int32_t* channel_buf, comple
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t sbrDecodeCoupleFrame(sbr_info_t* sbr, int32_t* left_chan, int32_t* right_chan, const uint8_t just_seeked, const uint8_t downSampledSBR) {
-    printf(ANSI_ESC_YELLOW "sbrDecodeCoupleFrame\n" ANSI_ESC_WHITE);
+    //    printf(ANSI_ESC_YELLOW "sbrDecodeCoupleFrame\n" ANSI_ESC_WHITE);
     uint8_t dont_process = 0;
     uint8_t ret = 0;
     //    complex_t X[MAX_NTSR][64]; // ⏫⏫⏫
 
-    complex_t** X = (complex_t**)faad_malloc(MAX_NTSR * sizeof(X));
-    for(uint8_t i = 0; i < MAX_NTSR; i++) X[i] = (complex_t*)faad_malloc(64 * sizeof(*(X[i])));
-
     if(sbr == NULL) return 20;
     /* case can occur due to bit errors */
     if(sbr->id_aac != ID_CPE) return 21;
+
+    complex_t** X = (complex_t**)faad_malloc(MAX_NTSR * sizeof(X));
+    for(uint8_t i = 0; i < MAX_NTSR; i++) X[i] = (complex_t*)faad_malloc(64 * sizeof(*(X[i])));
+
     if(sbr->ret || (sbr->header_count == 0)) {
         /* don't process just upsample */
         dont_process = 1;
@@ -5895,7 +5910,7 @@ uint8_t sbrDecodeCoupleFrame(sbr_info_t* sbr, int32_t* left_chan, int32_t* right
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t sbrDecodeSingleFrame(sbr_info_t* sbr, int32_t* channel, const uint8_t just_seeked, const uint8_t downSampledSBR) {
-//    printf(ANSI_ESC_YELLOW "sbrDecodeSingleFrame\n" ANSI_ESC_WHITE);
+    //    printf(ANSI_ESC_YELLOW "sbrDecodeSingleFrame\n" ANSI_ESC_WHITE);
     uint8_t dont_process = 0;
     uint8_t ret = 0;
     //    complex_t X[MAX_NTSR][64]; // ⏫⏫⏫
@@ -5939,9 +5954,8 @@ uint8_t sbrDecodeSingleFrame(sbr_info_t* sbr, int32_t* channel, const uint8_t ju
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-uint8_t sbrDecodeSingleFramePS(sbr_info_t* sbr, int32_t* left_channel, int32_t* right_channel, const uint8_t just_seeked,
-                               const uint8_t downSampledSBR) {
-//    printf(ANSI_ESC_YELLOW "sbrDecodeSingleFramePS\n" ANSI_ESC_WHITE);
+uint8_t sbrDecodeSingleFramePS(sbr_info_t* sbr, int32_t* left_channel, int32_t* right_channel, const uint8_t just_seeked, const uint8_t downSampledSBR) {
+    //    printf(ANSI_ESC_YELLOW "sbrDecodeSingleFramePS\n" ANSI_ESC_WHITE);
     uint8_t l, k;
     uint8_t dont_process = 0;
     uint8_t ret = 0;
@@ -6015,13 +6029,12 @@ uint8_t sbrDecodeSingleFramePS(sbr_info_t* sbr, int32_t* left_channel, int32_t* 
 uint8_t qmf_start_channel(uint8_t bs_start_freq, uint8_t bs_samplerate_mode, uint32_t sample_rate) {
     static const uint8_t startMinTable[12] = {7, 7, 10, 11, 12, 16, 16, 17, 24, 32, 35, 48};
     static const uint8_t offsetIndexTable[12] = {5, 5, 4, 4, 4, 3, 2, 1, 0, 6, 6, 6};
-    static const int8_t  offset[7][16] = {
-        {-8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7}, {-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 13},
-        {-5, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 16},  {-6, -4, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 16},
-        {-4, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 16, 20},  {-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 16, 20, 24},
-        {0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 16, 20, 24, 28, 33}};
-    uint8_t startMin = startMinTable[get_sr_index(sample_rate)];
-    uint8_t offsetIndex = offsetIndexTable[get_sr_index(sample_rate)];
+    static const int8_t  offset[7][16] = {{-8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7}, {-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 13},
+                                          {-5, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 16},  {-6, -4, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 16},
+                                          {-4, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 16, 20},  {-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 16, 20, 24},
+                                          {0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 16, 20, 24, 28, 33}};
+    uint8_t              startMin = startMinTable[get_sr_index(sample_rate)];
+    uint8_t              offsetIndex = offsetIndexTable[get_sr_index(sample_rate)];
 
     if(bs_samplerate_mode) { return startMin + offset[offsetIndex][bs_start_freq]; }
     else { return startMin + offset[6][bs_start_freq]; }
@@ -6037,12 +6050,10 @@ uint8_t qmf_stop_channel(uint8_t bs_stop_freq, uint32_t sample_rate, uint8_t k0)
     else {
         static const uint8_t stopMinTable[12] = {13, 15, 20, 21, 23, 32, 32, 35, 48, 64, 70, 96};
         static const int8_t  offset[12][14] = {
-            {0, 2, 4, 6, 8, 11, 14, 18, 22, 26, 31, 37, 44, 51},     {0, 2, 4, 6, 8, 11, 14, 18, 22, 26, 31, 36, 42, 49},
-            {0, 2, 4, 6, 8, 11, 14, 17, 21, 25, 29, 34, 39, 44},     {0, 2, 4, 6, 8, 11, 14, 17, 20, 24, 28, 33, 38, 43},
-            {0, 2, 4, 6, 8, 11, 14, 17, 20, 24, 28, 32, 36, 41},     {0, 2, 4, 6, 8, 10, 12, 14, 17, 20, 23, 26, 29, 32},
-            {0, 2, 4, 6, 8, 10, 12, 14, 17, 20, 23, 26, 29, 32},     {0, 1, 3, 5, 7, 9, 11, 13, 15, 17, 20, 23, 26, 29},
-            {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16},          {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, -1, -2, -3, -4, -5, -6, -6, -6, -6, -6, -6, -6, -6}, {0, -3, -6, -9, -12, -15, -18, -20, -22, -24, -26, -28, -30, -32}};
+            {0, 2, 4, 6, 8, 11, 14, 18, 22, 26, 31, 37, 44, 51}, {0, 2, 4, 6, 8, 11, 14, 18, 22, 26, 31, 36, 42, 49},     {0, 2, 4, 6, 8, 11, 14, 17, 21, 25, 29, 34, 39, 44},
+            {0, 2, 4, 6, 8, 11, 14, 17, 20, 24, 28, 33, 38, 43}, {0, 2, 4, 6, 8, 11, 14, 17, 20, 24, 28, 32, 36, 41},     {0, 2, 4, 6, 8, 10, 12, 14, 17, 20, 23, 26, 29, 32},
+            {0, 2, 4, 6, 8, 10, 12, 14, 17, 20, 23, 26, 29, 32}, {0, 1, 3, 5, 7, 9, 11, 13, 15, 17, 20, 23, 26, 29},      {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},          {0, -1, -2, -3, -4, -5, -6, -6, -6, -6, -6, -6, -6, -6}, {0, -3, -6, -9, -12, -15, -18, -20, -22, -24, -26, -28, -30, -32}};
         uint8_t stopMin = stopMinTable[get_sr_index(sample_rate)];
         /* bs_stop_freq <= 13 */
         return min(64, stopMin + offset[get_sr_index(sample_rate)][min(bs_stop_freq, 13)]);
@@ -6096,23 +6107,20 @@ uint8_t master_frequency_table_fs0(sbr_info_t* sbr, uint8_t k0, uint8_t k2, uint
 /* This function finds the number of bands using this formula: bands * log(a1/a0)/log(2.0) + 0.5 */
 static int32_t find_bands(uint8_t warp, uint8_t bands, uint8_t a0, uint8_t a1) {
     /* table with log2() values */
-    static const int32_t log2Table[65] = {
-        COEF_CONST(0.0),          COEF_CONST(0.0),          COEF_CONST(1.0000000000), COEF_CONST(1.5849625007), COEF_CONST(2.0000000000),
-        COEF_CONST(2.3219280949), COEF_CONST(2.5849625007), COEF_CONST(2.8073549221), COEF_CONST(3.0000000000), COEF_CONST(3.1699250014),
-        COEF_CONST(3.3219280949), COEF_CONST(3.4594316186), COEF_CONST(3.5849625007), COEF_CONST(3.7004397181), COEF_CONST(3.8073549221),
-        COEF_CONST(3.9068905956), COEF_CONST(4.0000000000), COEF_CONST(4.0874628413), COEF_CONST(4.1699250014), COEF_CONST(4.2479275134),
-        COEF_CONST(4.3219280949), COEF_CONST(4.3923174228), COEF_CONST(4.4594316186), COEF_CONST(4.5235619561), COEF_CONST(4.5849625007),
-        COEF_CONST(4.6438561898), COEF_CONST(4.7004397181), COEF_CONST(4.7548875022), COEF_CONST(4.8073549221), COEF_CONST(4.8579809951),
-        COEF_CONST(4.9068905956), COEF_CONST(4.9541963104), COEF_CONST(5.0000000000), COEF_CONST(5.0443941194), COEF_CONST(5.0874628413),
-        COEF_CONST(5.1292830169), COEF_CONST(5.1699250014), COEF_CONST(5.2094533656), COEF_CONST(5.2479275134), COEF_CONST(5.2854022189),
-        COEF_CONST(5.3219280949), COEF_CONST(5.3575520046), COEF_CONST(5.3923174228), COEF_CONST(5.4262647547), COEF_CONST(5.4594316186),
-        COEF_CONST(5.4918530963), COEF_CONST(5.5235619561), COEF_CONST(5.5545888517), COEF_CONST(5.5849625007), COEF_CONST(5.6147098441),
-        COEF_CONST(5.6438561898), COEF_CONST(5.6724253420), COEF_CONST(5.7004397181), COEF_CONST(5.7279204546), COEF_CONST(5.7548875022),
-        COEF_CONST(5.7813597135), COEF_CONST(5.8073549221), COEF_CONST(5.8328900142), COEF_CONST(5.8579809951), COEF_CONST(5.8826430494),
-        COEF_CONST(5.9068905956), COEF_CONST(5.9307373376), COEF_CONST(5.9541963104), COEF_CONST(5.9772799235), COEF_CONST(6.0)};
-    int32_t r0 = log2Table[a0]; /* coef */
-    int32_t r1 = log2Table[a1]; /* coef */
-    int32_t r2 = (r1 - r0);     /* coef */
+    static const int32_t log2Table[65] = {COEF_CONST(0.0),          COEF_CONST(0.0),          COEF_CONST(1.0000000000), COEF_CONST(1.5849625007), COEF_CONST(2.0000000000), COEF_CONST(2.3219280949),
+                                          COEF_CONST(2.5849625007), COEF_CONST(2.8073549221), COEF_CONST(3.0000000000), COEF_CONST(3.1699250014), COEF_CONST(3.3219280949), COEF_CONST(3.4594316186),
+                                          COEF_CONST(3.5849625007), COEF_CONST(3.7004397181), COEF_CONST(3.8073549221), COEF_CONST(3.9068905956), COEF_CONST(4.0000000000), COEF_CONST(4.0874628413),
+                                          COEF_CONST(4.1699250014), COEF_CONST(4.2479275134), COEF_CONST(4.3219280949), COEF_CONST(4.3923174228), COEF_CONST(4.4594316186), COEF_CONST(4.5235619561),
+                                          COEF_CONST(4.5849625007), COEF_CONST(4.6438561898), COEF_CONST(4.7004397181), COEF_CONST(4.7548875022), COEF_CONST(4.8073549221), COEF_CONST(4.8579809951),
+                                          COEF_CONST(4.9068905956), COEF_CONST(4.9541963104), COEF_CONST(5.0000000000), COEF_CONST(5.0443941194), COEF_CONST(5.0874628413), COEF_CONST(5.1292830169),
+                                          COEF_CONST(5.1699250014), COEF_CONST(5.2094533656), COEF_CONST(5.2479275134), COEF_CONST(5.2854022189), COEF_CONST(5.3219280949), COEF_CONST(5.3575520046),
+                                          COEF_CONST(5.3923174228), COEF_CONST(5.4262647547), COEF_CONST(5.4594316186), COEF_CONST(5.4918530963), COEF_CONST(5.5235619561), COEF_CONST(5.5545888517),
+                                          COEF_CONST(5.5849625007), COEF_CONST(5.6147098441), COEF_CONST(5.6438561898), COEF_CONST(5.6724253420), COEF_CONST(5.7004397181), COEF_CONST(5.7279204546),
+                                          COEF_CONST(5.7548875022), COEF_CONST(5.7813597135), COEF_CONST(5.8073549221), COEF_CONST(5.8328900142), COEF_CONST(5.8579809951), COEF_CONST(5.8826430494),
+                                          COEF_CONST(5.9068905956), COEF_CONST(5.9307373376), COEF_CONST(5.9541963104), COEF_CONST(5.9772799235), COEF_CONST(6.0)};
+    int32_t              r0 = log2Table[a0]; /* coef */
+    int32_t              r1 = log2Table[a1]; /* coef */
+    int32_t              r2 = (r1 - r0);     /* coef */
 
     if(warp) r2 = MUL_C(r2, COEF_CONST(1.0 / 1.3));
     /* convert r2 to real and then multiply and round */
@@ -6123,20 +6131,17 @@ static int32_t find_bands(uint8_t warp, uint8_t bands, uint8_t a0, uint8_t a1) {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static int32_t find_initial_power(uint8_t bands, uint8_t a0, uint8_t a1) {
     /* table with log() values */
-    static const int32_t logTable[65] = {
-        COEF_CONST(0.0),          COEF_CONST(0.0),          COEF_CONST(0.6931471806), COEF_CONST(1.0986122887), COEF_CONST(1.3862943611),
-        COEF_CONST(1.6094379124), COEF_CONST(1.7917594692), COEF_CONST(1.9459101491), COEF_CONST(2.0794415417), COEF_CONST(2.1972245773),
-        COEF_CONST(2.3025850930), COEF_CONST(2.3978952728), COEF_CONST(2.4849066498), COEF_CONST(2.5649493575), COEF_CONST(2.6390573296),
-        COEF_CONST(2.7080502011), COEF_CONST(2.7725887222), COEF_CONST(2.8332133441), COEF_CONST(2.8903717579), COEF_CONST(2.9444389792),
-        COEF_CONST(2.9957322736), COEF_CONST(3.0445224377), COEF_CONST(3.0910424534), COEF_CONST(3.1354942159), COEF_CONST(3.1780538303),
-        COEF_CONST(3.2188758249), COEF_CONST(3.2580965380), COEF_CONST(3.2958368660), COEF_CONST(3.3322045102), COEF_CONST(3.3672958300),
-        COEF_CONST(3.4011973817), COEF_CONST(3.4339872045), COEF_CONST(3.4657359028), COEF_CONST(3.4965075615), COEF_CONST(3.5263605246),
-        COEF_CONST(3.5553480615), COEF_CONST(3.5835189385), COEF_CONST(3.6109179126), COEF_CONST(3.6375861597), COEF_CONST(3.6635616461),
-        COEF_CONST(3.6888794541), COEF_CONST(3.7135720667), COEF_CONST(3.7376696183), COEF_CONST(3.7612001157), COEF_CONST(3.7841896339),
-        COEF_CONST(3.8066624898), COEF_CONST(3.8286413965), COEF_CONST(3.8501476017), COEF_CONST(3.8712010109), COEF_CONST(3.8918202981),
-        COEF_CONST(3.9120230054), COEF_CONST(3.9318256327), COEF_CONST(3.9512437186), COEF_CONST(3.9702919136), COEF_CONST(3.9889840466),
-        COEF_CONST(4.0073331852), COEF_CONST(4.0253516907), COEF_CONST(4.0430512678), COEF_CONST(4.0604430105), COEF_CONST(4.0775374439),
-        COEF_CONST(4.0943445622), COEF_CONST(4.1108738642), COEF_CONST(4.1271343850), COEF_CONST(4.1431347264), COEF_CONST(4.158883083)};
+    static const int32_t logTable[65] = {COEF_CONST(0.0),          COEF_CONST(0.0),          COEF_CONST(0.6931471806), COEF_CONST(1.0986122887), COEF_CONST(1.3862943611), COEF_CONST(1.6094379124),
+                                         COEF_CONST(1.7917594692), COEF_CONST(1.9459101491), COEF_CONST(2.0794415417), COEF_CONST(2.1972245773), COEF_CONST(2.3025850930), COEF_CONST(2.3978952728),
+                                         COEF_CONST(2.4849066498), COEF_CONST(2.5649493575), COEF_CONST(2.6390573296), COEF_CONST(2.7080502011), COEF_CONST(2.7725887222), COEF_CONST(2.8332133441),
+                                         COEF_CONST(2.8903717579), COEF_CONST(2.9444389792), COEF_CONST(2.9957322736), COEF_CONST(3.0445224377), COEF_CONST(3.0910424534), COEF_CONST(3.1354942159),
+                                         COEF_CONST(3.1780538303), COEF_CONST(3.2188758249), COEF_CONST(3.2580965380), COEF_CONST(3.2958368660), COEF_CONST(3.3322045102), COEF_CONST(3.3672958300),
+                                         COEF_CONST(3.4011973817), COEF_CONST(3.4339872045), COEF_CONST(3.4657359028), COEF_CONST(3.4965075615), COEF_CONST(3.5263605246), COEF_CONST(3.5553480615),
+                                         COEF_CONST(3.5835189385), COEF_CONST(3.6109179126), COEF_CONST(3.6375861597), COEF_CONST(3.6635616461), COEF_CONST(3.6888794541), COEF_CONST(3.7135720667),
+                                         COEF_CONST(3.7376696183), COEF_CONST(3.7612001157), COEF_CONST(3.7841896339), COEF_CONST(3.8066624898), COEF_CONST(3.8286413965), COEF_CONST(3.8501476017),
+                                         COEF_CONST(3.8712010109), COEF_CONST(3.8918202981), COEF_CONST(3.9120230054), COEF_CONST(3.9318256327), COEF_CONST(3.9512437186), COEF_CONST(3.9702919136),
+                                         COEF_CONST(3.9889840466), COEF_CONST(4.0073331852), COEF_CONST(4.0253516907), COEF_CONST(4.0430512678), COEF_CONST(4.0604430105), COEF_CONST(4.0775374439),
+                                         COEF_CONST(4.0943445622), COEF_CONST(4.1108738642), COEF_CONST(4.1271343850), COEF_CONST(4.1431347264), COEF_CONST(4.158883083)};
     /* standard Taylor polynomial coefficients for exp(x) around 0 */
     /* a polynomial around x=1 is more precise, as most values are around 1.07,
        but this is just fine already */
@@ -6458,9 +6463,7 @@ uint8_t hf_adjustment(sbr_info_t* sbr, complex_t Xsbr[MAX_NTSRHFG][64], uint8_t 
 static uint8_t get_S_mapped(sbr_info_t* sbr, uint8_t ch, uint8_t l, uint8_t current_band) {
     if(sbr->f[ch][l] == HI_RES) {
         /* in case of using f_table_high we just have 1 to 1 mapping from bs_add_harmonic[l][k] */
-        if((l >= sbr->l_A[ch]) || (sbr->bs_add_harmonic_prev[ch][current_band] && sbr->bs_add_harmonic_flag_prev[ch])) {
-            return sbr->bs_add_harmonic[ch][current_band];
-        }
+        if((l >= sbr->l_A[ch]) || (sbr->bs_add_harmonic_prev[ch][current_band] && sbr->bs_add_harmonic_flag_prev[ch])) { return sbr->bs_add_harmonic[ch][current_band]; }
     }
     else {
         uint8_t b, lb, ub;
@@ -6495,10 +6498,8 @@ static uint8_t estimate_current_envelope(sbr_info_t* sbr, sbr_hfadj_info_t* adj,
             for(m = 0; m < sbr->M; m++) {
                 nrg = 0;
                 for(i = l_i + sbr->tHFAdj; i < u_i + sbr->tHFAdj; i++) {
-                    nrg += ((QMF_RE(Xsbr[i][m + sbr->kx]) + (1 << (REAL_BITS - 1))) >> REAL_BITS) *
-                               ((QMF_RE(Xsbr[i][m + sbr->kx]) + (1 << (REAL_BITS - 1))) >> REAL_BITS) +
-                           ((QMF_IM(Xsbr[i][m + sbr->kx]) + (1 << (REAL_BITS - 1))) >> REAL_BITS) *
-                               ((QMF_IM(Xsbr[i][m + sbr->kx]) + (1 << (REAL_BITS - 1))) >> REAL_BITS);
+                    nrg += ((QMF_RE(Xsbr[i][m + sbr->kx]) + (1 << (REAL_BITS - 1))) >> REAL_BITS) * ((QMF_RE(Xsbr[i][m + sbr->kx]) + (1 << (REAL_BITS - 1))) >> REAL_BITS) +
+                           ((QMF_IM(Xsbr[i][m + sbr->kx]) + (1 << (REAL_BITS - 1))) >> REAL_BITS) * ((QMF_IM(Xsbr[i][m + sbr->kx]) + (1 << (REAL_BITS - 1))) >> REAL_BITS);
                 }
                 sbr->E_curr[ch][m][l] = nrg / div;
             }
@@ -6518,10 +6519,8 @@ static uint8_t estimate_current_envelope(sbr_info_t* sbr, sbr_hfadj_info_t* adj,
                     if(div == 0) div = 1;
                     for(i = l_i + sbr->tHFAdj; i < u_i + sbr->tHFAdj; i++) {
                         for(j = k_l; j < k_h; j++) {
-                            nrg += ((QMF_RE(Xsbr[i][j]) + (1 << (REAL_BITS - 1))) >> REAL_BITS) *
-                                       ((QMF_RE(Xsbr[i][j]) + (1 << (REAL_BITS - 1))) >> REAL_BITS) +
-                                   ((QMF_IM(Xsbr[i][j]) + (1 << (REAL_BITS - 1))) >> REAL_BITS) *
-                                       ((QMF_IM(Xsbr[i][j]) + (1 << (REAL_BITS - 1))) >> REAL_BITS);
+                            nrg += ((QMF_RE(Xsbr[i][j]) + (1 << (REAL_BITS - 1))) >> REAL_BITS) * ((QMF_RE(Xsbr[i][j]) + (1 << (REAL_BITS - 1))) >> REAL_BITS) +
+                                   ((QMF_IM(Xsbr[i][j]) + (1 << (REAL_BITS - 1))) >> REAL_BITS) * ((QMF_IM(Xsbr[i][j]) + (1 << (REAL_BITS - 1))) >> REAL_BITS);
                         }
                     }
                     sbr->E_curr[ch][k - sbr->kx][l] = nrg / div;
@@ -6789,8 +6788,7 @@ static void calculate_gain(sbr_info_t* sbr, sbr_hfadj_info_t* adj, uint8_t ch) {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static void hf_assembly(sbr_info_t* sbr, sbr_hfadj_info_t* adj, complex_t Xsbr[MAX_NTSRHFG][64], uint8_t ch) {
-    static int32_t h_smooth[] = {FRAC_CONST(0.03183050093751), FRAC_CONST(0.11516383427084), FRAC_CONST(0.21816949906249),
-                                 FRAC_CONST(0.30150283239582), FRAC_CONST(0.33333333333333)};
+    static int32_t h_smooth[] = {FRAC_CONST(0.03183050093751), FRAC_CONST(0.11516383427084), FRAC_CONST(0.21816949906249), FRAC_CONST(0.30150283239582), FRAC_CONST(0.33333333333333)};
     static int8_t  phi_re[] = {1, 0, -1, 0};
     static int8_t  phi_im[] = {0, 1, 0, -1};
 
@@ -6850,13 +6848,11 @@ static void hf_assembly(sbr_info_t* sbr, sbr_hfadj_info_t* adj, complex_t Xsbr[M
                 /* V is defined, not calculated */
                 // QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = MUL_Q2(G_filt, QMF_RE(Xsbr[i + sbr->tHFAdj][m+sbr->kx]))
                 //     + MUL_F(Q_filt, RE(V[fIndexNoise]));
-                QMF_RE(Xsbr[i + sbr->tHFAdj][m + sbr->kx]) =
-                    MUL_R(G_filt, QMF_RE(Xsbr[i + sbr->tHFAdj][m + sbr->kx])) + MUL_F(Q_filt, RE(noise_V[fIndexNoise]));
+                QMF_RE(Xsbr[i + sbr->tHFAdj][m + sbr->kx]) = MUL_R(G_filt, QMF_RE(Xsbr[i + sbr->tHFAdj][m + sbr->kx])) + MUL_F(Q_filt, RE(noise_V[fIndexNoise]));
                 if(sbr->bs_extension_id == 3 && sbr->bs_extension_data == 42) QMF_RE(Xsbr[i + sbr->tHFAdj][m + sbr->kx]) = 16428320;
                 // QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]) = MUL_Q2(G_filt, QMF_IM(Xsbr[i + sbr->tHFAdj][m+sbr->kx]))
                 //     + MUL_F(Q_filt, IM(V[fIndexNoise]));
-                QMF_IM(Xsbr[i + sbr->tHFAdj][m + sbr->kx]) =
-                    MUL_R(G_filt, QMF_IM(Xsbr[i + sbr->tHFAdj][m + sbr->kx])) + MUL_F(Q_filt, IM(noise_V[fIndexNoise]));
+                QMF_IM(Xsbr[i + sbr->tHFAdj][m + sbr->kx]) = MUL_R(G_filt, QMF_IM(Xsbr[i + sbr->tHFAdj][m + sbr->kx])) + MUL_F(Q_filt, IM(noise_V[fIndexNoise]));
                 {
                     int8_t rev = (((m + sbr->kx) & 1) ? -1 : 1);
                     QMF_RE(psi) = adj->S_M_boost[l][m] * phi_re[fIndexSine];
@@ -6920,10 +6916,8 @@ void hf_generation(sbr_info_t* sbr, complex_t Xlow[MAX_NTSRHFG][64], complex_t X
                     temp1_i = temp2_i;
                     temp2_i = temp3_i;
                     temp3_i = QMF_IM(Xlow[l + offset][p]);
-                    QMF_RE(Xhigh[l + offset][k]) =
-                        temp3_r + (MUL_R(a0_r, temp2_r) - MUL_R(a0_i, temp2_i) + MUL_R(a1_r, temp1_r) - MUL_R(a1_i, temp1_i));
-                    QMF_IM(Xhigh[l + offset][k]) =
-                        temp3_i + (MUL_R(a0_i, temp2_r) + MUL_R(a0_r, temp2_i) + MUL_R(a1_i, temp1_r) + MUL_R(a1_r, temp1_i));
+                    QMF_RE(Xhigh[l + offset][k]) = temp3_r + (MUL_R(a0_r, temp2_r) - MUL_R(a0_i, temp2_i) + MUL_R(a1_r, temp1_r) - MUL_R(a1_i, temp1_i));
+                    QMF_IM(Xhigh[l + offset][k]) = temp3_i + (MUL_R(a0_i, temp2_r) + MUL_R(a0_r, temp2_i) + MUL_R(a1_i, temp1_r) + MUL_R(a1_r, temp1_i));
                 }
             }
             else {
@@ -7068,8 +7062,7 @@ static void calc_chirp_factors(sbr_info_t* sbr, uint8_t ch) {
 
     for(i = 0; i < sbr->N_Q; i++) {
         sbr->bwArray[ch][i] = mapNewBw(sbr->bs_invf_mode[ch][i], sbr->bs_invf_mode_prev[ch][i]);
-        if(sbr->bwArray[ch][i] < sbr->bwArray_prev[ch][i])
-            sbr->bwArray[ch][i] = MUL_F(sbr->bwArray[ch][i], FRAC_CONST(0.75)) + MUL_F(sbr->bwArray_prev[ch][i], FRAC_CONST(0.25));
+        if(sbr->bwArray[ch][i] < sbr->bwArray_prev[ch][i]) sbr->bwArray[ch][i] = MUL_F(sbr->bwArray[ch][i], FRAC_CONST(0.75)) + MUL_F(sbr->bwArray_prev[ch][i], FRAC_CONST(0.25));
         else
             sbr->bwArray[ch][i] = MUL_F(sbr->bwArray[ch][i], FRAC_CONST(0.90625)) + MUL_F(sbr->bwArray_prev[ch][i], FRAC_CONST(0.09375));
         if(sbr->bwArray[ch][i] < COEF_CONST(0.015625)) sbr->bwArray[ch][i] = COEF_CONST(0.0);
@@ -7252,9 +7245,8 @@ void sbr_qmf_analysis_32(sbr_info_t* sbr, qmfa_info_t* qmfa, const int32_t* inpu
         for(n = 32 - 1; n >= 0; n--) { qmfa->x[qmfa->x_index + n] = qmfa->x[qmfa->x_index + n + 320] = (input[in++]) >> 4; }
         /* window and summation to create array u */
         for(n = 0; n < 64; n++) {
-            u[n] = MUL_F(qmfa->x[qmfa->x_index + n], qmf_c[2 * n]) + MUL_F(qmfa->x[qmfa->x_index + n + 64], qmf_c[2 * (n + 64)]) +
-                   MUL_F(qmfa->x[qmfa->x_index + n + 128], qmf_c[2 * (n + 128)]) + MUL_F(qmfa->x[qmfa->x_index + n + 192], qmf_c[2 * (n + 192)]) +
-                   MUL_F(qmfa->x[qmfa->x_index + n + 256], qmf_c[2 * (n + 256)]);
+            u[n] = MUL_F(qmfa->x[qmfa->x_index + n], qmf_c[2 * n]) + MUL_F(qmfa->x[qmfa->x_index + n + 64], qmf_c[2 * (n + 64)]) + MUL_F(qmfa->x[qmfa->x_index + n + 128], qmf_c[2 * (n + 128)]) +
+                   MUL_F(qmfa->x[qmfa->x_index + n + 192], qmf_c[2 * (n + 192)]) + MUL_F(qmfa->x[qmfa->x_index + n + 256], qmf_c[2 * (n + 256)]);
         }
         /* update ringbuffer index */
         qmfa->x_index -= 32;
@@ -7343,12 +7335,11 @@ void sbr_qmf_synthesis_32(sbr_info_t* sbr, qmfs_info_t* qmfs, complex_t* X[64], 
         }
         /* calculate 32 output samples and window */
         for(k = 0; k < 32; k++) {
-            output[out++] =
-                MUL_F(qmfs->v[qmfs->v_index + k], qmf_c[2 * k]) + MUL_F(qmfs->v[qmfs->v_index + 96 + k], qmf_c[64 + 2 * k]) +
-                MUL_F(qmfs->v[qmfs->v_index + 128 + k], qmf_c[128 + 2 * k]) + MUL_F(qmfs->v[qmfs->v_index + 224 + k], qmf_c[192 + 2 * k]) +
-                MUL_F(qmfs->v[qmfs->v_index + 256 + k], qmf_c[256 + 2 * k]) + MUL_F(qmfs->v[qmfs->v_index + 352 + k], qmf_c[320 + 2 * k]) +
-                MUL_F(qmfs->v[qmfs->v_index + 384 + k], qmf_c[384 + 2 * k]) + MUL_F(qmfs->v[qmfs->v_index + 480 + k], qmf_c[448 + 2 * k]) +
-                MUL_F(qmfs->v[qmfs->v_index + 512 + k], qmf_c[512 + 2 * k]) + MUL_F(qmfs->v[qmfs->v_index + 608 + k], qmf_c[576 + 2 * k]);
+            output[out++] = MUL_F(qmfs->v[qmfs->v_index + k], qmf_c[2 * k]) + MUL_F(qmfs->v[qmfs->v_index + 96 + k], qmf_c[64 + 2 * k]) + MUL_F(qmfs->v[qmfs->v_index + 128 + k], qmf_c[128 + 2 * k]) +
+                            MUL_F(qmfs->v[qmfs->v_index + 224 + k], qmf_c[192 + 2 * k]) + MUL_F(qmfs->v[qmfs->v_index + 256 + k], qmf_c[256 + 2 * k]) +
+                            MUL_F(qmfs->v[qmfs->v_index + 352 + k], qmf_c[320 + 2 * k]) + MUL_F(qmfs->v[qmfs->v_index + 384 + k], qmf_c[384 + 2 * k]) +
+                            MUL_F(qmfs->v[qmfs->v_index + 480 + k], qmf_c[448 + 2 * k]) + MUL_F(qmfs->v[qmfs->v_index + 512 + k], qmf_c[512 + 2 * k]) +
+                            MUL_F(qmfs->v[qmfs->v_index + 608 + k], qmf_c[576 + 2 * k]);
         }
         /* update ringbuffer index */
         qmfs->v_index -= 64;
@@ -7358,8 +7349,7 @@ void sbr_qmf_synthesis_32(sbr_info_t* sbr, qmfs_info_t* qmfs, complex_t* X[64], 
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void sbr_qmf_synthesis_64(sbr_info_t* sbr, qmfs_info_t* qmfs, complex_t* X[64], int32_t* output) {
-//    printf(ANSI_ESC_YELLOW "sbr_qmf_synthesis_64\n" ANSI_ESC_WHITE);
-    //     int32_t x1[64], x2[64];
+    //    printf(ANSI_ESC_YELLOW "sbr_qmf_synthesis_64\n" ANSI_ESC_WHITE);
     int32_t in_real1[32], in_imag1[32], out_real1[32], out_imag1[32];
     int32_t in_real2[32], in_imag2[32], out_real2[32], out_imag2[32]; // ⏫⏫⏫
 
@@ -7455,16 +7445,14 @@ void sbr_qmf_synthesis_64(sbr_info_t* sbr, qmfs_info_t* qmfs, complex_t* X[64], 
         /* calculate 64 output samples and window */
         for(k = 0; k < 64; k++) {
 #ifdef PREFER_POINTERS
-            output[out++] = MUL_F(*pring_buffer_1++, *pqmf_c_1++) + MUL_F(*pring_buffer_2++, *pqmf_c_2++) + MUL_F(*pring_buffer_3++, *pqmf_c_3++) +
-                            MUL_F(*pring_buffer_4++, *pqmf_c_4++) + MUL_F(*pring_buffer_5++, *pqmf_c_5++) + MUL_F(*pring_buffer_6++, *pqmf_c_6++) +
-                            MUL_F(*pring_buffer_7++, *pqmf_c_7++) + MUL_F(*pring_buffer_8++, *pqmf_c_8++) + MUL_F(*pring_buffer_9++, *pqmf_c_9++) +
-                            MUL_F(*pring_buffer_10++, *pqmf_c_10++);
+            output[out++] = MUL_F(*pring_buffer_1++, *pqmf_c_1++) + MUL_F(*pring_buffer_2++, *pqmf_c_2++) + MUL_F(*pring_buffer_3++, *pqmf_c_3++) + MUL_F(*pring_buffer_4++, *pqmf_c_4++) +
+                            MUL_F(*pring_buffer_5++, *pqmf_c_5++) + MUL_F(*pring_buffer_6++, *pqmf_c_6++) + MUL_F(*pring_buffer_7++, *pqmf_c_7++) + MUL_F(*pring_buffer_8++, *pqmf_c_8++) +
+                            MUL_F(*pring_buffer_9++, *pqmf_c_9++) + MUL_F(*pring_buffer_10++, *pqmf_c_10++);
 #else  // #ifdef PREFER_POINTERS
-            output[out++] = MUL_F(pring_buffer_1[k + 0], qmf_c[k + 0]) + MUL_F(pring_buffer_1[k + 192], qmf_c[k + 64]) +
-                            MUL_F(pring_buffer_1[k + 256], qmf_c[k + 128]) + MUL_F(pring_buffer_1[k + (256 + 192)], qmf_c[k + 192]) +
-                            MUL_F(pring_buffer_1[k + 512], qmf_c[k + 256]) + MUL_F(pring_buffer_1[k + (512 + 192)], qmf_c[k + 320]) +
-                            MUL_F(pring_buffer_1[k + 768], qmf_c[k + 384]) + MUL_F(pring_buffer_1[k + (768 + 192)], qmf_c[k + 448]) +
-                            MUL_F(pring_buffer_1[k + 1024], qmf_c[k + 512]) + MUL_F(pring_buffer_1[k + (1024 + 192)], qmf_c[k + 576]);
+            output[out++] = MUL_F(pring_buffer_1[k + 0], qmf_c[k + 0]) + MUL_F(pring_buffer_1[k + 192], qmf_c[k + 64]) + MUL_F(pring_buffer_1[k + 256], qmf_c[k + 128]) +
+                            MUL_F(pring_buffer_1[k + (256 + 192)], qmf_c[k + 192]) + MUL_F(pring_buffer_1[k + 512], qmf_c[k + 256]) + MUL_F(pring_buffer_1[k + (512 + 192)], qmf_c[k + 320]) +
+                            MUL_F(pring_buffer_1[k + 768], qmf_c[k + 384]) + MUL_F(pring_buffer_1[k + (768 + 192)], qmf_c[k + 448]) + MUL_F(pring_buffer_1[k + 1024], qmf_c[k + 512]) +
+                            MUL_F(pring_buffer_1[k + (1024 + 192)], qmf_c[k + 576]);
 #endif // #ifdef PREFER_POINTERS
         }
         /* update ringbuffer index */
@@ -7475,11 +7463,10 @@ void sbr_qmf_synthesis_64(sbr_info_t* sbr, qmfs_info_t* qmfs, complex_t* X[64], 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static void sbr_reset(sbr_info_t* sbr) {
-//    printf(ANSI_ESC_YELLOW "sbr_reset\n" ANSI_ESC_WHITE);
+    //    printf(ANSI_ESC_YELLOW "sbr_reset\n" ANSI_ESC_WHITE);
     /* if these are different from the previous frame: Reset = 1 */
-    if((sbr->bs_start_freq != sbr->bs_start_freq_prev) || (sbr->bs_stop_freq != sbr->bs_stop_freq_prev) ||
-       (sbr->bs_freq_scale != sbr->bs_freq_scale_prev) || (sbr->bs_alter_scale != sbr->bs_alter_scale_prev) ||
-       (sbr->bs_xover_band != sbr->bs_xover_band_prev) || (sbr->bs_noise_bands != sbr->bs_noise_bands_prev)) {
+    if((sbr->bs_start_freq != sbr->bs_start_freq_prev) || (sbr->bs_stop_freq != sbr->bs_stop_freq_prev) || (sbr->bs_freq_scale != sbr->bs_freq_scale_prev) ||
+       (sbr->bs_alter_scale != sbr->bs_alter_scale_prev) || (sbr->bs_xover_band != sbr->bs_xover_band_prev) || (sbr->bs_noise_bands != sbr->bs_noise_bands_prev)) {
         sbr->Reset = 1;
     }
     else { sbr->Reset = 0; }
@@ -7492,8 +7479,7 @@ static void sbr_reset(sbr_info_t* sbr) {
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-static uint8_t calc_sbr_tables(sbr_info_t* sbr, uint8_t start_freq, uint8_t stop_freq, uint8_t samplerate_mode, uint8_t freq_scale,
-                               uint8_t alter_scale, uint8_t xover_band) {
+static uint8_t calc_sbr_tables(sbr_info_t* sbr, uint8_t start_freq, uint8_t stop_freq, uint8_t samplerate_mode, uint8_t freq_scale, uint8_t alter_scale, uint8_t xover_band) {
     uint8_t result = 0;
     uint8_t k2;
 
@@ -7551,13 +7537,9 @@ UNUSED_FUNCTION static uint8_t sbr_extension_data(bitfile_t* ld, sbr_info_t* sbr
     // if (!(sbr->frame == 0 && sbr->bs_header_flag == 0))
     if(sbr->header_count != 0) {
         if(sbr->Reset || (sbr->bs_header_flag && sbr->just_seeked)) {
-            uint8_t rt = calc_sbr_tables(sbr, sbr->bs_start_freq, sbr->bs_stop_freq, sbr->bs_samplerate_mode, sbr->bs_freq_scale, sbr->bs_alter_scale,
-                                         sbr->bs_xover_band);
+            uint8_t rt = calc_sbr_tables(sbr, sbr->bs_start_freq, sbr->bs_stop_freq, sbr->bs_samplerate_mode, sbr->bs_freq_scale, sbr->bs_alter_scale, sbr->bs_xover_band);
             /* if an error occured with the new header values revert to the old ones */
-            if(rt > 0) {
-                result += calc_sbr_tables(sbr, saved_start_freq, saved_stop_freq, saved_samplerate_mode, saved_freq_scale, saved_alter_scale,
-                                          saved_xover_band);
-            }
+            if(rt > 0) { result += calc_sbr_tables(sbr, saved_start_freq, saved_stop_freq, saved_samplerate_mode, saved_freq_scale, saved_alter_scale, saved_xover_band); }
         }
         if(result == 0) {
             result = sbr_data(ld, sbr);
@@ -7565,8 +7547,7 @@ UNUSED_FUNCTION static uint8_t sbr_extension_data(bitfile_t* ld, sbr_info_t* sbr
                In this case the old time border vector is saved and all the previous data normally read after sbr_grid() is saved.  */
             /* to be on the safe side, calculate old sbr tables in case of error */
             if((result > 0) && (sbr->Reset || (sbr->bs_header_flag && sbr->just_seeked))) {
-                result += calc_sbr_tables(sbr, saved_start_freq, saved_stop_freq, saved_samplerate_mode, saved_freq_scale, saved_alter_scale,
-                                          saved_xover_band);
+                result += calc_sbr_tables(sbr, saved_start_freq, saved_stop_freq, saved_samplerate_mode, saved_freq_scale, saved_alter_scale, saved_xover_band);
             }
             /* we should be able to safely set result to 0 now, but practise indicates this doesn't work well */
         }
@@ -8671,8 +8652,7 @@ static uint8_t fill_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld, drc_info_
         if((bs_extension_type == EXT_SBR_DATA) || (bs_extension_type == EXT_SBR_DATA_CRC)) {
             if(sbr_ele == INVALID_SBR_ELEMENT) return 24;
             if(!hDecoder->sbr[sbr_ele]) {
-                hDecoder->sbr[sbr_ele] = sbrDecodeInit(hDecoder->frameLength, hDecoder->element_id[sbr_ele], 2 * get_sample_rate(hDecoder->sf_index),
-                                                       hDecoder->downSampledSBR);
+                hDecoder->sbr[sbr_ele] = sbrDecodeInit(hDecoder->frameLength, hDecoder->element_id[sbr_ele], 2 * get_sample_rate(hDecoder->sf_index), hDecoder->downSampledSBR);
             }
             if(!hDecoder->sbr[sbr_ele]) return 19;
             hDecoder->sbr_present_flag = 1;
@@ -8749,8 +8729,7 @@ static uint8_t side_info(NeAACDecStruct_t* hDecoder, element_t* ele, bitfile_t* 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* Table 4.4.24 */
-static uint8_t individual_channel_stream(NeAACDecStruct_t* hDecoder, element_t* ele, bitfile_t* ld, ic_stream_t* ics, uint8_t scal_flag,
-                                         int16_t* spec_data) {
+static uint8_t individual_channel_stream(NeAACDecStruct_t* hDecoder, element_t* ele, bitfile_t* ld, ic_stream_t* ics, uint8_t scal_flag, int16_t* spec_data) {
     uint8_t result;
 
     result = side_info(hDecoder, ele, ld, ics, scal_flag);
@@ -9266,10 +9245,13 @@ static uint32_t latmParsePayload(latm_header_t* latm, bitfile_t* ld) {
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static uint32_t latmAudioMuxElement(latm_header_t* latm, bitfile_t* ld) {
-    uint32_t                 ascLen, asc_bits = 0;
-    uint32_t                 x1, y1, m, n, i;
-    program_config_t         pce;
-    mp4AudioSpecificConfig_t mp4ASC;
+    uint32_t         ascLen, asc_bits = 0;
+    uint32_t         x1, y1, m, n, i;
+    program_config_t pce;
+    uint32_t         ret = 0;
+    //    mp4AudioSpecificConfig_t mp4ASC; // ⏫⏫⏫
+
+    mp4AudioSpecificConfig_t* mp4ASC = (mp4AudioSpecificConfig_t*)faad_malloc(1 * sizeof(mp4AudioSpecificConfig_t));
 
     latm->useSameStreamMux = (uint8_t)faad_getbits(ld, 1);
     if(!latm->useSameStreamMux) {
@@ -9279,7 +9261,8 @@ static uint32_t latmAudioMuxElement(latm_header_t* latm, bitfile_t* ld) {
         if(latm->versionA) {
             // dunno the payload format for versionA
             fprintf(stderr, "versionA not supported\n");
-            return 0;
+            ret = 0;
+            goto exit;
         }
         if(latm->version) // read taraBufferFullness
             latm_get_value(ld);
@@ -9288,14 +9271,19 @@ static uint32_t latmAudioMuxElement(latm_header_t* latm, bitfile_t* ld) {
         latm->numPrograms = (uint8_t)faad_getbits(ld, 4) + 1;
         latm->numLayers = faad_getbits(ld, 3) + 1;
         if(latm->numPrograms > 1 || !latm->allStreamsSameTimeFraming || latm->numSubFrames > 1 || latm->numLayers > 1) {
-            fprintf(stderr, "\r\nUnsupported LATM configuration: %d programs/ %d subframes, %d layers, allstreams: %d\n", latm->numPrograms,
-                    latm->numSubFrames, latm->numLayers, latm->allStreamsSameTimeFraming);
-            return 0;
+            fprintf(stderr, "\r\nUnsupported LATM configuration: %d programs/ %d subframes, %d layers, allstreams: %d\n", latm->numPrograms, latm->numSubFrames, latm->numLayers,
+                    latm->allStreamsSameTimeFraming);
+            ret = 0;
+            goto exit;
         }
         ascLen = 0;
         if(latm->version) ascLen = latm_get_value(ld);
         x1 = faad_get_processed_bits(ld);
-        if(AudioSpecificConfigFrombitfile_t(ld, &mp4ASC, &pce, 0, 1) < 0) return 0;
+
+        if(AudioSpecificConfigFrombitfile_t(ld, mp4ASC, &pce, 0, 1) < 0) {
+            ret = 0;
+            goto exit;
+        }
         // horrid hack to unread the ASC bits and store them in latm->ASC
         // the correct code would rely on an ideal faad_ungetbits()
         y1 = faad_get_processed_bits(ld);
@@ -9326,13 +9314,15 @@ static uint32_t latmAudioMuxElement(latm_header_t* latm, bitfile_t* ld) {
             latm->frameLength = faad_getbits(ld, 9);
             if(latm->frameLength == 0) {
                 fprintf(stderr, "Invalid frameLength: 0\r\n");
-                return 0;
+                ret = 0;
+                goto exit;
             }
             latm->frameLength = (latm->frameLength + 20) * 8;
         }
         else { // hellish CELP or HCVX stuff, discard
             fprintf(stderr, "Unsupported CELP/HCVX framelentype: %d\n", latm->framelen_type);
-            return 0;
+            ret = 0;
+            goto exit;
         }
         latm->otherDataLenBits = 0;
         if(faad_getbits(ld, 1)) { // other data present
@@ -9350,9 +9340,21 @@ static uint32_t latmAudioMuxElement(latm_header_t* latm, bitfile_t* ld) {
         latm->inited = 1;
     }
     // read payload
-    if(latm->inited) return latmParsePayload(latm, ld);
-    else
-        return 0;
+    if(latm->inited) {
+        ret = latmParsePayload(latm, ld);
+        goto exit;
+    }
+    else {
+        ret = 0;
+        goto exit;
+    }
+
+exit:
+    if(mp4ASC) {
+        free(mp4ASC);
+        mp4ASC = NULL;
+    }
+    return ret;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -9486,9 +9488,8 @@ uint8_t window_grouping_info(NeAACDecStruct_t* hDecoder, ic_stream_t* ics) {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 static inline int32_t iquant(int16_t q, const int32_t* tab, uint8_t* error) {
-    static const int32_t errcorr[] = {REAL_CONST(0),         REAL_CONST(1.0 / 8.0), REAL_CONST(2.0 / 8.0),
-                                      REAL_CONST(3.0 / 8.0), REAL_CONST(4.0 / 8.0), REAL_CONST(5.0 / 8.0),
-                                      REAL_CONST(6.0 / 8.0), REAL_CONST(7.0 / 8.0), REAL_CONST(0)};
+    static const int32_t errcorr[] = {REAL_CONST(0),         REAL_CONST(1.0 / 8.0), REAL_CONST(2.0 / 8.0), REAL_CONST(3.0 / 8.0), REAL_CONST(4.0 / 8.0),
+                                      REAL_CONST(5.0 / 8.0), REAL_CONST(6.0 / 8.0), REAL_CONST(7.0 / 8.0), REAL_CONST(0)};
     int32_t              x1, x2;
     int16_t              sgn = 1;
 
@@ -9756,15 +9757,15 @@ uint8_t reconstruct_single_channel(NeAACDecStruct_t* hDecoder, ic_stream_t* ics,
         }
     #endif
         /* long term prediction */
-        lt_prediction(ics, &(ics->ltp), spec_coef, hDecoder->lt_pred_stat[sce->channel], hDecoder->fb, ics->window_shape,
-                      hDecoder->window_shape_prev[sce->channel], hDecoder->sf_index, hDecoder->object_type, hDecoder->frameLength);
+        lt_prediction(ics, &(ics->ltp), spec_coef, hDecoder->lt_pred_stat[sce->channel], hDecoder->fb, ics->window_shape, hDecoder->window_shape_prev[sce->channel], hDecoder->sf_index,
+                      hDecoder->object_type, hDecoder->frameLength);
     }
 #endif
     /* tns decoding */
     tns_decode_frame(ics, &(ics->tns), hDecoder->sf_index, hDecoder->object_type, spec_coef, hDecoder->frameLength);
     /* filter bank */
-    ifilter_bank(hDecoder->fb, ics->window_sequence, ics->window_shape, hDecoder->window_shape_prev[sce->channel], spec_coef,
-                 hDecoder->time_out[sce->channel], hDecoder->fb_intermed[sce->channel], hDecoder->object_type, hDecoder->frameLength);
+    ifilter_bank(hDecoder->fb, ics->window_sequence, ics->window_shape, hDecoder->window_shape_prev[sce->channel], spec_coef, hDecoder->time_out[sce->channel], hDecoder->fb_intermed[sce->channel],
+                 hDecoder->object_type, hDecoder->frameLength);
 
     /* save window shape for next frame */
     hDecoder->window_shape_prev[sce->channel] = ics->window_shape;
@@ -9774,8 +9775,7 @@ uint8_t reconstruct_single_channel(NeAACDecStruct_t* hDecoder, ic_stream_t* ics,
     }
 #ifdef LTP_DEC
     if(is_ltp_ot(hDecoder->object_type)) {
-        lt_update_state(hDecoder->lt_pred_stat[sce->channel], hDecoder->time_out[sce->channel], hDecoder->fb_intermed[sce->channel],
-                        hDecoder->frameLength, hDecoder->object_type);
+        lt_update_state(hDecoder->lt_pred_stat[sce->channel], hDecoder->time_out[sce->channel], hDecoder->fb_intermed[sce->channel], hDecoder->frameLength, hDecoder->object_type);
     }
 #endif
 #ifdef SBR_DEC
@@ -9783,13 +9783,9 @@ uint8_t reconstruct_single_channel(NeAACDecStruct_t* hDecoder, ic_stream_t* ics,
         int32_t ele = hDecoder->fr_ch_ele;
         int32_t ch = sce->channel;
         /* following case can happen when forceUpSampling == 1 */
-        if(hDecoder->sbr[ele] == NULL) {
-            hDecoder->sbr[ele] =
-                sbrDecodeInit(hDecoder->frameLength, hDecoder->element_id[ele], 2 * get_sample_rate(hDecoder->sf_index), hDecoder->downSampledSBR);
-        }
+        if(hDecoder->sbr[ele] == NULL) { hDecoder->sbr[ele] = sbrDecodeInit(hDecoder->frameLength, hDecoder->element_id[ele], 2 * get_sample_rate(hDecoder->sf_index), hDecoder->downSampledSBR); }
         if(!hDecoder->sbr[ele]) return 19;
-        if(sce->ics1.window_sequence == EIGHT_SHORT_SEQUENCE)
-            hDecoder->sbr[ele]->maxAACLine = 8 * min(sce->ics1.swb_offset[max(sce->ics1.max_sfb - 1, 0)], sce->ics1.swb_offset_max);
+        if(sce->ics1.window_sequence == EIGHT_SHORT_SEQUENCE) hDecoder->sbr[ele]->maxAACLine = 8 * min(sce->ics1.swb_offset[max(sce->ics1.max_sfb - 1, 0)], sce->ics1.swb_offset_max);
         else
             hDecoder->sbr[ele]->maxAACLine = min(sce->ics1.swb_offset[max(sce->ics1.max_sfb - 1, 0)], sce->ics1.swb_offset_max);
             /* check if any of the PS tools is used */
@@ -9799,10 +9795,7 @@ uint8_t reconstruct_single_channel(NeAACDecStruct_t* hDecoder, ic_stream_t* ics,
             retval = sbrDecodeSingleFrame(hDecoder->sbr[ele], hDecoder->time_out[ch], hDecoder->postSeekResetFlag, hDecoder->downSampledSBR);
     #if(defined(PS_DEC))
         }
-        else {
-            retval = sbrDecodeSingleFramePS(hDecoder->sbr[ele], hDecoder->time_out[ch], hDecoder->time_out[ch + 1], hDecoder->postSeekResetFlag,
-                                            hDecoder->downSampledSBR);
-        }
+        else { retval = sbrDecodeSingleFramePS(hDecoder->sbr[ele], hDecoder->time_out[ch], hDecoder->time_out[ch + 1], hDecoder->postSeekResetFlag, hDecoder->downSampledSBR); }
     #endif
         if(retval > 0) return retval;
     }
@@ -9822,8 +9815,7 @@ uint8_t reconstruct_single_channel(NeAACDecStruct_t* hDecoder, ic_stream_t* ics,
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-uint8_t reconstruct_channel_pair(NeAACDecStruct_t* hDecoder, ic_stream_t* ics1, ic_stream_t* ics2, element_t* cpe, int16_t* spec_data1,
-                                 int16_t* spec_data2) {
+uint8_t reconstruct_channel_pair(NeAACDecStruct_t* hDecoder, ic_stream_t* ics1, ic_stream_t* ics2, element_t* cpe, int16_t* spec_data1, int16_t* spec_data2) {
     uint8_t retval;
     // int32_t spec_coef1[1024]; // ⏫⏫⏫
     // int32_t spec_coef2[1024]; // ⏫⏫⏫
@@ -9894,9 +9886,7 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct_t* hDecoder, ic_stream_t* ics1, 
         return retval;
     }
     /* pns decoding */
-    if(ics1->ms_mask_present) {
-        pns_decode(ics1, ics2, spec_coef1, spec_coef2, hDecoder->frameLength, 1, hDecoder->object_type, &(hDecoder->__r1), &(hDecoder->__r2));
-    }
+    if(ics1->ms_mask_present) { pns_decode(ics1, ics2, spec_coef1, spec_coef2, hDecoder->frameLength, 1, hDecoder->object_type, &(hDecoder->__r1), &(hDecoder->__r2)); }
     else { pns_decode(ics1, ics2, spec_coef1, spec_coef2, hDecoder->frameLength, 0, hDecoder->object_type, &(hDecoder->__r1), &(hDecoder->__r2)); }
     /* mid/side decoding */
     ms_decode(ics1, ics2, spec_coef1, spec_coef2, hDecoder->frameLength);
@@ -9919,29 +9909,27 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct_t* hDecoder, ic_stream_t* ics1, 
         }
     #endif
         /* long term prediction */
-        lt_prediction(ics1, ltp1, spec_coef1, hDecoder->lt_pred_stat[cpe->channel], hDecoder->fb, ics1->window_shape,
-                      hDecoder->window_shape_prev[cpe->channel], hDecoder->sf_index, hDecoder->object_type, hDecoder->frameLength);
-        lt_prediction(ics2, ltp2, spec_coef2, hDecoder->lt_pred_stat[cpe->paired_channel], hDecoder->fb, ics2->window_shape,
-                      hDecoder->window_shape_prev[cpe->paired_channel], hDecoder->sf_index, hDecoder->object_type, hDecoder->frameLength);
+        lt_prediction(ics1, ltp1, spec_coef1, hDecoder->lt_pred_stat[cpe->channel], hDecoder->fb, ics1->window_shape, hDecoder->window_shape_prev[cpe->channel], hDecoder->sf_index,
+                      hDecoder->object_type, hDecoder->frameLength);
+        lt_prediction(ics2, ltp2, spec_coef2, hDecoder->lt_pred_stat[cpe->paired_channel], hDecoder->fb, ics2->window_shape, hDecoder->window_shape_prev[cpe->paired_channel], hDecoder->sf_index,
+                      hDecoder->object_type, hDecoder->frameLength);
     }
 #endif
     /* tns decoding */
     tns_decode_frame(ics1, &(ics1->tns), hDecoder->sf_index, hDecoder->object_type, spec_coef1, hDecoder->frameLength);
     tns_decode_frame(ics2, &(ics2->tns), hDecoder->sf_index, hDecoder->object_type, spec_coef2, hDecoder->frameLength);
     /* filter bank */
-    ifilter_bank(hDecoder->fb, ics1->window_sequence, ics1->window_shape, hDecoder->window_shape_prev[cpe->channel], spec_coef1,
-                 hDecoder->time_out[cpe->channel], hDecoder->fb_intermed[cpe->channel], hDecoder->object_type, hDecoder->frameLength);
-    ifilter_bank(hDecoder->fb, ics2->window_sequence, ics2->window_shape, hDecoder->window_shape_prev[cpe->paired_channel], spec_coef2,
-                 hDecoder->time_out[cpe->paired_channel], hDecoder->fb_intermed[cpe->paired_channel], hDecoder->object_type, hDecoder->frameLength);
+    ifilter_bank(hDecoder->fb, ics1->window_sequence, ics1->window_shape, hDecoder->window_shape_prev[cpe->channel], spec_coef1, hDecoder->time_out[cpe->channel], hDecoder->fb_intermed[cpe->channel],
+                 hDecoder->object_type, hDecoder->frameLength);
+    ifilter_bank(hDecoder->fb, ics2->window_sequence, ics2->window_shape, hDecoder->window_shape_prev[cpe->paired_channel], spec_coef2, hDecoder->time_out[cpe->paired_channel],
+                 hDecoder->fb_intermed[cpe->paired_channel], hDecoder->object_type, hDecoder->frameLength);
     /* save window shape for next frame */
     hDecoder->window_shape_prev[cpe->channel] = ics1->window_shape;
     hDecoder->window_shape_prev[cpe->paired_channel] = ics2->window_shape;
 #ifdef LTP_DEC
     if(is_ltp_ot(hDecoder->object_type)) {
-        lt_update_state(hDecoder->lt_pred_stat[cpe->channel], hDecoder->time_out[cpe->channel], hDecoder->fb_intermed[cpe->channel],
-                        hDecoder->frameLength, hDecoder->object_type);
-        lt_update_state(hDecoder->lt_pred_stat[cpe->paired_channel], hDecoder->time_out[cpe->paired_channel],
-                        hDecoder->fb_intermed[cpe->paired_channel], hDecoder->frameLength, hDecoder->object_type);
+        lt_update_state(hDecoder->lt_pred_stat[cpe->channel], hDecoder->time_out[cpe->channel], hDecoder->fb_intermed[cpe->channel], hDecoder->frameLength, hDecoder->object_type);
+        lt_update_state(hDecoder->lt_pred_stat[cpe->paired_channel], hDecoder->time_out[cpe->paired_channel], hDecoder->fb_intermed[cpe->paired_channel], hDecoder->frameLength, hDecoder->object_type);
     }
 #endif
 #ifdef SBR_DEC
@@ -9950,10 +9938,7 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct_t* hDecoder, ic_stream_t* ics1, 
         int32_t ch0 = cpe->channel;
         int32_t ch1 = cpe->paired_channel;
         /* following case can happen when forceUpSampling == 1 */
-        if(hDecoder->sbr[ele] == NULL) {
-            hDecoder->sbr[ele] =
-                sbrDecodeInit(hDecoder->frameLength, hDecoder->element_id[ele], 2 * get_sample_rate(hDecoder->sf_index), hDecoder->downSampledSBR);
-        }
+        if(hDecoder->sbr[ele] == NULL) { hDecoder->sbr[ele] = sbrDecodeInit(hDecoder->frameLength, hDecoder->element_id[ele], 2 * get_sample_rate(hDecoder->sf_index), hDecoder->downSampledSBR); }
         if(!hDecoder->sbr[ele]) {
             if(spec_coef1) {
                 free(spec_coef1);
@@ -9965,12 +9950,10 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct_t* hDecoder, ic_stream_t* ics1, 
             }
             return 19;
         }
-        if(cpe->ics1.window_sequence == EIGHT_SHORT_SEQUENCE)
-            hDecoder->sbr[ele]->maxAACLine = 8 * min(cpe->ics1.swb_offset[max(cpe->ics1.max_sfb - 1, 0)], cpe->ics1.swb_offset_max);
+        if(cpe->ics1.window_sequence == EIGHT_SHORT_SEQUENCE) hDecoder->sbr[ele]->maxAACLine = 8 * min(cpe->ics1.swb_offset[max(cpe->ics1.max_sfb - 1, 0)], cpe->ics1.swb_offset_max);
         else
             hDecoder->sbr[ele]->maxAACLine = min(cpe->ics1.swb_offset[max(cpe->ics1.max_sfb - 1, 0)], cpe->ics1.swb_offset_max);
-        retval = sbrDecodeCoupleFrame(hDecoder->sbr[ele], hDecoder->time_out[ch0], hDecoder->time_out[ch1], hDecoder->postSeekResetFlag,
-                                      hDecoder->downSampledSBR);
+        retval = sbrDecodeCoupleFrame(hDecoder->sbr[ele], hDecoder->time_out[ch0], hDecoder->time_out[ch1], hDecoder->postSeekResetFlag, hDecoder->downSampledSBR);
         if(retval > 0) {
             if(spec_coef1) {
                 free(spec_coef1);
@@ -10038,7 +10021,7 @@ static uint32_t faad_showbits(bitfile_t* ld, uint32_t bits) {
     return ((ld->bufa & ((1 << ld->bits_left) - 1)) << bits) | (ld->bufb >> (32 - bits));
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-static void DCT3_4_unscaled(int32_t* y, int32_t* x) {
+UNUSED_FUNCTION static void DCT3_4_unscaled(int32_t* y, int32_t* x) {
     int32_t f0, f1, f2, f3, f4, f5, f6, f7, f8;
 
     f0 = MUL_F(x[2], FRAC_CONST(0.7071067811865476));
@@ -10483,7 +10466,10 @@ static void DST4_32(int32_t* y, int32_t* x) {
     y[2] = MUL_C(COEF_CONST(4.0846110781292477), f[308]);
     y[1] = MUL_C(COEF_CONST(6.7967507116736332), f[306]);
     y[0] = MUL_R(REAL_CONST(20.3738781672314530), f[304]);
-    if(f){free(f); f = NULL;}
+    if(f) {
+        free(f);
+        f = NULL;
+    }
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static void DCT4_32(int32_t* y, int32_t* x) {
@@ -10889,8 +10875,10 @@ static void DCT4_32(int32_t* y, int32_t* x) {
     f[397] = MUL_C(COEF_CONST(1.0708550202783576), f[300]);
     y[30] = f[395] + f[396];
     y[1] = f[397] - f[396];
-    if(f){free(f); f = NULL;}
+    if(f) {
+        free(f);
+        f = NULL;
+    }
 }
-
 
 /* EOF */
