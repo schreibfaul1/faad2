@@ -59,6 +59,13 @@ void alloc_mem() {
     for(uint8_t i = 0; i < 32; i++) m_P_dec[i] = (int32_t*)faad_malloc(34 * sizeof(*(m_P_dec[i])));
     m_G_TransientRatio = (int32_t**)faad_calloc(32, sizeof(m_G_TransientRatio));
     for(uint8_t i = 0; i < 32; i++) m_G_TransientRatio[i] = (int32_t*)faad_calloc(34, sizeof(*(m_G_TransientRatio[i])));
+    m_X_hybrid_left = (complex_t**)faad_malloc(32 * sizeof(m_X_hybrid_left));
+    for(uint8_t i = 0; i < 32; i++) m_X_hybrid_left[i] = (complex_t*)faad_malloc(34 * sizeof(*(m_X_hybrid_left[i])));
+    m_X_hybrid_right = (complex_t**)faad_calloc(32, sizeof(m_X_hybrid_right));
+    for(uint8_t i = 0; i < 32; i++) m_X_hybrid_right[i] = (complex_t*)faad_calloc(34, sizeof(*(m_X_hybrid_right[i])));
+
+
+
 
     uint16_t sum = 1 * sizeof(mp4AudioSpecificConfig_t);
     sum += 2 * 1024 * sizeof(int32_t);
@@ -67,6 +74,7 @@ void alloc_mem() {
     sum += 512 * sizeof(bits_t_t);
     sum += 32 * 34 * sizeof(int32_t) + 32 * sizeof(int32_t*);
     sum += 32 * 34 * sizeof(int32_t) + 32 * sizeof(int32_t*);
+    sum += 32 * 34 * sizeof(complex_t) + 32 * sizeof(complex_t*);
     printf(ANSI_ESC_ORANGE "alloc %d bytes\n" ANSI_ESC_WHITE, sum);
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -79,8 +87,8 @@ void free_mem() {
     if(m_segment)          {free(m_segment);      m_segment = NULL;}
     if(m_P_dec)            {for(uint8_t i = 0; i < 32; i++){free(m_P_dec[i]); m_P_dec[i] = NULL;} free(m_P_dec); m_P_dec = NULL;}
     if(m_G_TransientRatio) {for(uint8_t i = 0; i < 32; i++){free(m_G_TransientRatio[i]); m_G_TransientRatio[i] = NULL;} free(m_G_TransientRatio); m_G_TransientRatio = NULL;}
-
-
+    if(m_X_hybrid_left)    {for(uint8_t i = 0; i < 32; i++){free(m_X_hybrid_left[i]); m_X_hybrid_left[i] = NULL;} free(m_X_hybrid_left); m_X_hybrid_left = NULL;}
+    if(m_X_hybrid_right)   {for(uint8_t i = 0; i < 32; i++){free(m_X_hybrid_right[i]); m_X_hybrid_right[i] = NULL;} free(m_X_hybrid_right); m_X_hybrid_right = NULL;}
 
 
 
@@ -4610,13 +4618,13 @@ ps_info_t* ps_init(uint8_t sr_index, uint8_t numTimeSlotsRate) {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* main Parametric Stereo decoding function */
 uint8_t ps_decode(ps_info_t* ps, complex_t* X_left[64], complex_t* X_right[64]) {
-    // complex_t X_hybrid_left[32][32] = {{0}};  // ⏫⏫⏫
-    // complex_t X_hybrid_right[32][32] = {{0}}; // ⏫⏫⏫
+    // complex_t m_X_hybrid_left[32][32] = {{0}};  // ⏫⏫⏫
+    // complex_t m_X_hybrid_right[32][32] = {{0}}; // ⏫⏫⏫
 
-    complex_t** X_hybrid_left = (complex_t**)faad_malloc(32 * sizeof(X_hybrid_left));
-    for(uint8_t i = 0; i < 32; i++) X_hybrid_left[i] = (complex_t*)faad_malloc(34 * sizeof(*(X_hybrid_left[i])));
-    complex_t** X_hybrid_right = (complex_t**)faad_calloc(32, sizeof(X_hybrid_right));
-    for(uint8_t i = 0; i < 32; i++) X_hybrid_right[i] = (complex_t*)faad_calloc(34, sizeof(*(X_hybrid_right[i])));
+    // complex_t** m_X_hybrid_left = (complex_t**)faad_malloc(32 * sizeof(m_X_hybrid_left));
+    // for(uint8_t i = 0; i < 32; i++) m_X_hybrid_left[i] = (complex_t*)faad_malloc(34 * sizeof(*(m_X_hybrid_left[i])));
+    // complex_t** m_X_hybrid_right = (complex_t**)faad_calloc(32, sizeof(m_X_hybrid_right));
+    // for(uint8_t i = 0; i < 32; i++) m_X_hybrid_right[i] = (complex_t*)faad_calloc(34, sizeof(*(m_X_hybrid_right[i])));
 
     /* delta decoding of the bitstream data */
     ps_data_decode(ps);
@@ -4640,27 +4648,27 @@ uint8_t ps_decode(ps_info_t* ps, complex_t* X_left[64], complex_t* X_right[64]) 
     /* Perform further analysis on the lowest subbands to get a higher
      * frequency resolution
      */
-    hybrid_analysis((hyb_info_t*)ps->hyb, X_left, X_hybrid_left, ps->use34hybrid_bands, ps->numTimeSlotsRate);
+    hybrid_analysis((hyb_info_t*)ps->hyb, X_left, m_X_hybrid_left, ps->use34hybrid_bands, ps->numTimeSlotsRate);
     /* decorrelate mono signal */
-    ps_decorrelate(ps, X_left, X_right, X_hybrid_left, X_hybrid_right);
+    ps_decorrelate(ps, X_left, X_right, m_X_hybrid_left, m_X_hybrid_right);
     /* apply mixing and phase parameters */
-    ps_mix_phase(ps, X_left, X_right, X_hybrid_left, X_hybrid_right);
+    ps_mix_phase(ps, X_left, X_right, m_X_hybrid_left, m_X_hybrid_right);
     /* hybrid synthesis, to rebuild the SBR QMF matrices */
-    hybrid_synthesis((hyb_info_t*)ps->hyb, X_left, X_hybrid_left, ps->use34hybrid_bands, ps->numTimeSlotsRate);
-    hybrid_synthesis((hyb_info_t*)ps->hyb, X_right, X_hybrid_right, ps->use34hybrid_bands, ps->numTimeSlotsRate);
+    hybrid_synthesis((hyb_info_t*)ps->hyb, X_left, m_X_hybrid_left, ps->use34hybrid_bands, ps->numTimeSlotsRate);
+    hybrid_synthesis((hyb_info_t*)ps->hyb, X_right, m_X_hybrid_right, ps->use34hybrid_bands, ps->numTimeSlotsRate);
 
-    for(uint8_t i = 0; i < 32; i++) {
-        free(X_hybrid_left[i]);
-        X_hybrid_left[i] = NULL;
-    }
-    free(X_hybrid_left);
-    X_hybrid_left = NULL;
-    for(uint8_t i = 0; i < 32; i++) {
-        free(X_hybrid_right[i]);
-        X_hybrid_right[i] = NULL;
-    }
-    free(X_hybrid_right);
-    X_hybrid_right = NULL;
+    // for(uint8_t i = 0; i < 32; i++) {
+    //     free(m_X_hybrid_left[i]);
+    //     m_X_hybrid_left[i] = NULL;
+    // }
+    // free(m_X_hybrid_left);
+    // m_X_hybrid_left = NULL;
+    // for(uint8_t i = 0; i < 32; i++) {
+    //     free(m_X_hybrid_right[i]);
+    //     m_X_hybrid_right[i] = NULL;
+    // }
+    // free(m_X_hybrid_right);
+    // m_X_hybrid_right = NULL;
     return 0;
 }
 #endif
