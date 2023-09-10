@@ -65,10 +65,16 @@ void alloc_mem() {
     for(uint8_t i = 0; i < 32; i++) m_X_hybrid_right[i] = (complex_t*)faad_calloc(34, sizeof(*(m_X_hybrid_right[i])));
     m_x_est = (int32_t*)faad_malloc(2048 * sizeof(int32_t));
     m_X_est = (int32_t*)faad_malloc(2048 * sizeof(int32_t));
+    m_Z1_imdct = (complex_t*)faad_malloc(512 * sizeof(complex_t));
+    m_Z1_mdct = (complex_t*)faad_malloc(512 * sizeof(complex_t));
+    m_X_dcf = (complex_t**)faad_malloc(MAX_NTSR * sizeof(m_X_dcf));
+    for(uint8_t i = 0; i < MAX_NTSR; i++) m_X_dcf[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_dcf[i])));
+    m_X_dsf = (complex_t**)faad_calloc(MAX_NTSR, sizeof(m_X_dsf));
+    for(uint8_t i = 0; i < MAX_NTSR; i++) m_X_dsf[i] = (complex_t*)faad_calloc(64, sizeof(*(m_X_dsf[i])));
 
 
 
-    uint16_t sum = 1 * sizeof(mp4AudioSpecificConfig_t);
+    uint32_t sum = 1 * sizeof(mp4AudioSpecificConfig_t);
     sum += 2 * 1024 * sizeof(int32_t);
     sum += 2 * 1024 * sizeof(int32_t);
     sum += 512 * sizeof(codeword_t);
@@ -78,6 +84,11 @@ void alloc_mem() {
     sum += 32 * 34 * sizeof(complex_t) + 32 * sizeof(complex_t*);
     sum += 2048 * sizeof(int32_t);
     sum += 2048 * sizeof(int32_t);
+    sum += 512 * sizeof(complex_t);
+    sum += 512 * sizeof(complex_t);
+    sum += MAX_NTSR * 64 * sizeof(complex_t) + MAX_NTSR * sizeof(complex_t*) ;
+    sum += MAX_NTSR * 64 * sizeof(complex_t) + MAX_NTSR * sizeof(complex_t*) ;
+
     printf(ANSI_ESC_ORANGE "alloc %d bytes\n" ANSI_ESC_WHITE, sum);
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -94,7 +105,10 @@ void free_mem() {
     if(m_X_hybrid_right)   {for(uint8_t i = 0; i < 32; i++){free(m_X_hybrid_right[i]);   m_X_hybrid_right[i] = NULL;}   free(m_X_hybrid_right);   m_X_hybrid_right = NULL;}
     if(m_x_est)            {free(m_x_est);        m_x_est = NULL;}
     if(m_X_est)            {free(m_X_est);        m_X_est = NULL;}
-
+    if(m_Z1_imdct)         {free(m_Z1_imdct);     m_Z1_imdct = NULL;}
+    if(m_Z1_mdct)          {free(m_Z1_mdct);      m_Z1_mdct = NULL;}
+    if(m_X_dcf)            {for(uint8_t i = 0; i < MAX_NTSR; i++){free(m_X_dcf[i]); m_X_dcf[i] = NULL;} free(m_X_dcf); m_X_dcf = NULL;}
+    if(m_X_dsf)            {for(uint8_t i = 0; i < MAX_NTSR; i++){free(m_X_dsf[i]); m_X_dsf[i] = NULL;} free(m_X_dsf); m_X_dsf = NULL;}
 
     printf(ANSI_ESC_ORANGE "free mem\n" ANSI_ESC_WHITE);
     // clang-format on
@@ -4825,8 +4839,8 @@ void faad_imdct(mdct_info_t* mdct, int32_t* X_in, int32_t* X_out) {
 #ifdef ALLOW_SMALL_FRAMELENGTH
     int32_t scale, b_scale = 0;
 #endif
-    // complex_t  Z1[512]; // ⏫⏫⏫
-    complex_t* Z1 = (complex_t*)faad_malloc(512 * sizeof(complex_t));
+    // complex_t  m_Z1_imdct[512]; // ⏫⏫⏫
+  //  complex_t* m_Z1_imdct = (complex_t*)faad_malloc(512 * sizeof(complex_t));
     complex_t* sincos = mdct->sincos;
     uint16_t   N = mdct->N;
     uint16_t   N2 = N >> 1;
@@ -4842,53 +4856,53 @@ void faad_imdct(mdct_info_t* mdct, int32_t* X_in, int32_t* X_out) {
     }
 #endif
     /* pre-IFFT complex multiplication */
-    for(k = 0; k < N4; k++) { ComplexMult(&IM(Z1[k]), &RE(Z1[k]), X_in[2 * k], X_in[N2 - 1 - 2 * k], RE(sincos[k]), IM(sincos[k])); }
+    for(k = 0; k < N4; k++) { ComplexMult(&IM(m_Z1_imdct[k]), &RE(m_Z1_imdct[k]), X_in[2 * k], X_in[N2 - 1 - 2 * k], RE(sincos[k]), IM(sincos[k])); }
     /* complex IFFT, any non-scaling FFT can be used here */
-    cfftb(mdct->cfft, Z1);
+    cfftb(mdct->cfft, m_Z1_imdct);
     /* post-IFFT complex multiplication */
     for(k = 0; k < N4; k++) {
-        RE(x) = RE(Z1[k]);
-        IM(x) = IM(Z1[k]);
-        ComplexMult(&IM(Z1[k]), &RE(Z1[k]), IM(x), RE(x), RE(sincos[k]), IM(sincos[k]));
+        RE(x) = RE(m_Z1_imdct[k]);
+        IM(x) = IM(m_Z1_imdct[k]);
+        ComplexMult(&IM(m_Z1_imdct[k]), &RE(m_Z1_imdct[k]), IM(x), RE(x), RE(sincos[k]), IM(sincos[k]));
 #ifdef ALLOW_SMALL_FRAMELENGTH
         /* non-power of 2 MDCT scaling */
         if(b_scale) {
-            RE(Z1[k]) = MUL_C(RE(Z1[k]), scale);
-            IM(Z1[k]) = MUL_C(IM(Z1[k]), scale);
+            RE(m_Z1_imdct[k]) = MUL_C(RE(m_Z1_imdct[k]), scale);
+            IM(m_Z1_imdct[k]) = MUL_C(IM(m_Z1_imdct[k]), scale);
         }
 #endif
     }
     /* reordering */
     for(k = 0; k < N8; k += 2) {
-        X_out[2 * k] = IM(Z1[N8 + k]);
-        X_out[2 + 2 * k] = IM(Z1[N8 + 1 + k]);
-        X_out[1 + 2 * k] = -RE(Z1[N8 - 1 - k]);
-        X_out[3 + 2 * k] = -RE(Z1[N8 - 2 - k]);
-        X_out[N4 + 2 * k] = RE(Z1[k]);
-        X_out[N4 + +2 + 2 * k] = RE(Z1[1 + k]);
-        X_out[N4 + 1 + 2 * k] = -IM(Z1[N4 - 1 - k]);
-        X_out[N4 + 3 + 2 * k] = -IM(Z1[N4 - 2 - k]);
-        X_out[N2 + 2 * k] = RE(Z1[N8 + k]);
-        X_out[N2 + +2 + 2 * k] = RE(Z1[N8 + 1 + k]);
-        X_out[N2 + 1 + 2 * k] = -IM(Z1[N8 - 1 - k]);
-        X_out[N2 + 3 + 2 * k] = -IM(Z1[N8 - 2 - k]);
-        X_out[N2 + N4 + 2 * k] = -IM(Z1[k]);
-        X_out[N2 + N4 + 2 + 2 * k] = -IM(Z1[1 + k]);
-        X_out[N2 + N4 + 1 + 2 * k] = RE(Z1[N4 - 1 - k]);
-        X_out[N2 + N4 + 3 + 2 * k] = RE(Z1[N4 - 2 - k]);
+        X_out[2 * k] = IM(m_Z1_imdct[N8 + k]);
+        X_out[2 + 2 * k] = IM(m_Z1_imdct[N8 + 1 + k]);
+        X_out[1 + 2 * k] = -RE(m_Z1_imdct[N8 - 1 - k]);
+        X_out[3 + 2 * k] = -RE(m_Z1_imdct[N8 - 2 - k]);
+        X_out[N4 + 2 * k] = RE(m_Z1_imdct[k]);
+        X_out[N4 + +2 + 2 * k] = RE(m_Z1_imdct[1 + k]);
+        X_out[N4 + 1 + 2 * k] = -IM(m_Z1_imdct[N4 - 1 - k]);
+        X_out[N4 + 3 + 2 * k] = -IM(m_Z1_imdct[N4 - 2 - k]);
+        X_out[N2 + 2 * k] = RE(m_Z1_imdct[N8 + k]);
+        X_out[N2 + +2 + 2 * k] = RE(m_Z1_imdct[N8 + 1 + k]);
+        X_out[N2 + 1 + 2 * k] = -IM(m_Z1_imdct[N8 - 1 - k]);
+        X_out[N2 + 3 + 2 * k] = -IM(m_Z1_imdct[N8 - 2 - k]);
+        X_out[N2 + N4 + 2 * k] = -IM(m_Z1_imdct[k]);
+        X_out[N2 + N4 + 2 + 2 * k] = -IM(m_Z1_imdct[1 + k]);
+        X_out[N2 + N4 + 1 + 2 * k] = RE(m_Z1_imdct[N4 - 1 - k]);
+        X_out[N2 + N4 + 3 + 2 * k] = RE(m_Z1_imdct[N4 - 2 - k]);
     }
-    if(Z1) {
-        free(Z1);
-        Z1 = NULL;
-    }
+    // if(m_Z1_imdct) {
+    //     free(m_Z1_imdct);
+    //     m_Z1_imdct = NULL;
+    // }
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void faad_mdct(mdct_info_t* mdct, int32_t* X_in, int32_t* X_out) {
     uint16_t  k;
     complex_t x;
-    // complex_t  Z1[512]; // ⏫⏫⏫
-    complex_t* Z1 = (complex_t*)faad_malloc(512 * sizeof(complex_t));
+    // complex_t  m_Z1_mdct[512]; // ⏫⏫⏫
+ //   complex_t* m_Z1_mdct = (complex_t*)faad_malloc(512 * sizeof(complex_t));
     complex_t* sincos = mdct->sincos;
     uint16_t   N = mdct->N;
     uint16_t   N2 = N >> 1;
@@ -4909,30 +4923,30 @@ void faad_mdct(mdct_info_t* mdct, int32_t* X_in, int32_t* X_out) {
         uint16_t n = k << 1;
         RE(x) = X_in[N - N4 - 1 - n] + X_in[N - N4 + n];
         IM(x) = X_in[N4 + n] - X_in[N4 - 1 - n];
-        ComplexMult(&RE(Z1[k]), &IM(Z1[k]), RE(x), IM(x), RE(sincos[k]), IM(sincos[k]));
-        RE(Z1[k]) = MUL_R(RE(Z1[k]), scale);
-        IM(Z1[k]) = MUL_R(IM(Z1[k]), scale);
+        ComplexMult(&RE(m_Z1_mdct[k]), &IM(m_Z1_mdct[k]), RE(x), IM(x), RE(sincos[k]), IM(sincos[k]));
+        RE(m_Z1_mdct[k]) = MUL_R(RE(m_Z1_mdct[k]), scale);
+        IM(m_Z1_mdct[k]) = MUL_R(IM(m_Z1_mdct[k]), scale);
         RE(x) = X_in[N2 - 1 - n] - X_in[n];
         IM(x) = X_in[N2 + n] + X_in[N - 1 - n];
-        ComplexMult(&RE(Z1[k + N8]), &IM(Z1[k + N8]), RE(x), IM(x), RE(sincos[k + N8]), IM(sincos[k + N8]));
-        RE(Z1[k + N8]) = MUL_R(RE(Z1[k + N8]), scale);
-        IM(Z1[k + N8]) = MUL_R(IM(Z1[k + N8]), scale);
+        ComplexMult(&RE(m_Z1_mdct[k + N8]), &IM(m_Z1_mdct[k + N8]), RE(x), IM(x), RE(sincos[k + N8]), IM(sincos[k + N8]));
+        RE(m_Z1_mdct[k + N8]) = MUL_R(RE(m_Z1_mdct[k + N8]), scale);
+        IM(m_Z1_mdct[k + N8]) = MUL_R(IM(m_Z1_mdct[k + N8]), scale);
     }
     /* complex FFT, any non-scaling FFT can be used here  */
-    cfftf(mdct->cfft, Z1);
+    cfftf(mdct->cfft, m_Z1_mdct);
     /* post-FFT complex multiplication */
     for(k = 0; k < N4; k++) {
         uint16_t n = k << 1;
-        ComplexMult(&RE(x), &IM(x), RE(Z1[k]), IM(Z1[k]), RE(sincos[k]), IM(sincos[k]));
+        ComplexMult(&RE(x), &IM(x), RE(m_Z1_mdct[k]), IM(m_Z1_mdct[k]), RE(sincos[k]), IM(sincos[k]));
         X_out[n] = -RE(x);
         X_out[N2 - 1 - n] = IM(x);
         X_out[N2 + n] = -IM(x);
         X_out[N - 1 - n] = RE(x);
     }
-    if(Z1) {
-        free(Z1);
-        Z1 = NULL;
-    }
+    // if(m_Z1_mdct) {
+    //     free(m_Z1_mdct);
+    //     m_Z1_mdct = NULL;
+    // }
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -5914,14 +5928,14 @@ uint8_t sbrDecodeCoupleFrame(sbr_info_t* sbr, int32_t* left_chan, int32_t* right
     //    printf(ANSI_ESC_YELLOW "sbrDecodeCoupleFrame\n" ANSI_ESC_WHITE);
     uint8_t dont_process = 0;
     uint8_t ret = 0;
-    //    complex_t X[MAX_NTSR][64]; // ⏫⏫⏫
+    //    complex_t m_X_dcf[MAX_NTSR][64]; // ⏫⏫⏫
 
     if(sbr == NULL) return 20;
     /* case can occur due to bit errors */
     if(sbr->id_aac != ID_CPE) return 21;
 
-    complex_t** X = (complex_t**)faad_malloc(MAX_NTSR * sizeof(X));
-    for(uint8_t i = 0; i < MAX_NTSR; i++) X[i] = (complex_t*)faad_malloc(64 * sizeof(*(X[i])));
+    // complex_t** m_X_dcf = (complex_t**)faad_malloc(MAX_NTSR * sizeof(m_X_dcf));
+    // for(uint8_t i = 0; i < MAX_NTSR; i++) m_X_dcf[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_dcf[i])));
 
     if(sbr->ret || (sbr->header_count == 0)) {
         /* don't process just upsample */
@@ -5931,21 +5945,21 @@ uint8_t sbrDecodeCoupleFrame(sbr_info_t* sbr, int32_t* left_chan, int32_t* right
     }
     if(just_seeked) { sbr->just_seeked = 1; }
     else { sbr->just_seeked = 0; }
-    sbr->ret += sbr_process_channel(sbr, left_chan, X, 0, dont_process, downSampledSBR);
+    sbr->ret += sbr_process_channel(sbr, left_chan, m_X_dcf, 0, dont_process, downSampledSBR);
     /* subband synthesis */
-    if(downSampledSBR) { sbr_qmf_synthesis_32(sbr, sbr->qmfs[0], X, left_chan); }
-    else { sbr_qmf_synthesis_64(sbr, sbr->qmfs[0], X, left_chan); }
-    sbr->ret += sbr_process_channel(sbr, right_chan, X, 1, dont_process, downSampledSBR);
+    if(downSampledSBR) { sbr_qmf_synthesis_32(sbr, sbr->qmfs[0], m_X_dcf, left_chan); }
+    else { sbr_qmf_synthesis_64(sbr, sbr->qmfs[0], m_X_dcf, left_chan); }
+    sbr->ret += sbr_process_channel(sbr, right_chan, m_X_dcf, 1, dont_process, downSampledSBR);
     /* subband synthesis */
-    if(downSampledSBR) { sbr_qmf_synthesis_32(sbr, sbr->qmfs[1], X, right_chan); }
-    else { sbr_qmf_synthesis_64(sbr, sbr->qmfs[1], X, right_chan); }
+    if(downSampledSBR) { sbr_qmf_synthesis_32(sbr, sbr->qmfs[1], m_X_dcf, right_chan); }
+    else { sbr_qmf_synthesis_64(sbr, sbr->qmfs[1], m_X_dcf, right_chan); }
 
-    for(uint8_t i = 0; i < MAX_NTSR; i++) {
-        free(X[i]);
-        X[i] = NULL;
-    }
-    free(X);
-    X = NULL;
+    // for(uint8_t i = 0; i < MAX_NTSR; i++) {
+    //     free(m_X_dcf[i]);
+    //     m_X_dcf[i] = NULL;
+    // }
+    // free(m_X_dcf);
+    // m_X_dcf = NULL;
 
     if(sbr->bs_header_flag) sbr->just_seeked = 0;
     if(sbr->header_count != 0 && sbr->ret == 0) {
@@ -5965,14 +5979,14 @@ uint8_t sbrDecodeSingleFrame(sbr_info_t* sbr, int32_t* channel, const uint8_t ju
     //    printf(ANSI_ESC_YELLOW "sbrDecodeSingleFrame\n" ANSI_ESC_WHITE);
     uint8_t dont_process = 0;
     uint8_t ret = 0;
-    //    complex_t X[MAX_NTSR][64]; // ⏫⏫⏫
+    //    complex_t m_X_dsf[MAX_NTSR][64]; // ⏫⏫⏫
 
     if(sbr == NULL) return 20;
     /* case can occur due to bit errors */
     if(sbr->id_aac != ID_SCE && sbr->id_aac != ID_LFE) return 21;
 
-    complex_t** X = (complex_t**)faad_calloc(MAX_NTSR, sizeof(X));
-    for(uint8_t i = 0; i < MAX_NTSR; i++) X[i] = (complex_t*)faad_calloc(64, sizeof(*(X[i])));
+    // complex_t** m_X_dsf = (complex_t**)faad_malloc(MAX_NTSR, sizeof(m_X_dsf));
+    // for(uint8_t i = 0; i < MAX_NTSR; i++) m_X_dsf[i] = (complex_t*)faad_malloc(64, sizeof(*(m_X_dsf[i])));
 
     if(sbr->ret || (sbr->header_count == 0)) {
         /* don't process just upsample */
@@ -5982,18 +5996,18 @@ uint8_t sbrDecodeSingleFrame(sbr_info_t* sbr, int32_t* channel, const uint8_t ju
     }
     if(just_seeked) { sbr->just_seeked = 1; }
     else { sbr->just_seeked = 0; }
-    sbr->ret += sbr_process_channel(sbr, channel, X, 0, dont_process, downSampledSBR);
+    sbr->ret += sbr_process_channel(sbr, channel, m_X_dsf, 0, dont_process, downSampledSBR);
     /* subband synthesis */
-    if(downSampledSBR) { sbr_qmf_synthesis_32(sbr, sbr->qmfs[0], X, channel); }
-    else { sbr_qmf_synthesis_64(sbr, sbr->qmfs[0], X, channel); }
+    if(downSampledSBR) { sbr_qmf_synthesis_32(sbr, sbr->qmfs[0], m_X_dsf, channel); }
+    else { sbr_qmf_synthesis_64(sbr, sbr->qmfs[0], m_X_dsf, channel); }
     if(sbr->bs_header_flag) sbr->just_seeked = 0;
 
-    for(uint8_t i = 0; i < MAX_NTSR; i++) {
-        free(X[i]);
-        X[i] = NULL;
-    }
-    free(X);
-    X = NULL;
+    // for(uint8_t i = 0; i < MAX_NTSR; i++) {
+    //     free(m_X_dsf[i]);
+    //     m_X_dsf[i] = NULL;
+    // }
+    // free(m_X_dsf);
+    // m_X_dsf = NULL;
 
     if(sbr->header_count != 0 && sbr->ret == 0) {
         ret = sbr_save_prev_data(sbr, 0);
