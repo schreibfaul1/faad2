@@ -52,8 +52,11 @@ int32_t*                  m_spec_coef2 = NULL;
 void alloc_mem() {
     m_mp4ASC = (mp4AudioSpecificConfig_t*)faad_malloc(1 * sizeof(mp4AudioSpecificConfig_t));
     m_transf_buf = (int32_t*)faad_malloc(2 * 1024 * sizeof(int32_t));
+    m_windowed_buf = (int32_t*)faad_malloc(2 * 1024 * sizeof(int32_t));
 
     uint16_t sum = 1 * sizeof(mp4AudioSpecificConfig_t);
+    sum += 2 * 1024 * sizeof(int32_t);
+    sum += 2 * 1024 * sizeof(int32_t);
     printf(ANSI_ESC_ORANGE "alloc %d bytes\n" ANSI_ESC_WHITE, sum);
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -61,6 +64,7 @@ void free_mem() {
     // clang-format off
     if(m_mp4ASC) {free(m_mp4ASC); m_mp4ASC = NULL;}
     if(m_transf_buf) {free(m_transf_buf);  m_transf_buf = NULL; }
+    if(m_windowed_buf) {free(m_windowed_buf); m_windowed_buf = NULL;}
 
 
     printf(ANSI_ESC_ORANGE "free mem\n" ANSI_ESC_WHITE);
@@ -2382,8 +2386,9 @@ void ifilter_bank(fb_info_t* fb, uint8_t window_sequence, uint8_t window_shape, 
 void filter_bank_ltp(fb_info_t* fb, uint8_t window_sequence, uint8_t window_shape, uint8_t window_shape_prev, int32_t* in_data, int32_t* out_mdct, uint8_t object_type, uint16_t frame_len) {
     (void)object_type;
     int16_t i;
-    //    int32_t        windowed_buf[2 * 1024] = {0}; // ⏫⏫⏫
-    int32_t* windowed_buf = (int32_t*)faad_calloc(2 * 1024, sizeof(int32_t));
+    //    int32_t        m_windowed_buf[2 * 1024] = {0}; // ⏫⏫⏫
+    // int32_t* m_windowed_buf = (int32_t*)faad_calloc(2 * 1024, sizeof(int32_t));
+    memset(m_windowed_buf, 0, 2 * 1024 * sizeof(int32_t));
 
     const int32_t* window_long = NULL;
     const int32_t* window_long_prev = NULL;
@@ -2411,31 +2416,31 @@ void filter_bank_ltp(fb_info_t* fb, uint8_t window_sequence, uint8_t window_shap
     switch(window_sequence) {
     case ONLY_LONG_SEQUENCE:
         for(i = nlong - 1; i >= 0; i--) {
-            windowed_buf[i] = MUL_F(in_data[i], window_long_prev[i]);
-            windowed_buf[i + nlong] = MUL_F(in_data[i + nlong], window_long[nlong - 1 - i]);
+            m_windowed_buf[i] = MUL_F(in_data[i], window_long_prev[i]);
+            m_windowed_buf[i + nlong] = MUL_F(in_data[i + nlong], window_long[nlong - 1 - i]);
         }
-        mdct(fb, windowed_buf, out_mdct, 2 * nlong);
+        mdct(fb, m_windowed_buf, out_mdct, 2 * nlong);
         break;
     case LONG_START_SEQUENCE:
-        for(i = 0; i < nlong; i++) windowed_buf[i] = MUL_F(in_data[i], window_long_prev[i]);
-        for(i = 0; i < nflat_ls; i++) windowed_buf[i + nlong] = in_data[i + nlong];
-        for(i = 0; i < nshort; i++) windowed_buf[i + nlong + nflat_ls] = MUL_F(in_data[i + nlong + nflat_ls], window_short[nshort - 1 - i]);
-        for(i = 0; i < nflat_ls; i++) windowed_buf[i + nlong + nflat_ls + nshort] = 0;
-        mdct(fb, windowed_buf, out_mdct, 2 * nlong);
+        for(i = 0; i < nlong; i++) m_windowed_buf[i] = MUL_F(in_data[i], window_long_prev[i]);
+        for(i = 0; i < nflat_ls; i++) m_windowed_buf[i + nlong] = in_data[i + nlong];
+        for(i = 0; i < nshort; i++) m_windowed_buf[i + nlong + nflat_ls] = MUL_F(in_data[i + nlong + nflat_ls], window_short[nshort - 1 - i]);
+        for(i = 0; i < nflat_ls; i++) m_windowed_buf[i + nlong + nflat_ls + nshort] = 0;
+        mdct(fb, m_windowed_buf, out_mdct, 2 * nlong);
         break;
     case LONG_STOP_SEQUENCE:
-        for(i = 0; i < nflat_ls; i++) windowed_buf[i] = 0;
-        for(i = 0; i < nshort; i++) windowed_buf[i + nflat_ls] = MUL_F(in_data[i + nflat_ls], window_short_prev[i]);
-        for(i = 0; i < nflat_ls; i++) windowed_buf[i + nflat_ls + nshort] = in_data[i + nflat_ls + nshort];
-        for(i = 0; i < nlong; i++) windowed_buf[i + nlong] = MUL_F(in_data[i + nlong], window_long[nlong - 1 - i]);
-        mdct(fb, windowed_buf, out_mdct, 2 * nlong);
+        for(i = 0; i < nflat_ls; i++) m_windowed_buf[i] = 0;
+        for(i = 0; i < nshort; i++) m_windowed_buf[i + nflat_ls] = MUL_F(in_data[i + nflat_ls], window_short_prev[i]);
+        for(i = 0; i < nflat_ls; i++) m_windowed_buf[i + nflat_ls + nshort] = in_data[i + nflat_ls + nshort];
+        for(i = 0; i < nlong; i++) m_windowed_buf[i + nlong] = MUL_F(in_data[i + nlong], window_long[nlong - 1 - i]);
+        mdct(fb, m_windowed_buf, out_mdct, 2 * nlong);
         break;
     }
 
-    if(windowed_buf) {
-        free(windowed_buf);
-        windowed_buf = NULL;
-    }
+    // if(m_windowed_buf) {
+    //     free(m_windowed_buf);
+    //     m_windowed_buf = NULL;
+    // }
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
