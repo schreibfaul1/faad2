@@ -2574,7 +2574,6 @@ uint8_t huffman_spectral_data(uint8_t cb, bitfile_t* ld, int16_t* sp) {
     return 0;
 }
 
-#ifdef ERROR_RESILIENCE
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* Special version of huffman_spectral_data. Will not read from a bitfile_t but a bits_t_t structure. Will keep track of the bits decoded and return
    the number of bits remaining. Do not read more than ld->len, return -1 if codeword would be longer */
@@ -2710,7 +2709,6 @@ int8_t huffman_spectral_data_2(uint8_t cb, bits_t_t* ld, int16_t* sp) {
     }
     return ld->len;
 }
-#endif
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void is_decode(ic_stream_t* ics, ic_stream_t* icsr, int32_t* l_spec, int32_t* r_spec, uint16_t frame_len) {
     uint8_t  g, sfb, b;
@@ -2741,8 +2739,6 @@ void is_decode(ic_stream_t* ics, ic_stream_t* icsr, int32_t* l_spec, int32_t* r_
         }
     }
 }
-
-#ifdef ERROR_RESILIENCE
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* rewind and reverse - 32 bit version */
 static uint32_t rewrev_word(uint32_t v, const uint8_t len) {
@@ -2757,7 +2753,6 @@ static uint32_t rewrev_word(uint32_t v, const uint8_t len) {
     return v;
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 /* 64 bit version */
 static void rewrev_lword(uint32_t* hi, uint32_t* lo, const uint8_t len) {
     if(len <= 32) {
@@ -2777,20 +2772,17 @@ static void rewrev_lword(uint32_t* hi, uint32_t* lo, const uint8_t len) {
         t = ((t >> S[3]) & B[3]) | ((t << S[3]) & ~B[3]);
         v = ((v >> S[4]) & B[4]) | ((v << S[4]) & ~B[4]);
         t = ((t >> S[4]) & B[4]) | ((t << S[4]) & ~B[4]);
-        /* last 32<>32 bit swap is implicit below */
-        /* shift off low bits (this is really only one 64 bit shift) */
+        /* last 32<>32 bit swap is implicit below shift off low bits (this is really only one 64 bit shift) */
         *lo = (t >> (64 - len)) | (v << (len - 32));
         *hi = v >> (64 - len);
     }
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* bits_t_t version */
 static void rewrev_bits(bits_t_t* bits) {
     if(bits->len == 0) return;
     rewrev_lword(&bits->bufb, &bits->bufa, bits->len);
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* merge bits of a to b */
 static void concat_bits(bits_t_t* b, bits_t_t* a) {
@@ -2818,7 +2810,6 @@ static void concat_bits(bits_t_t* b, bits_t_t* a) {
     b->bufb = bh | ah;
     b->len += a->len;
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static uint8_t is_good_cb(uint8_t this_CB, uint8_t this_sec_CB) {
     /* only want spectral data CB's */
@@ -2834,7 +2825,6 @@ static uint8_t is_good_cb(uint8_t this_CB, uint8_t this_sec_CB) {
     }
     return 0;
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static void read_segment(bits_t_t* segment, uint8_t segwidth, bitfile_t* ld) {
     segment->len = segwidth;
@@ -2848,7 +2838,6 @@ static void read_segment(bits_t_t* segment, uint8_t segwidth, bitfile_t* ld) {
         segment->bufb = 0;
     }
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static void fill_in_codeword(codeword_t* codeword, uint16_t index, uint16_t sp, uint8_t cb) {
     codeword[index].sp_offset = sp;
@@ -2856,18 +2845,13 @@ static void fill_in_codeword(codeword_t* codeword, uint16_t index, uint16_t sp, 
     codeword[index].decoded = 0;
     codeword[index].bits.len = 0;
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t reordered_spectral_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bitfile_t* ld, int16_t* spectral_data) {
-    uint16_t PCWs_done;
-    uint16_t numberOfSegments, numberOfSets, numberOfCodewords;
-    //    codeword_t m_codeword[512]; // ⏫⏫⏫
-    //    bits_t_t     m_segment[512];  // ⏫⏫⏫
-    uint16_t sp_offset[8];
-    uint16_t g, i, sortloop, set, bitsread;
-    /*uint16_t bitsleft, codewordsleft*/;
-    uint8_t w_idx, sfb, this_CB, last_CB, this_sec_CB;
-
+    uint16_t       PCWs_done;
+    uint16_t       numberOfSegments, numberOfSets, numberOfCodewords;
+    uint16_t       sp_offset[8];
+    uint16_t       g, i, sortloop, set, bitsread;
+    uint8_t        w_idx, sfb, this_CB, last_CB, this_sec_CB;
     const uint16_t nshort = hDecoder->frameLength / 8;
     const uint16_t sp_data_len = ics->length_of_reordered_spectral_data;
     const uint8_t* PreSortCb;
@@ -2877,18 +2861,15 @@ uint8_t reordered_spectral_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bi
     /* since there is spectral data, at least one codeword has nonzero length */
     if(ics->length_of_longest_codeword == 0) return 10;
     if(sp_data_len < ics->length_of_longest_codeword) return 10;
-
     codeword_t* m_codeword = (codeword_t*)faad_malloc(512 * sizeof(codeword_t));
     bits_t_t*   m_segment = (bits_t_t*)faad_malloc(512 * sizeof(bits_t_t));
-
     sp_offset[0] = 0;
     for(g = 1; g < ics->num_window_groups; g++) { sp_offset[g] = sp_offset[g - 1] + nshort * ics->window_group_length[g - 1]; }
     PCWs_done = 0;
     numberOfSegments = 0;
     numberOfCodewords = 0;
     bitsread = 0;
-    /* VCB11 code books in use */
-    if(hDecoder->aacSectionDataResilienceFlag) {
+    if(hDecoder->aacSectionDataResilienceFlag) { /* VCB11 code books in use */
         PreSortCb = PreSortCB_ER;
         last_CB = NUM_CB_ER;
     }
@@ -2967,17 +2948,7 @@ uint8_t reordered_spectral_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bi
             }
         }
     }
-    if(numberOfSegments == 0) {
-        // if(m_segment) {
-        //     free(m_segment);
-        //     m_segment = NULL;
-        // }
-        // if(m_codeword) {
-        //     free(m_codeword);
-        //     m_codeword = NULL;
-        // }
-        return 10;
-    }
+    if(numberOfSegments == 0) { return 10; }
     numberOfSets = numberOfCodewords / numberOfSegments;
     /* step 2: decode nonPCWs */
     for(set = 1; set <= numberOfSets; set++) {
@@ -3003,18 +2974,8 @@ uint8_t reordered_spectral_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bi
         }
         for(i = 0; i < numberOfSegments; i++) rewrev_bits(&m_segment[i]);
     }
-    // if(m_segment) {
-    //     free(m_segment);
-    //     m_segment = NULL;
-    // }
-    // if(m_codeword) {
-    //     free(m_codeword);
-    //     m_codeword = NULL;
-    // }
     return 0;
 }
-#endif
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void ms_decode(ic_stream_t* ics, ic_stream_t* icsr, int32_t* l_spec, int32_t* r_spec, uint16_t frame_len) {
     uint8_t  g, b, sfb;
@@ -3027,9 +2988,7 @@ void ms_decode(ic_stream_t* ics, ic_stream_t* icsr, int32_t* l_spec, int32_t* r_
         for(g = 0; g < ics->num_window_groups; g++) {
             for(b = 0; b < ics->window_group_length[g]; b++) {
                 for(sfb = 0; sfb < ics->max_sfb; sfb++) {
-                    /* If intensity stereo coding or noise substitution is on for a particular scalefactor band, no M/S stereo decoding
-                       is carried out.
-                     */
+                    /* If intensity stereo coding or noise substitution is on for a particular scalefactor band, no M/S stereo decoding is carried out. */
                     if((ics->ms_used[g][sfb] || ics->ms_mask_present == 2) && !is_intensity(icsr, g, sfb) && !is_noise(ics, g, sfb)) {
                         for(i = ics->swb_offset[sfb]; i < min(ics->swb_offset[sfb + 1], ics->swb_offset_max); i++) {
                             k = (group * nshort) + i;
@@ -3136,22 +3095,25 @@ void* output_to_PCM(NeAACDecStruct_t* hDecoder, int32_t** input, void* sample_bu
 int32_t fp_sqrt(int32_t value) {
     int32_t root = 0;
 
-    step(0);
-    step(2);
-    step(4);
-    step(6);
-    step(8);
-    step(10);
-    step(12);
-    step(14);
-    step(16);
-    step(18);
-    step(20);
-    step(22);
-    step(24);
-    step(26);
-    step(28);
-    step(30);
+    // clang-format off
+    if((0x40000000l >> 0)  + root <= value) { value -= (0x40000000l >> 0)  + root; root = (root >> 1) | (0x40000000l >> 0); }  else { root = root >> 1; }
+    if((0x40000000l >> 2)  + root <= value) { value -= (0x40000000l >> 2)  + root; root = (root >> 1) | (0x40000000l >> 2); }  else { root = root >> 1; }
+    if((0x40000000l >> 4)  + root <= value) { value -= (0x40000000l >> 4)  + root; root = (root >> 1) | (0x40000000l >> 4); }  else { root = root >> 1; }
+    if((0x40000000l >> 6)  + root <= value) { value -= (0x40000000l >> 6)  + root; root = (root >> 1) | (0x40000000l >> 6); }  else { root = root >> 1; }
+    if((0x40000000l >> 8)  + root <= value) { value -= (0x40000000l >> 8)  + root; root = (root >> 1) | (0x40000000l >> 8); }  else { root = root >> 1; }
+    if((0x40000000l >> 10) + root <= value) { value -= (0x40000000l >> 10) + root; root = (root >> 1) | (0x40000000l >> 10); } else { root = root >> 1; }
+    if((0x40000000l >> 12) + root <= value) { value -= (0x40000000l >> 12) + root; root = (root >> 1) | (0x40000000l >> 12); } else { root = root >> 1; }
+    if((0x40000000l >> 14) + root <= value) { value -= (0x40000000l >> 14) + root; root = (root >> 1) | (0x40000000l >> 14); } else { root = root >> 1; }
+    if((0x40000000l >> 16) + root <= value) { value -= (0x40000000l >> 16) + root; root = (root >> 1) | (0x40000000l >> 16); } else { root = root >> 1; }
+    if((0x40000000l >> 18) + root <= value) { value -= (0x40000000l >> 18) + root; root = (root >> 1) | (0x40000000l >> 18); } else { root = root >> 1; }
+    if((0x40000000l >> 20) + root <= value) { value -= (0x40000000l >> 20) + root; root = (root >> 1) | (0x40000000l >> 20); } else { root = root >> 1; }
+    if((0x40000000l >> 22) + root <= value) { value -= (0x40000000l >> 22) + root; root = (root >> 1) | (0x40000000l >> 22); } else { root = root >> 1; }
+    if((0x40000000l >> 24) + root <= value) { value -= (0x40000000l >> 24) + root; root = (root >> 1) | (0x40000000l >> 24); } else { root = root >> 1; }
+    if((0x40000000l >> 26) + root <= value) { value -= (0x40000000l >> 26) + root; root = (root >> 1) | (0x40000000l >> 26); } else { root = root >> 1; }
+    if((0x40000000l >> 28) + root <= value) { value -= (0x40000000l >> 28) + root; root = (root >> 1) | (0x40000000l >> 28); } else { root = root >> 1; }
+    if((0x40000000l >> 30) + root <= value) { value -= (0x40000000l >> 30) + root; root = (root >> 1) | (0x40000000l >> 30); } else { root = root >> 1; }
+    // clang-format on
+
     if(root < value) ++root;
     root <<= (REAL_BITS / 2);
     return root;
@@ -3368,7 +3330,6 @@ static void channel_filter4(hyb_info_t* hyb, uint8_t frame_len, const int32_t* f
         QMF_IM(X_hybrid[i][3]) = input_re2[0] + input_re2[1] + input_im2[0] + input_im2[1];
     }
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* complex filter, size 8 */
 static void channel_filter8(hyb_info_t* hyb, uint8_t frame_len, const int32_t* filter, complex_t* buffer, complex_t** X_hybrid) {
@@ -3424,7 +3385,6 @@ static void channel_filter8(hyb_info_t* hyb, uint8_t frame_len, const int32_t* f
         QMF_IM(X_hybrid[i][0]) = x[0];
     }
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static void inline DCT3_6_unscaled(int32_t* y, int32_t* x) {
     int32_t f0, f1, f2, f3, f4, f5, f6, f7;
@@ -3444,7 +3404,6 @@ static void inline DCT3_6_unscaled(int32_t* y, int32_t* x) {
     y[4] = f1 - f3 - x[4];
     y[5] = f2 - f6 + f4;
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* complex filter, size 12 */
 static void channel_filter12(hyb_info_t* hyb, uint8_t frame_len, const int32_t* filter, complex_t* buffer, complex_t** X_hybrid) {
@@ -3471,7 +3430,6 @@ static void channel_filter12(hyb_info_t* hyb, uint8_t frame_len, const int32_t* 
         DCT3_6_unscaled(out_re2, input_re2);
         DCT3_6_unscaled(out_im1, input_im1);
         DCT3_6_unscaled(out_im2, input_im2);
-
         for(n = 0; n < 6; n += 2) {
             QMF_RE(X_hybrid[i][n]) = out_re1[n] - out_im1[n];
             QMF_IM(X_hybrid[i][n]) = out_re2[n] + out_im2[n];
@@ -3484,11 +3442,8 @@ static void channel_filter12(hyb_info_t* hyb, uint8_t frame_len, const int32_t* 
         }
     }
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-/* Hybrid analysis: further split up QMF subbands
- * to improve frequency resolution
- */
+/* Hybrid analysis: further split up QMF subbands to improve frequency resolution */
 static void hybrid_analysis(hyb_info_t* hyb, complex_t* X[64], complex_t* X_hybrid[32], uint8_t use34, uint8_t numTimeSlotsRate) {
     uint8_t  k, n, band;
     uint8_t  offset = 0;
@@ -3545,7 +3500,6 @@ static void hybrid_analysis(hyb_info_t* hyb, complex_t* X[64], complex_t* X_hybr
         }
     }
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static void hybrid_synthesis(hyb_info_t* hyb, complex_t* X[64], complex_t* X_hybrid[32], uint8_t use34, uint8_t numTimeSlotsRate) {
     uint8_t k, n, band;
@@ -3567,7 +3521,6 @@ static void hybrid_synthesis(hyb_info_t* hyb, complex_t* X[64], complex_t* X_hyb
         offset += resolution[band];
     }
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* limits the value i to the range [min,max] */
 static int8_t delta_clip(int8_t i, int8_t min, int8_t max) {
@@ -3577,7 +3530,6 @@ static int8_t delta_clip(int8_t i, int8_t min, int8_t max) {
     else
         return i;
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* delta decode array */
 static void delta_decode(uint8_t enable, int8_t* index, int8_t* index_prev, uint8_t dt_flag, uint8_t nr_par, uint8_t stride, int8_t min_index, int8_t max_index) {
@@ -3596,29 +3548,16 @@ static void delta_decode(uint8_t enable, int8_t* index, int8_t* index_prev, uint
         else {
             /* delta coded in time direction */
             for(i = 0; i < nr_par; i++) {
-                // int8_t tmp2;
-                // int8_t tmp = index[i];
-                // printf("%d %d\n", index_prev[i*stride], index[i]);
-                // printf("%d\n", index[i]);
                 index[i] = index_prev[i * stride] + index[i];
                 // tmp2 = index[i];
                 index[i] = delta_clip(index[i], min_index, max_index);
-                // if (iid)
-                //{
-                //     if (index[i] == 7)
-                //     {
-                //         printf("%d %d %d\n", index_prev[i*stride], tmp, tmp2);
-                //     }
-                // }
             }
         }
     }
     else {
-        /* set indices to zero */
-        for(i = 0; i < nr_par; i++) { index[i] = 0; }
+        for(i = 0; i < nr_par; i++) { index[i] = 0; } /* set indices to zero */
     }
-    /* coarse */
-    if(stride == 2) {
+    if(stride == 2) { /* coarse */
         for(i = (nr_par << 1) - 1; i > 0; i--) { index[i] = index[i >> 1]; }
     }
 }
@@ -3657,7 +3596,6 @@ static void delta_modulo_decode(uint8_t enable, int8_t* index, int8_t* index_pre
         for(i = (nr_par << 1) - 1; i > 0; i--) { index[i] = index[i >> 1]; }
     }
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static void map20indexto34(int8_t* index, uint8_t bins) {
     index[0] = index[0];
@@ -3698,7 +3636,6 @@ static void map20indexto34(int8_t* index, uint8_t bins) {
         index[33] = index[19];
     }
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* parse the bitstream data decoded in ps_data() */
 static void ps_data_decode(ps_info_t* ps) {
@@ -3815,7 +3752,6 @@ static void ps_data_decode(ps_info_t* ps) {
         }
     }
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* decorrelate the mono signal using an allpass filter */
 static void ps_decorrelate(ps_info_t* ps, complex_t* X_left[64], complex_t* X_right[64], complex_t* X_hybrid_left[32], complex_t* X_hybrid_right[32]) {
@@ -3825,34 +3761,21 @@ static void ps_decorrelate(ps_info_t* ps, complex_t* X_left[64], complex_t* X_ri
     const complex_t* Phi_Fract_SubQmf;
     uint8_t          temp_delay_ser[NO_ALLPASS_LINKS];
     int32_t          P_SmoothPeakDecayDiffNrg, nrg;
-    //    int32_t          m_P_dec[32][34];                        // ⏫⏫⏫
-    //    int32_t          m_G_TransientRatio[32][34] = {{0}}; // ⏫⏫⏫
-    complex_t inputLeft;
+    complex_t        inputLeft;
 
-    // int32_t** m_P_dec = (int32_t**)faad_malloc(32 * sizeof(m_P_dec));
-    // for(uint8_t i = 0; i < 32; i++) m_P_dec[i] = (int32_t*)faad_malloc(34 * sizeof(*(m_P_dec[i])));
-    // int32_t** m_G_TransientRatio = (int32_t**)faad_calloc(32, sizeof(m_G_TransientRatio));
-    // for(uint8_t i = 0; i < 32; i++) m_G_TransientRatio[i] = (int32_t*)faad_calloc(34, sizeof(*(m_G_TransientRatio[i])));
-
-    /* chose hybrid filterbank: 20 or 34 band case */
-    if(ps->use34hybrid_bands) { Phi_Fract_SubQmf = Phi_Fract_SubQmf34; }
+    if(ps->use34hybrid_bands) { Phi_Fract_SubQmf = Phi_Fract_SubQmf34; } /* chose hybrid filterbank: 20 or 34 band case */
     else { Phi_Fract_SubQmf = Phi_Fract_SubQmf20; }
-    /* clear the energy values */
-    for(n = 0; n < 32; n++) {
+    for(n = 0; n < 32; n++) { /* clear the energy values */
         for(bk = 0; bk < 34; bk++) { m_P_dec[n][bk] = 0; }
     }
 
-    /* calculate the energy in each parameter band b(k) */
-    for(gr = 0; gr < ps->num_groups; gr++) {
-        /* select the parameter index b(k) to which this group belongs */
-        bk = (~NEGATE_IPD_MASK) & ps->map_group2bk[gr];
-        /* select the upper subband border for this group */
-        maxsb = (gr < ps->num_hybrid_groups) ? ps->group_border[gr] + 1 : ps->group_border[gr + 1];
+    for(gr = 0; gr < ps->num_groups; gr++) {                                                        /* calculate the energy in each parameter band b(k) */
+        bk = (~NEGATE_IPD_MASK) & ps->map_group2bk[gr];                                             /* select the parameter index b(k) to which this group belongs */
+        maxsb = (gr < ps->num_hybrid_groups) ? ps->group_border[gr] + 1 : ps->group_border[gr + 1]; /* select the upper subband border for this group */
         for(sb = ps->group_border[gr]; sb < maxsb; sb++) {
             for(n = ps->border_position[0]; n < ps->border_position[ps->num_env]; n++) {
                 uint32_t in_re, in_im;
-                /* input from hybrid subbands or QMF subbands */
-                if(gr < ps->num_hybrid_groups) {
+                if(gr < ps->num_hybrid_groups) { /* input from hybrid subbands or QMF subbands */
                     RE(inputLeft) = QMF_RE(X_hybrid_left[n][sb]);
                     IM(inputLeft) = QMF_IM(X_hybrid_left[n][sb]);
                 }
@@ -3861,9 +3784,7 @@ static void ps_decorrelate(ps_info_t* ps, complex_t* X_left[64], complex_t* X_ri
                     IM(inputLeft) = QMF_IM(X_left[n][sb]);
                 }
                 /* accumulate energy */
-                /* NOTE: all input is scaled by 2^(-5) because of fixed point QMF
-                 * meaning that m_P_dec will be scaled by 2^(-10) compared to floating point version
-                 */
+                /* NOTE: all input is scaled by 2^(-5) because of fixed point QMF meaning that m_P_dec will be scaled by 2^(-10) compared to floating point version */
                 in_re = ((abs(RE(inputLeft)) + (1 << (REAL_BITS - 1))) >> REAL_BITS);
                 in_im = ((abs(IM(inputLeft)) + (1 << (REAL_BITS - 1))) >> REAL_BITS);
                 m_P_dec[n][bk] += in_re * in_re + in_im * in_im;
@@ -3876,37 +3797,28 @@ static void ps_decorrelate(ps_info_t* ps, complex_t* X_left[64], complex_t* X_ri
             const int32_t gamma = COEF_CONST(1.5);
             ps->P_PeakDecayNrg[bk] = MUL_F(ps->P_PeakDecayNrg[bk], ps->alpha_decay);
             if(ps->P_PeakDecayNrg[bk] < m_P_dec[n][bk]) ps->P_PeakDecayNrg[bk] = m_P_dec[n][bk];
-            /* apply smoothing filter to peak decay energy */
-            P_SmoothPeakDecayDiffNrg = ps->P_SmoothPeakDecayDiffNrg_prev[bk];
+            P_SmoothPeakDecayDiffNrg = ps->P_SmoothPeakDecayDiffNrg_prev[bk]; /* apply smoothing filter to peak decay energy */
             P_SmoothPeakDecayDiffNrg += MUL_F((ps->P_PeakDecayNrg[bk] - m_P_dec[n][bk] - ps->P_SmoothPeakDecayDiffNrg_prev[bk]), ps->alpha_smooth);
             ps->P_SmoothPeakDecayDiffNrg_prev[bk] = P_SmoothPeakDecayDiffNrg;
-            /* apply smoothing filter to energy */
-            nrg = ps->P_prev[bk];
+            nrg = ps->P_prev[bk]; /* apply smoothing filter to energy */
             nrg += MUL_F((m_P_dec[n][bk] - ps->P_prev[bk]), ps->alpha_smooth);
             ps->P_prev[bk] = nrg;
-            /* calculate transient ratio */
-            if(MUL_C(P_SmoothPeakDecayDiffNrg, gamma) <= nrg) { m_G_TransientRatio[n][bk] = REAL_CONST(1.0); }
+            if(MUL_C(P_SmoothPeakDecayDiffNrg, gamma) <= nrg) { m_G_TransientRatio[n][bk] = REAL_CONST(1.0); } /* calculate transient ratio */
             else { m_G_TransientRatio[n][bk] = DIV_R(nrg, (MUL_C(P_SmoothPeakDecayDiffNrg, gamma))); }
         }
     }
-    /* apply stereo decorrelation filter to the signal */
-    for(gr = 0; gr < ps->num_groups; gr++) {
+    for(gr = 0; gr < ps->num_groups; gr++) { /* apply stereo decorrelation filter to the signal */
         if(gr < ps->num_hybrid_groups) maxsb = ps->group_border[gr] + 1;
         else
             maxsb = ps->group_border[gr + 1];
-        /* QMF channel */
-        for(sb = ps->group_border[gr]; sb < maxsb; sb++) {
+        for(sb = ps->group_border[gr]; sb < maxsb; sb++) { /* QMF channel */
             int32_t g_DecaySlope;
             int32_t g_DecaySlope_filt[NO_ALLPASS_LINKS];
-            /* g_DecaySlope: [0..1] */
-            if(gr < ps->num_hybrid_groups || sb <= ps->decay_cutoff) { g_DecaySlope = FRAC_CONST(1.0); }
+            if(gr < ps->num_hybrid_groups || sb <= ps->decay_cutoff) { g_DecaySlope = FRAC_CONST(1.0); } /* g_DecaySlope: [0..1] */
             else {
                 int8_t decay = ps->decay_cutoff - sb;
                 if(decay <= -20 /* -1/DECAY_SLOPE */) { g_DecaySlope = 0; }
-                else {
-                    /* decay(int32_t)*decay_slope(frac) = g_DecaySlope(frac) */
-                    g_DecaySlope = FRAC_CONST(1.0) + DECAY_SLOPE * decay;
-                }
+                else { g_DecaySlope = FRAC_CONST(1.0) + DECAY_SLOPE * decay; /* decay(int32_t)*decay_slope(frac) = g_DecaySlope(frac) */ }
             }
             /* calculate g_DecaySlope_filt for every m multiplied by filter_a[m] */
             for(m = 0; m < NO_ALLPASS_LINKS; m++) { g_DecaySlope_filt[m] = MUL_F(g_DecaySlope, filter_a[m]); }
@@ -4038,29 +3950,10 @@ static void ps_decorrelate(ps_info_t* ps, complex_t* X_left[64], complex_t* X_ri
     }
     /* update delay indices */
     ps->saved_delay = temp_delay;
-    for(m = 0; m < NO_ALLPASS_LINKS; m++) ps->delay_buf_index_ser[m] = temp_delay_ser[m];
-
-    // for(uint8_t i = 0; i < 32; i++) {
-    //     free(m_G_TransientRatio[i]);
-    //     m_G_TransientRatio[i] = NULL;
-    // }
-    // free(m_G_TransientRatio);
-    // m_G_TransientRatio = NULL;
-    // for(uint8_t i = 0; i < 32; i++) {
-    //     free(m_P_dec[i]);
-    //     m_P_dec[i] = NULL;
-    // }
-    // free(m_P_dec);
-    // m_P_dec = NULL;
+    for(m = 0; m < NO_ALLPASS_LINKS; m++) { ps->delay_buf_index_ser[m] = temp_delay_ser[m]; }
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    #define step(shift)                                  \
-        if((0x40000000l >> shift) + root <= value) {     \
-            value -= (0x40000000l >> shift) + root;      \
-            root = (root >> 1) | (0x40000000l >> shift); \
-        }                                                \
-        else { root = root >> 1; }
 
 /* fixed point square root approximation */
 // static int32_t ps_sqrt(int32_t value) {
@@ -5430,10 +5323,6 @@ static void fft_dif(int32_t* Real, int32_t* Imag) {
         Real[i2] = point1_real - point2_real; // out[i2] = point1 - point2
         Imag[i2] = point1_imag - point2_imag;
     }
-
-#ifdef REORDER_IN_FFT
-    FFTReorder(Real, Imag);
-#endif // #ifdef REORDER_IN_FFT
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
