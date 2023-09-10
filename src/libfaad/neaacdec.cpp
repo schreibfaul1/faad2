@@ -82,6 +82,13 @@ void alloc_mem() {
     m_lim_imTable = (int32_t*)faad_malloc(100 * sizeof(int32_t));
     m_patchBorders = (uint8_t*)faad_malloc(64 * sizeof(uint8_t));
     m_adj = (sbr_hfadj_info_t*)faad_malloc(1 * sizeof(sbr_hfadj_info_t));
+    m_Q_M_lim = (int32_t*)faad_malloc(MAX_M * sizeof(int32_t));
+    m_G_lim = (int32_t*)faad_malloc(MAX_M * sizeof(int32_t));
+    m_S_M = (int32_t*)faad_malloc(MAX_M * sizeof(int32_t));
+    m_sce = (element_t*)faad_malloc(1 * sizeof(element_t));
+    m_spec_data = (int16_t*)faad_malloc(1024 * sizeof(int16_t));
+
+
 
     uint32_t sum = 1 * sizeof(mp4AudioSpecificConfig_t);
     sum += 2 * 1024 * sizeof(int32_t);
@@ -102,10 +109,13 @@ void alloc_mem() {
     sum += 64 * sizeof(int32_t);
     sum += 64 * sizeof(int32_t);
     sum += 1 * sizeof(sbr_hfadj_info_t);
+    sum += MAX_M * sizeof(int32_t);
+    sum += MAX_M * sizeof(int32_t);
+    sum += MAX_M * sizeof(int32_t);
+    sum += 1 * sizeof(element_t);
+    sum += 1024 * sizeof(int16_t);
 
-
-
-
+    
     printf(ANSI_ESC_ORANGE "alloc %d bytes\n" ANSI_ESC_WHITE, sum);
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -135,6 +145,12 @@ void free_mem() {
     if(m_patchBorders)     {free(m_patchBorders); m_patchBorders = NULL;}
     if(m_lim_imTable)      {free(m_lim_imTable); m_lim_imTable = NULL;}
     if(m_adj)              {free(m_adj); m_adj = NULL;}
+    if(m_S_M)              {free(m_S_M); m_S_M = NULL;}
+    if(m_G_lim)            {free(m_G_lim); m_G_lim = NULL;}
+    if(m_Q_M_lim)          {free(m_Q_M_lim); m_Q_M_lim = NULL;}
+    if(m_spec_data)        {free(m_spec_data); m_spec_data = NULL;}
+    if(m_sce)              {free(m_sce); m_sce = NULL;}
+
 
     printf(ANSI_ESC_ORANGE "free mem\n" ANSI_ESC_WHITE);
     // clang-format on
@@ -6730,13 +6746,13 @@ static void calculate_gain(sbr_info_t* sbr, sbr_hfadj_info_t* adj, uint8_t ch) {
 
     uint8_t current_t_noise_band = 0;
     uint8_t S_mapped;
-    //    int32_t Q_M_lim[MAX_M]; //??? ⏫⏫⏫
-    //    int32_t G_lim[MAX_M];
+    //    int32_t m_Q_M_lim[MAX_M]; //??? ⏫⏫⏫
+    //    int32_t m_G_lim[MAX_M];
     int32_t G_boost;
-    //    int32_t S_M[MAX_M];
-    int32_t* Q_M_lim = (int32_t*)faad_malloc(MAX_M * sizeof(int32_t));
-    int32_t* G_lim = (int32_t*)faad_malloc(MAX_M * sizeof(int32_t));
-    int32_t* S_M = (int32_t*)faad_malloc(MAX_M * sizeof(int32_t));
+    //    int32_t m_S_M[MAX_M];
+    // int32_t* m_Q_M_lim = (int32_t*)faad_malloc(MAX_M * sizeof(int32_t));
+    // int32_t* m_G_lim = (int32_t*)faad_malloc(MAX_M * sizeof(int32_t));
+    // int32_t* m_S_M = (int32_t*)faad_malloc(MAX_M * sizeof(int32_t));
 
     for(l = 0; l < sbr->L_E[ch]; l++) {
         uint8_t current_f_noise_band = 0;
@@ -6820,13 +6836,13 @@ static void calculate_gain(sbr_info_t* sbr, sbr_hfadj_info_t* adj, uint8_t ch) {
                 /* Q_M only depends on E_orig and Q_div2:
                  * since N_Q <= N_Low <= N_High we only need to recalculate Q_M on a change of current res band (HI or LO) */
                 Q_M = E_orig + Q_orig - Q_orig_plus1;
-                /* S_M only depends on E_orig, Q_div and S_index_mapped:
+                /* m_S_M only depends on E_orig, Q_div and S_index_mapped:
                  * S_index_mapped can only be non-zero once per HI_RES band */
-                if(S_index_mapped == 0) { S_M[m] = LOG2_MIN_INF; /* -inf */ }
+                if(S_index_mapped == 0) { m_S_M[m] = LOG2_MIN_INF; /* -inf */ }
                 else {
-                    S_M[m] = E_orig - Q_orig_plus1;
+                    m_S_M[m] = E_orig - Q_orig_plus1;
                     /* accumulate sinusoid part of the total energy */
-                    den += pow2_int(S_M[m]);
+                    den += pow2_int(m_S_M[m]);
                 }
                 /* calculate gain */
                 /* ratio of the energy of the original signal and the energy of the HF generated signal */
@@ -6843,20 +6859,20 @@ static void calculate_gain(sbr_info_t* sbr, sbr_hfadj_info_t* adj, uint8_t ch) {
                 }
                 /* limit the additional noise energy level and apply the limiter */
                 if(G_max > G) {
-                    Q_M_lim[m] = Q_M;
-                    G_lim[m] = G;
+                    m_Q_M_lim[m] = Q_M;
+                    m_G_lim[m] = G;
                     if((S_index_mapped == 0) && (l != sbr->l_A[ch])) { Q_M_size++; }
                 }
                 else {
                     /* G > G_max */
-                    Q_M_lim[m] = Q_M + G_max - G;
-                    G_lim[m] = G_max;
+                    m_Q_M_lim[m] = Q_M + G_max - G;
+                    m_G_lim[m] = G_max;
 
                     /* accumulate limited Q_M */
-                    if((S_index_mapped == 0) && (l != sbr->l_A[ch])) { den += pow2_int(Q_M_lim[m]); }
+                    if((S_index_mapped == 0) && (l != sbr->l_A[ch])) { den += pow2_int(m_Q_M_lim[m]); }
                 }
                 /* accumulate the total energy E_curr changes for every m so we do need to accumulate every m */
-                den += pow2_int(E_curr + G_lim[m]);
+                den += pow2_int(E_curr + m_G_lim[m]);
             }
             /* accumulate last range of equal Q_Ms */
             if(Q_M_size > 0) { den += pow2_int(log2_int_tab[Q_M_size] + Q_M); }
@@ -6866,25 +6882,25 @@ static void calculate_gain(sbr_info_t* sbr, sbr_hfadj_info_t* adj, uint8_t ch) {
             G_boost = min(G_boost, REAL_CONST(1.328771237) /* log2(1.584893192 ^ 2) */);
             for(m = ml1; m < ml2; m++) {
                 /* apply compensation to gain, noise floor sf's and sinusoid levels */
-                adj->G_lim_boost[l][m] = pow2_fix((G_lim[m] + G_boost) >> 1);
-                adj->Q_M_lim_boost[l][m] = pow2_fix((Q_M_lim[m] + G_boost) >> 1);
-                if(S_M[m] != LOG2_MIN_INF) { adj->S_M_boost[l][m] = pow2_int((S_M[m] + G_boost) >> 1); }
+                adj->G_lim_boost[l][m] = pow2_fix((m_G_lim[m] + G_boost) >> 1);
+                adj->Q_M_lim_boost[l][m] = pow2_fix((m_Q_M_lim[m] + G_boost) >> 1);
+                if(m_S_M[m] != LOG2_MIN_INF) { adj->S_M_boost[l][m] = pow2_int((m_S_M[m] + G_boost) >> 1); }
                 else { adj->S_M_boost[l][m] = 0; }
             }
         }
     }
-    if(S_M) {
-        free(S_M);
-        S_M = NULL;
-    }
-    if(G_lim) {
-        free(G_lim);
-        G_lim = NULL;
-    }
-    if(Q_M_lim) {
-        free(Q_M_lim);
-        Q_M_lim = NULL;
-    }
+    // if(m_S_M) {
+    //     free(m_S_M);
+    //     m_S_M = NULL;
+    // }
+    // if(m_G_lim) {
+    //     free(m_G_lim);
+    //     m_G_lim = NULL;
+    // }
+    // if(m_Q_M_lim) {
+    //     free(m_Q_M_lim);
+    //     m_Q_M_lim = NULL;
+    // }
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -8461,17 +8477,21 @@ void raw_data_block(NeAACDecStruct_t* hDecoder, NeAACDecFrameInfo_t* hInfo, bitf
 static uint8_t single_lfe_channel_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld, uint8_t channel, uint8_t* tag) {
     uint8_t retval = 0;
     uint8_t ret = 0;
-    // element_t    sce = {}; // ⏫⏫⏫
-    element_t*   sce = (element_t*)faad_calloc(1, sizeof(element_t));
-    ic_stream_t* ics = &(sce->ics1);
-    // int16_t    spec_data[1024] = {0}; // ⏫⏫⏫
-    int16_t* spec_data = (int16_t*)faad_calloc(1024, sizeof(int16_t));
+    // element_t    m_sce = {}; // ⏫⏫⏫
+//    element_t*   m_sce = (element_t*)faad_calloc(1, sizeof(element_t));
+    memset(m_sce, 0, 1 * sizeof(element_t));
+    memset(m_spec_data, 0, 1024 * sizeof(int16_t));
 
-    sce->element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG);
-    *tag = sce->element_instance_tag;
-    sce->channel = channel;
-    sce->paired_channel = -1;
-    retval = individual_channel_stream(hDecoder, sce, ld, ics, 0, spec_data);
+
+    ic_stream_t* ics = &(m_sce->ics1);
+    // int16_t    m_spec_data[1024] = {0}; // ⏫⏫⏫
+//    int16_t* m_spec_data = (int16_t*)faad_calloc(1024, sizeof(int16_t));
+
+    m_sce->element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG);
+    *tag = m_sce->element_instance_tag;
+    m_sce->channel = channel;
+    m_sce->paired_channel = -1;
+    retval = individual_channel_stream(hDecoder, m_sce, ld, ics, 0, m_spec_data);
     if(retval > 0) {
         ret = retval;
         goto exit;
@@ -8494,23 +8514,23 @@ static uint8_t single_lfe_channel_element(NeAACDecStruct_t* hDecoder, bitfile_t*
     }
 #endif
     /* noiseless coding is done, spectral reconstruction is done now */
-    retval = reconstruct_single_channel(hDecoder, ics, sce, spec_data);
+    retval = reconstruct_single_channel(hDecoder, ics, m_sce, m_spec_data);
     if(retval > 0) {
         ret = retval;
         goto exit;
     }
-    if(sce) {
-        free(sce);
-        sce = NULL;
-    }
+    // if(m_sce) {
+    //     free(m_sce);
+    //     m_sce = NULL;
+    // }
     ret = 0;
     goto exit;
 
 exit:
-    if(spec_data) {
-        free(spec_data);
-        spec_data = NULL;
-    }
+    // if(m_spec_data) {
+    //     free(m_spec_data);
+    //     m_spec_data = NULL;
+    // }
     return ret;
 }
 
