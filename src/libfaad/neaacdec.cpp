@@ -27,8 +27,7 @@ int32_t*                  m_vDk0 = NULL;
 int32_t*                  m_vDk1 = NULL;
 int32_t*                  m_vk0 = NULL;
 int32_t*                  m_vk1 = NULL;
-int32_t*                  m_lm_imTable = NULL;
-uint8_t*                  m_imTable = NULL;
+int32_t*                  m_lim_imTable = NULL;
 uint8_t*                  m_patchBorders = NULL;
 sbr_hfadj_info_t*         m_adj = NULL;
 int32_t*                  m_Q_M_lim = NULL;
@@ -58,12 +57,12 @@ void alloc_mem() {
     m_segment = (bits_t_t*)faad_malloc(512 * sizeof(bits_t_t));
     m_P_dec = (int32_t**)faad_malloc(32 * sizeof(m_P_dec));
     for(uint8_t i = 0; i < 32; i++) m_P_dec[i] = (int32_t*)faad_malloc(34 * sizeof(*(m_P_dec[i])));
-    m_G_TransientRatio = (int32_t**)faad_calloc(32, sizeof(m_G_TransientRatio));
-    for(uint8_t i = 0; i < 32; i++) m_G_TransientRatio[i] = (int32_t*)faad_calloc(34, sizeof(*(m_G_TransientRatio[i])));
+    m_G_TransientRatio = (int32_t**)faad_malloc(32 * sizeof(m_G_TransientRatio));
+    for(uint8_t i = 0; i < 32; i++) m_G_TransientRatio[i] = (int32_t*)faad_malloc(34 * sizeof(*(m_G_TransientRatio[i])));
     m_X_hybrid_left = (complex_t**)faad_malloc(32 * sizeof(m_X_hybrid_left));
     for(uint8_t i = 0; i < 32; i++) m_X_hybrid_left[i] = (complex_t*)faad_malloc(34 * sizeof(*(m_X_hybrid_left[i])));
-    m_X_hybrid_right = (complex_t**)faad_calloc(32, sizeof(m_X_hybrid_right));
-    for(uint8_t i = 0; i < 32; i++) m_X_hybrid_right[i] = (complex_t*)faad_calloc(34, sizeof(*(m_X_hybrid_right[i])));
+    m_X_hybrid_right = (complex_t**)faad_malloc(32 * sizeof(m_X_hybrid_right));
+    for(uint8_t i = 0; i < 32; i++) m_X_hybrid_right[i] = (complex_t*)faad_malloc(34 * sizeof(*(m_X_hybrid_right[i])));
     m_x_est = (int32_t*)faad_malloc(2048 * sizeof(int32_t));
     m_X_est = (int32_t*)faad_malloc(2048 * sizeof(int32_t));
     m_Z1_imdct = (complex_t*)faad_malloc(512 * sizeof(complex_t));
@@ -72,17 +71,17 @@ void alloc_mem() {
     for(uint8_t i = 0; i < MAX_NTSR; i++) m_X_dcf[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_dcf[i])));
     m_X_dsf = (complex_t**)faad_malloc(MAX_NTSR * sizeof(m_X_dsf));
     for(uint8_t i = 0; i < MAX_NTSR; i++) m_X_dsf[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_dsf[i])));
-    m_X_left = (complex_t**)faad_calloc(38, sizeof(m_X_left));
-    for(uint8_t i = 0; i < 38; i++) m_X_left[i] = (complex_t*)faad_calloc(64, sizeof(*(m_X_left[i])));
-    m_X_right = (complex_t**)faad_calloc(38, sizeof(m_X_right));
-    for(uint8_t i = 0; i < 38; i++) m_X_right[i] = (complex_t*)faad_calloc(64, sizeof(*(m_X_right[i])));
-    m_vDk0 = (int32_t*)faad_calloc(64, sizeof(int32_t));
-    m_vDk1 = (int32_t*)faad_calloc(64, sizeof(int32_t));
-    m_vk0 = (int32_t*)faad_calloc(64, sizeof(int32_t));
-    m_vk1 = (int32_t*)faad_calloc(64, sizeof(int32_t));
-    m_lm_imTable = (int32_t*)faad_malloc(100 * sizeof(int32_t));
+    m_X_left = (complex_t**)faad_malloc(38 * sizeof(m_X_left));
+    for(uint8_t i = 0; i < 38; i++) m_X_left[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_left[i])));
+    m_X_right = (complex_t**)faad_malloc(38 * sizeof(m_X_right));
+    for(uint8_t i = 0; i < 38; i++) m_X_right[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_right[i])));
+    m_vDk0 = (int32_t*)faad_malloc(64 * sizeof(int32_t));
+    m_vDk1 = (int32_t*)faad_malloc(64 * sizeof(int32_t));
+    m_vk0 = (int32_t*)faad_malloc(64 * sizeof(int32_t));
+    m_vk1 = (int32_t*)faad_malloc(64 * sizeof(int32_t));
+    m_lim_imTable = (int32_t*)faad_malloc(100 * sizeof(int32_t));
     m_patchBorders = (uint8_t*)faad_malloc(64 * sizeof(uint8_t));
-
+    m_adj = (sbr_hfadj_info_t*)faad_malloc(1 * sizeof(sbr_hfadj_info_t));
 
     uint32_t sum = 1 * sizeof(mp4AudioSpecificConfig_t);
     sum += 2 * 1024 * sizeof(int32_t);
@@ -102,6 +101,9 @@ void alloc_mem() {
     sum += 64 * sizeof(int32_t);
     sum += 64 * sizeof(int32_t);
     sum += 64 * sizeof(int32_t);
+    sum += 1 * sizeof(sbr_hfadj_info_t);
+
+
 
 
     printf(ANSI_ESC_ORANGE "alloc %d bytes\n" ANSI_ESC_WHITE, sum);
@@ -131,7 +133,8 @@ void free_mem() {
     if(m_vDk1)             {free(m_vDk1); m_vDk1 = NULL;}
     if(m_vDk0)             {free(m_vDk0); m_vDk0 = NULL;}
     if(m_patchBorders)     {free(m_patchBorders); m_patchBorders = NULL;}
-    if(m_lm_imTable)       {free(m_lm_imTable); m_lm_imTable = NULL;}
+    if(m_lim_imTable)      {free(m_lim_imTable); m_lim_imTable = NULL;}
+    if(m_adj)              {free(m_adj); m_adj = NULL;}
 
     printf(ANSI_ESC_ORANGE "free mem\n" ANSI_ESC_WHITE);
     // clang-format on
@@ -6447,20 +6450,20 @@ void limiter_frequency_table(sbr_info_t* sbr) {
     sbr->f_table_lim[0][1] = sbr->f_table_res[LO_RES][sbr->N_low] - sbr->kx;
     sbr->N_L[0] = 1;
 
-    int32_t* m_lm_imTable = (int32_t*)faad_malloc(100 * sizeof(int32_t));
+    int32_t* m_lim_imTable = (int32_t*)faad_malloc(100 * sizeof(int32_t));
     uint8_t* m_patchBorders = (uint8_t*)faad_malloc(64 * sizeof(uint8_t));
     for(s = 1; s < 4; s++) {
-        //    int32_t m_lm_imTable[100 /*TODO*/] = {0};  // ⏫⏫⏫
+        //    int32_t m_lim_imTable[100 /*TODO*/] = {0};  // ⏫⏫⏫
         //    uint8_t m_patchBorders[64 /*??*/] = {0};
-        memset(m_lm_imTable, 0, 100 * sizeof(int32_t));
+        memset(m_lim_imTable, 0, 100 * sizeof(int32_t));
         memset(m_patchBorders, 0, 64 * sizeof(uint8_t));
 
         m_patchBorders[0] = sbr->kx;
         for(k = 1; k <= sbr->noPatches; k++) { m_patchBorders[k] = m_patchBorders[k - 1] + sbr->patchNoSubbands[k - 1]; }
-        for(k = 0; k <= sbr->N_low; k++) { m_lm_imTable[k] = sbr->f_table_res[LO_RES][k]; }
-        for(k = 1; k < sbr->noPatches; k++) { m_lm_imTable[k + sbr->N_low] = m_patchBorders[k]; }
+        for(k = 0; k <= sbr->N_low; k++) { m_lim_imTable[k] = sbr->f_table_res[LO_RES][k]; }
+        for(k = 1; k < sbr->noPatches; k++) { m_lim_imTable[k + sbr->N_low] = m_patchBorders[k]; }
         /* needed */
-        qsort(m_lm_imTable, sbr->noPatches + sbr->N_low, sizeof(m_lm_imTable[0]), longcmp);
+        qsort(m_lim_imTable, sbr->noPatches + sbr->N_low, sizeof(m_lim_imTable[0]), longcmp);
         k = 1;
         nrLim = sbr->noPatches + sbr->N_low - 1;
         if(nrLim < 0) // TODO: BIG FAT PROBLEM
@@ -6470,20 +6473,20 @@ void limiter_frequency_table(sbr_info_t* sbr) {
         if(k <= nrLim) {
             int32_t nOctaves;
 
-            if(m_lm_imTable[k - 1] != 0) nOctaves = DIV_R((m_lm_imTable[k] << REAL_BITS), REAL_CONST(m_lm_imTable[k - 1]));
+            if(m_lim_imTable[k - 1] != 0) nOctaves = DIV_R((m_lim_imTable[k] << REAL_BITS), REAL_CONST(m_lim_imTable[k - 1]));
             else
                 nOctaves = 0;
             if(nOctaves < limiterBandsCompare[s - 1]) {
                 uint8_t i;
-                if(m_lm_imTable[k] != m_lm_imTable[k - 1]) {
+                if(m_lim_imTable[k] != m_lim_imTable[k - 1]) {
                     uint8_t found = 0, found2 = 0;
                     for(i = 0; i <= sbr->noPatches; i++) {
-                        if(m_lm_imTable[k] == m_patchBorders[i]) found = 1;
+                        if(m_lim_imTable[k] == m_patchBorders[i]) found = 1;
                     }
                     if(found) {
                         found2 = 0;
                         for(i = 0; i <= sbr->noPatches; i++) {
-                            if(m_lm_imTable[k - 1] == m_patchBorders[i]) found2 = 1;
+                            if(m_lim_imTable[k - 1] == m_patchBorders[i]) found2 = 1;
                         }
                         if(found2) {
                             k++;
@@ -6491,16 +6494,16 @@ void limiter_frequency_table(sbr_info_t* sbr) {
                         }
                         else {
                             /* remove (k-1)th element */
-                            m_lm_imTable[k - 1] = sbr->f_table_res[LO_RES][sbr->N_low];
-                            qsort(m_lm_imTable, sbr->noPatches + sbr->N_low, sizeof(m_lm_imTable[0]), longcmp);
+                            m_lim_imTable[k - 1] = sbr->f_table_res[LO_RES][sbr->N_low];
+                            qsort(m_lim_imTable, sbr->noPatches + sbr->N_low, sizeof(m_lim_imTable[0]), longcmp);
                             nrLim--;
                             goto restart;
                         }
                     }
                 }
                 /* remove kth element */
-                m_lm_imTable[k] = sbr->f_table_res[LO_RES][sbr->N_low];
-                qsort(m_lm_imTable, nrLim, sizeof(m_lm_imTable[0]), longcmp);
+                m_lim_imTable[k] = sbr->f_table_res[LO_RES][sbr->N_low];
+                qsort(m_lim_imTable, nrLim, sizeof(m_lim_imTable[0]), longcmp);
                 nrLim--;
                 goto restart;
             }
@@ -6510,22 +6513,23 @@ void limiter_frequency_table(sbr_info_t* sbr) {
             }
         }
         sbr->N_L[s] = nrLim;
-        for(k = 0; k <= nrLim; k++) { sbr->f_table_lim[s][k] = m_lm_imTable[k] - sbr->kx; }
+        for(k = 0; k <= nrLim; k++) { sbr->f_table_lim[s][k] = m_lim_imTable[k] - sbr->kx; }
     }
     // if(m_patchBorders) {
     //     free(m_patchBorders);
     //     m_patchBorders = NULL;
     // }
-    // if(m_lm_imTable) {
-    //     free(m_lm_imTable);
-    //     m_lm_imTable = NULL;
+    // if(m_lim_imTable) {
+    //     free(m_lim_imTable);
+    //     m_lim_imTable = NULL;
     // }
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 uint8_t hf_adjustment(sbr_info_t* sbr, complex_t Xsbr[MAX_NTSRHFG][64], uint8_t ch) {
-    // sbr_hfadj_info_t adj = {}; // ⏫⏫⏫
-    sbr_hfadj_info_t* adj = (sbr_hfadj_info_t*)faad_calloc(1, sizeof(sbr_hfadj_info_t));
+    // sbr_hfadj_info_t m_adj = {}; // ⏫⏫⏫
+ //   sbr_hfadj_info_t* m_adj = (sbr_hfadj_info_t*)faad_calloc(1, sizeof(sbr_hfadj_info_t));
+    memset(m_adj, 0, sizeof(sbr_hfadj_info_t));
     uint8_t           ret = 0;
 
     if(sbr->bs_frame_class[ch] == FIXFIX) { sbr->l_A[ch] = -1; }
@@ -6539,20 +6543,20 @@ uint8_t hf_adjustment(sbr_info_t* sbr, complex_t Xsbr[MAX_NTSRHFG][64], uint8_t 
         else
             sbr->l_A[ch] = sbr->L_E[ch] + 1 - sbr->bs_pointer[ch];
     }
-    ret = estimate_current_envelope(sbr, adj, Xsbr, ch);
+    ret = estimate_current_envelope(sbr, m_adj, Xsbr, ch);
     if(ret > 0) {
-        if(adj) {
-            free(adj);
-            adj = NULL;
+        if(m_adj) {
+            free(m_adj);
+            m_adj = NULL;
         }
         return 1;
     }
-    calculate_gain(sbr, adj, ch);
-    hf_assembly(sbr, adj, Xsbr, ch);
-    if(adj) {
-        free(adj);
-        adj = NULL;
-    }
+    calculate_gain(sbr, m_adj, ch);
+    hf_assembly(sbr, m_adj, Xsbr, ch);
+    // if(m_adj) {
+    //     free(m_adj);
+    //     m_adj = NULL;
+    // }
     return 0;
 }
 
