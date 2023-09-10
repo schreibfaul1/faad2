@@ -87,7 +87,9 @@ void alloc_mem() {
     m_S_M = (int32_t*)faad_malloc(MAX_M * sizeof(int32_t));
     m_sce = (element_t*)faad_malloc(1 * sizeof(element_t));
     m_spec_data = (int16_t*)faad_malloc(1024 * sizeof(int16_t));
-
+    m_cpe = (element_t*)faad_malloc(1 * sizeof(element_t));
+    m_spec_data1 = (int16_t*)faad_malloc(1024 * sizeof(int16_t));
+    m_spec_data2 = (int16_t*)faad_malloc(1024 * sizeof(int16_t));
 
 
     uint32_t sum = 1 * sizeof(mp4AudioSpecificConfig_t);
@@ -113,6 +115,9 @@ void alloc_mem() {
     sum += MAX_M * sizeof(int32_t);
     sum += MAX_M * sizeof(int32_t);
     sum += 1 * sizeof(element_t);
+    sum += 1024 * sizeof(int16_t);
+    sum += 1 * sizeof(element_t);
+    sum += 1024 * sizeof(int16_t);
     sum += 1024 * sizeof(int16_t);
 
     
@@ -150,7 +155,9 @@ void free_mem() {
     if(m_Q_M_lim)          {free(m_Q_M_lim); m_Q_M_lim = NULL;}
     if(m_spec_data)        {free(m_spec_data); m_spec_data = NULL;}
     if(m_sce)              {free(m_sce); m_sce = NULL;}
-
+    if(m_cpe)              {free(m_cpe); m_cpe = NULL;}
+    if(m_spec_data1)       {free(m_spec_data1); m_spec_data1 = NULL;}
+    if(m_spec_data2)       {free(m_spec_data2); m_spec_data2 = NULL;}
 
     printf(ANSI_ESC_ORANGE "free mem\n" ANSI_ESC_WHITE);
     // clang-format on
@@ -8537,24 +8544,28 @@ exit:
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* Table 4.4.5 */
 static uint8_t channel_pair_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld, uint8_t channels, uint8_t* tag) {
-    // int16_t    spec_data1[1024] = {0}; // ⏫⏫⏫
-    // int16_t    spec_data2[1024] = {0};
-    //  element_t    cpe = {};
-    element_t*   cpe = (element_t*)faad_calloc(1, sizeof(element_t));
-    int16_t*     spec_data1 = (int16_t*)faad_calloc(1024, sizeof(int16_t));
-    int16_t*     spec_data2 = (int16_t*)faad_calloc(1024, sizeof(int16_t));
-    ic_stream_t* ics1 = &(cpe->ics1);
-    ic_stream_t* ics2 = &(cpe->ics2);
+    // int16_t    m_spec_data1[1024] = {0}; // ⏫⏫⏫
+    // int16_t    m_spec_data2[1024] = {0};
+    //  element_t    m_cpe = {};
+    // element_t*   m_cpe = (element_t*)faad_calloc(1, sizeof(element_t));
+    // int16_t*     m_spec_data1 = (int16_t*)faad_calloc(1024, sizeof(int16_t));
+    // int16_t*     m_spec_data2 = (int16_t*)faad_calloc(1024, sizeof(int16_t));
+    memset(m_cpe, 0, 1 * sizeof(element_t));
+    memset(m_spec_data1, 0, 1024 * sizeof(int16_t));
+    memset(m_spec_data1, 0, 1024 * sizeof(int16_t));
+
+    ic_stream_t* ics1 = &(m_cpe->ics1);
+    ic_stream_t* ics2 = &(m_cpe->ics2);
     uint8_t      result;
     uint8_t      ret;
 
-    cpe->channel = channels;
-    cpe->paired_channel = channels + 1;
-    cpe->element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG);
-    *tag = cpe->element_instance_tag;
-    if((cpe->common_window = faad_get1bit(ld)) & 1) {
+    m_cpe->channel = channels;
+    m_cpe->paired_channel = channels + 1;
+    m_cpe->element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG);
+    *tag = m_cpe->element_instance_tag;
+    if((m_cpe->common_window = faad_get1bit(ld)) & 1) {
         /* both channels have common ics information */
-        if((result = ics_info(hDecoder, ics1, ld, cpe->common_window)) > 0) {
+        if((result = ics_info(hDecoder, ics1, ld, m_cpe->common_window)) > 0) {
             ret = result;
             goto exit;
         }
@@ -8593,12 +8604,12 @@ static uint8_t channel_pair_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld, u
         memcpy(ics2, ics1, sizeof(ic_stream_t));
     }
     else { ics1->ms_mask_present = 0; }
-    if((result = individual_channel_stream(hDecoder, cpe, ld, ics1, 0, spec_data1)) > 0) {
+    if((result = individual_channel_stream(hDecoder, m_cpe, ld, ics1, 0, m_spec_data1)) > 0) {
         ret = result;
         goto exit;
     }
 #ifdef ERROR_RESILIENCE
-    if(cpe->common_window && (hDecoder->object_type >= ER_OBJECT_START) && (ics1->predictor_data_present)) {
+    if(m_cpe->common_window && (hDecoder->object_type >= ER_OBJECT_START) && (ics1->predictor_data_present)) {
         if((
     #ifdef LTP_DEC
                ics1->ltp2.data_present =
@@ -8617,7 +8628,7 @@ static uint8_t channel_pair_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld, u
         }
     }
 #endif
-    if((result = individual_channel_stream(hDecoder, cpe, ld, ics2, 0, spec_data2)) > 0) {
+    if((result = individual_channel_stream(hDecoder, m_cpe, ld, ics2, 0, m_spec_data2)) > 0) {
         ret = result;
         goto exit;
     }
@@ -8634,7 +8645,7 @@ static uint8_t channel_pair_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld, u
     }
 #endif
     /* noiseless coding is done, spectral reconstruction is done now */
-    if((result = reconstruct_channel_pair(hDecoder, ics1, ics2, cpe, spec_data1, spec_data2)) > 0) {
+    if((result = reconstruct_channel_pair(hDecoder, ics1, ics2, m_cpe, m_spec_data1, m_spec_data2)) > 0) {
         ret = result;
         goto exit;
     }
@@ -8642,18 +8653,18 @@ static uint8_t channel_pair_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld, u
     goto exit;
 
 exit:
-    if(cpe) {
-        free(cpe);
-        cpe = NULL;
-    }
-    if(spec_data1) {
-        free(spec_data1);
-        spec_data1 = NULL;
-    }
-    if(spec_data2) {
-        free(spec_data2);
-        spec_data2 = NULL;
-    }
+    // if(m_cpe) {
+    //     free(m_cpe);
+    //     m_cpe = NULL;
+    // }
+    // if(m_spec_data1) {
+    //     free(m_spec_data1);
+    //     m_spec_data1 = NULL;
+    // }
+    // if(m_spec_data2) {
+    //     free(m_spec_data2);
+    //     m_spec_data2 = NULL;
+    // }
     return ret;
 }
 
