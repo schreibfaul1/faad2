@@ -64,8 +64,7 @@
 #define LTP_DEC /* Allow decoding of LTP (long term prediction) profile AAC */
 #define LD_DEC  /* Allow decoding of LD (low delay) profile AAC */
 #define ALLOW_SMALL_FRAMELENGTH
-
-#define SBR_DEC /* Allow decoding of SBR (spectral band replication) */
+// #define SBR_DEC /* Allow decoding of SBR (spectral band replication) */
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* LD can't do without LTP */

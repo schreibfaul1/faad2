@@ -54,11 +54,16 @@ int32_t*                  m_spec_coef2 = NULL;
 void alloc_mem() {
     // clang-format off
     uint32_t sum = 0;
-    m_transf_buf = (int32_t*)faad_malloc(2 * 1024 * sizeof(int32_t));                                                       sum += 2 * 1024 * sizeof(int32_t);
-    m_Z1_imdct = (complex_t*)faad_malloc(512 * sizeof(complex_t));                                                          sum += 512 * sizeof(complex_t);
-    m_sce = (element_t*)faad_malloc(1 * sizeof(element_t));                                                                 sum += 1 * sizeof(element_t);
-    m_spec_data = (int16_t*)faad_malloc(1024 * sizeof(int16_t));                                                            sum += 1024 * sizeof(int16_t);
-    m_spec_coef = (int32_t*)faad_malloc(1024 * sizeof(int32_t));                                                            sum += 1024 * sizeof(int32_t);
+    m_transf_buf = (int32_t*)faad_malloc(2 * 1024 * sizeof(int32_t));                                                        sum += 2 * 1024 * sizeof(int32_t);
+    m_Z1_imdct = (complex_t*)faad_malloc(512 * sizeof(complex_t));                                                           sum += 512 * sizeof(complex_t);
+    m_sce = (element_t*)faad_malloc(1 * sizeof(element_t));                                                                  sum += 1 * sizeof(element_t);
+    m_spec_data = (int16_t*)faad_malloc(1024 * sizeof(int16_t));                                                             sum += 1024 * sizeof(int16_t);
+    m_spec_coef = (int32_t*)faad_malloc(1024 * sizeof(int32_t));                                                             sum += 1024 * sizeof(int32_t);
+    m_cpe = (element_t*)faad_malloc(1 * sizeof(element_t));                                                                  sum += 1 * sizeof(element_t);
+    m_spec_data1 = (int16_t*)faad_malloc(1024 * sizeof(int16_t));                                                            sum += 1024 * sizeof(int16_t);
+    m_spec_data2 = (int16_t*)faad_malloc(1024 * sizeof(int16_t));                                                            sum += 1024 * sizeof(int16_t);
+    m_spec_coef1 = (int32_t*)faad_malloc(1024 * sizeof(int32_t));                                                            sum += 1024 * sizeof(int32_t);
+    m_spec_coef2 = (int32_t*)faad_malloc(1024 * sizeof(int32_t));                                                            sum += 1024 * sizeof(int32_t);
 #ifdef SBR_DEC
     m_P_dec = (int32_t**)faad_malloc(32 * sizeof(m_P_dec));                                                                  sum += 32 * sizeof(int32_t*);
     for(uint8_t i = 0; i < 32; i++){m_P_dec[i] = (int32_t*)faad_malloc(34 * sizeof(*(m_P_dec[i])));}                         sum += 32 * 34 * sizeof(int32_t);
@@ -85,6 +90,10 @@ void alloc_mem() {
 #endif
 
 // m_mp4ASC = (mp4AudioSpecificConfig_t*)faad_malloc(1 * sizeof(mp4AudioSpecificConfig_t));                                 sum += 1 * sizeof(mp4AudioSpecificConfig_t);
+// m_mp4ASC_ame = (mp4AudioSpecificConfig_t*)faad_malloc(1 * sizeof(mp4AudioSpecificConfig_t));                             sum += 1 * sizeof(mp4AudioSpecificConfig_t);
+
+
+
 // m_windowed_buf = (int32_t*)faad_malloc(2 * 1024 * sizeof(int32_t));                                                      sum += 2 * 1024 * sizeof(int32_t);
 // m_codeword = (codeword_t*)faad_malloc(512 * sizeof(codeword_t));                                                         sum += 512 * sizeof(codeword_t);
 // m_segment = (bits_t_t*)faad_malloc(512 * sizeof(bits_t_t));                                                              sum += 512 * sizeof(bits_t_t);
@@ -95,12 +104,9 @@ void alloc_mem() {
 // for(uint8_t i = 0; i < MAX_NTSR; i++){m_X_dcf[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_dcf[i])));}                 sum += MAX_NTSR * 64 * sizeof(complex_t);
 // m_lim_imTable = (int32_t*)faad_malloc(100 * sizeof(int32_t));                                                            sum += 100 * sizeof(int32_t);
 // m_patchBorders = (uint8_t*)faad_malloc(64 * sizeof(uint8_t));                                                            sum += 64 * sizeof(uint8_t);
-// m_cpe = (element_t*)faad_malloc(1 * sizeof(element_t));                                                                  sum += 1 * sizeof(element_t);
-// m_spec_data1 = (int16_t*)faad_malloc(1024 * sizeof(int16_t));                                                            sum += 1024 * sizeof(int16_t);
-// m_spec_data2 = (int16_t*)faad_malloc(1024 * sizeof(int16_t));                                                            sum += 1024 * sizeof(int16_t);
-// m_mp4ASC_ame = (mp4AudioSpecificConfig_t*)faad_malloc(1 * sizeof(mp4AudioSpecificConfig_t));                             sum += 1 * sizeof(mp4AudioSpecificConfig_t);
-// m_spec_coef1 = (int32_t*)faad_malloc(1024 * sizeof(int32_t));                                                            sum += 1024 * sizeof(int32_t);
-// m_spec_coef2 = (int32_t*)faad_malloc(1024 * sizeof(int32_t));                                                            sum += 1024 * sizeof(int32_t);
+
+
+
 
     printf(ANSI_ESC_ORANGE "alloc %d bytes\n" ANSI_ESC_WHITE, sum);
     // clang-format off
@@ -4370,11 +4376,6 @@ void lt_prediction(ic_stream_t* ics, ltp_info_t* ltp, int32_t* spec, int16_t* lt
                    uint16_t frame_len) {
     uint8_t  sfb;
     uint16_t bin, i, num_samples;
-    //    int32_t  m_x_est[2048]; // ⏫⏫⏫
-    //    int32_t  m_X_est[2048]; // ⏫⏫⏫
-
-    // int32_t* m_x_est = (int32_t*)faad_malloc(2048 * sizeof(int32_t));
-    // int32_t* m_X_est = (int32_t*)faad_malloc(2048 * sizeof(int32_t));
 
     if(ics->window_sequence != EIGHT_SHORT_SEQUENCE) {
         if(ltp->data_present) {
@@ -4395,14 +4396,6 @@ void lt_prediction(ic_stream_t* ics, ltp_info_t* ltp, int32_t* spec, int16_t* lt
             }
         }
     }
-    // if(m_x_est) {
-    //     free(m_x_est);
-    //     m_x_est = NULL;
-    // }
-    // if(m_X_est) {
-    //     free(m_X_est);
-    //     m_X_est = NULL;
-    // }
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -4547,8 +4540,6 @@ void faad_imdct(mdct_info_t* mdct, int32_t* X_in, int32_t* X_out) {
 void faad_mdct(mdct_info_t* mdct, int32_t* X_in, int32_t* X_out) {
     uint16_t  k;
     complex_t x;
-    // complex_t  m_Z1_mdct[512]; // ⏫⏫⏫
-    //   complex_t* m_Z1_mdct = (complex_t*)faad_malloc(512 * sizeof(complex_t));
     complex_t* sincos = mdct->sincos;
     uint16_t   N = mdct->N;
     uint16_t   N2 = N >> 1;
@@ -4559,13 +4550,11 @@ void faad_mdct(mdct_info_t* mdct, int32_t* X_in, int32_t* X_out) {
 #ifdef ALLOW_SMALL_FRAMELENGTH
     /* detect non-power of 2 */
     if(N & (N - 1)) {
-        /* adjust scale for non-power of 2 MDCT */
-        /* *= sqrt(2048/1920) */
+        /* adjust scale for non-power of 2 MDCT = sqrt(2048/1920) */
         scale = MUL_C(scale, COEF_CONST(1.0327955589886444));
     }
 #endif
-    /* pre-FFT complex multiplication */
-    for(k = 0; k < N8; k++) {
+    for(k = 0; k < N8; k++) { /* pre-FFT complex multiplication */
         uint16_t n = k << 1;
         RE(x) = X_in[N - N4 - 1 - n] + X_in[N - N4 + n];
         IM(x) = X_in[N4 + n] - X_in[N4 - 1 - n];
@@ -4589,10 +4578,6 @@ void faad_mdct(mdct_info_t* mdct, int32_t* X_in, int32_t* X_out) {
         X_out[N2 + n] = -IM(x);
         X_out[N - 1 - n] = RE(x);
     }
-    // if(m_Z1_mdct) {
-    //     free(m_Z1_mdct);
-    //     m_Z1_mdct = NULL;
-    // }
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -5012,18 +4997,14 @@ uint8_t rvlc_decode_scale_factors(ic_stream_t* ics, bitfile_t* ld) {
         //            ics->length_of_rvlc_sf);
     }
     if(ics->sf_escapes_present) {
-        /* We read length_of_rvlc_escapes bits here to put it in a
-           seperate bitfile_t.
-        */
+        /* We read length_of_rvlc_escapes bits here to put it in a seperate bitfile_t. */
         rvlc_esc_buffer = faad_getbitbuffer(ld, ics->length_of_rvlc_escapes);
         faad_initbits(&ld_rvlc_esc, (void*)rvlc_esc_buffer, bit2byte(ics->length_of_rvlc_escapes));
-        //        faad_initbits_rev(&ld_rvlc_esc_rev, (void*)rvlc_esc_buffer,
-        //            ics->length_of_rvlc_escapes);
+        //        faad_initbits_rev(&ld_rvlc_esc_rev, (void*)rvlc_esc_buffer, ics->length_of_rvlc_escapes);
     }
     /* decode the rvlc scale factors and escapes */
     result = rvlc_decode_sf_forward(ics, &ld_rvlc_sf, &ld_rvlc_esc, &intensity_used);
-    //    result = rvlc_decode_sf_reverse(ics, &ld_rvlc_sf_rev,
-    //        &ld_rvlc_esc_rev, intensity_used);
+    //    result = rvlc_decode_sf_reverse(ics, &ld_rvlc_sf_rev, &ld_rvlc_esc_rev, intensity_used);
     if(rvlc_esc_buffer) faad_free(rvlc_esc_buffer);
     if(rvlc_sf_buffer) faad_free(rvlc_sf_buffer);
     if(ics->length_of_rvlc_sf > 0)
@@ -5082,7 +5063,6 @@ static uint8_t rvlc_decode_sf_forward(ic_stream_t* ics, bitfile_t* ld_sf, bitfil
     }
     return 0;
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static int8_t rvlc_huffman_sf(bitfile_t* ld_sf, bitfile_t* ld_esc, int8_t direction) {
     uint8_t                  i, j;
@@ -5115,7 +5095,6 @@ static int8_t rvlc_huffman_sf(bitfile_t* ld_sf, bitfile_t* ld_esc, int8_t direct
     }
     return index;
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static int8_t rvlc_huffman_esc(bitfile_t* ld, int8_t direction) {
     uint8_t                  i, j;
@@ -5143,8 +5122,7 @@ static void fft_dif(int32_t* Real, int32_t* Imag) {
     int32_t  point1_real, point1_imag, point2_real, point2_imag; // For faster access
     uint32_t j, i, i2, w_index;                                  // Counters
 
-    // First 2 stages of 32 point FFT decimation in frequency 4*16*2=64*2=128 multiplications, 6*16*2=96*2=192 additions
-    // Stage 1 of 32 point FFT decimation in frequency
+    // First 2 stages of 32 point FFT decimation in frequency 4*16*2=64*2=128 multiplications, 6*16*2=96*2=192 additions. Stage 1 of 32 point FFT decimation in frequency
     for(i = 0; i < 16; i++) {
         point1_real = Real[i];
         point1_imag = Imag[i];
@@ -5503,7 +5481,6 @@ static void sbr_save_matrix(sbr_info_t* sbr, uint8_t ch) {
     for(i = 0; i < sbr->tHFGen; i++) { memmove(sbr->Xsbr[ch][i], sbr->Xsbr[ch][i + sbr->numTimeSlotsRate], 64 * sizeof(complex_t)); }
     for(i = sbr->tHFGen; i < MAX_NTSRHFG; i++) { memset(sbr->Xsbr[ch][i], 0, 64 * sizeof(complex_t)); }
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static uint8_t sbr_process_channel(sbr_info_t* sbr, int32_t* channel_buf, complex_t* X[64], uint8_t ch, uint8_t dont_process, const uint8_t downSampledSBR) {
     (void)downSampledSBR;
@@ -6131,14 +6108,6 @@ void limiter_frequency_table(sbr_info_t* sbr) {
         sbr->N_L[s] = nrLim;
         for(k = 0; k <= nrLim; k++) { sbr->f_table_lim[s][k] = m_lim_imTable[k] - sbr->kx; }
     }
-    // if(m_patchBorders) {
-    //     free(m_patchBorders);
-    //     m_patchBorders = NULL;
-    // }
-    // if(m_lim_imTable) {
-    //     free(m_lim_imTable);
-    //     m_lim_imTable = NULL;
-    // }
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -8136,12 +8105,6 @@ exit:
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* Table 4.4.5 */
 static uint8_t channel_pair_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld, uint8_t channels, uint8_t* tag) {
-    // int16_t    m_spec_data1[1024] = {0}; // ⏫⏫⏫
-    // int16_t    m_spec_data2[1024] = {0};
-    //  element_t    m_cpe = {};
-    // element_t*   m_cpe = (element_t*)faad_calloc(1, sizeof(element_t));
-    // int16_t*     m_spec_data1 = (int16_t*)faad_calloc(1024, sizeof(int16_t));
-    // int16_t*     m_spec_data2 = (int16_t*)faad_calloc(1024, sizeof(int16_t));
     memset(m_cpe, 0, 1 * sizeof(element_t));
     memset(m_spec_data1, 0, 1024 * sizeof(int16_t));
     memset(m_spec_data1, 0, 1024 * sizeof(int16_t));
@@ -8225,8 +8188,7 @@ static uint8_t channel_pair_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld, u
         goto exit;
     }
 #ifdef SBR_DEC
-    /* check if next bitstream element is a fill element */
-    /* if so, read it now so SBR decoding can be done in case of a file with SBR */
+    /* check if next bitstream element is a fill element if so, read it now so SBR decoding can be done in case of a file with SBR */
     if(faad_showbits(ld, LEN_SE_ID) == ID_FIL) {
         faad_flushbits(ld, LEN_SE_ID);
         /* one sbr_info_t*_t describes a channel_element not a channel! */
@@ -8245,18 +8207,6 @@ static uint8_t channel_pair_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld, u
     goto exit;
 
 exit:
-    // if(m_cpe) {
-    //     free(m_cpe);
-    //     m_cpe = NULL;
-    // }
-    // if(m_spec_data1) {
-    //     free(m_spec_data1);
-    //     m_spec_data1 = NULL;
-    // }
-    // if(m_spec_data2) {
-    //     free(m_spec_data2);
-    //     m_spec_data2 = NULL;
-    // }
     return ret;
 }
 
