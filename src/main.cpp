@@ -6,15 +6,15 @@
 #include "aac_decoder.h"
 
 // Declaration of the required global variables
-uint8_t  inBuffer[4096];
-int16_t  outBuffer[2048 * 2 * sizeof(int16_t)];
+uint8_t inBuffer[4096];
+int16_t outBuffer[2048 * 2 * sizeof(int16_t)];
 uint16_t bytesRead, pcmSize;
 uint16_t samplerate = 0;
-uint16_t byterate = 0;
+uint32_t  byterate = 0;
 uint8_t  channels = 0;
 uint32_t sumSamples = 0;
-uint8_t  aacSBR = 0;
-uint8_t  aacPS = 0;
+uint8_t aacSBR = 0;
+uint8_t aacPS = 0;
 
 //const char* aacFileName = "sample1.aac";  // stereo 44100Hz
 //const char* aacFileName = "sample2.aac";  // stereo 48000Hz
@@ -37,7 +37,7 @@ int main() {
     bool ab = AACDecoder_AllocateBuffers();
     // Read the first aac frame to determine the parameters
     bytesRead = fread(inBuffer, 1, sizeof(inBuffer), aacFile);
-    printf("first bytesRead %ld\n", bytesRead);
+    printf("first bytesRead %d\n", bytesRead);
 
     int ibs = sizeof(inBuffer);
     int err = AACDecode(inBuffer, &ibs, outBuffer);
@@ -48,7 +48,7 @@ int main() {
     }
     samplerate = AACGetSampRate();
     channels = AACGetChannels();
-    printf("samplerate = %li\n", samplerate);
+    printf("samplerate = %d\n", samplerate);
     printf("channels = %i\n", channels);
 
     byterate = samplerate * channels * 16  / 8;
@@ -94,7 +94,7 @@ int main() {
             printf("AAC Header Type %d (0 RAW, 1 ADIF, 2 ADTS)\n", AACGetFormat());
             printf("Spectral Band Replication %d (0 no SBR, 1 upsampled SBR, 2 downsampled SBR, 3 no SBR but upsampled)\n",AACGetSBR());
         }
-        uint8_t fac = 0;
+        uint8_t fac = 1;
         if(aacSBR){if(aacPS) fac = 1; else fac = 2;}
         fwrite(outBuffer, 1, validSamples * channels * fac, wavFile);
 
@@ -105,7 +105,7 @@ int main() {
 
     printf("ready\n");
     AACDecoder_FreeBuffers();
-    printf("%ld bytes written\n", sumSamples);
+    printf("%d bytes written\n", sumSamples);
     fseek(wavFile, 40, SEEK_SET);
     fwrite(&sumSamples, 4, 1, wavFile);  // Subchunk 2 Size
     sumSamples += 34;
