@@ -8046,15 +8046,10 @@ void raw_data_block(NeAACDecStruct_t* hDecoder, NeAACDecFrameInfo_t* hInfo, bitf
 static uint8_t single_lfe_channel_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld, uint8_t channel, uint8_t* tag) {
     uint8_t retval = 0;
     uint8_t ret = 0;
-    // element_t    m_sce = {}; // ⏫⏫⏫
-    //    element_t*   m_sce = (element_t*)faad_calloc(1, sizeof(element_t));
     memset(m_sce, 0, 1 * sizeof(element_t));
     memset(m_spec_data, 0, 1024 * sizeof(int16_t));
 
     ic_stream_t* ics = &(m_sce->ics1);
-    // int16_t    m_spec_data[1024] = {0}; // ⏫⏫⏫
-    //    int16_t* m_spec_data = (int16_t*)faad_calloc(1024, sizeof(int16_t));
-
     m_sce->element_instance_tag = (uint8_t)faad_getbits(ld, LEN_TAG);
     *tag = m_sce->element_instance_tag;
     m_sce->channel = channel;
@@ -8087,18 +8082,10 @@ static uint8_t single_lfe_channel_element(NeAACDecStruct_t* hDecoder, bitfile_t*
         ret = retval;
         goto exit;
     }
-    // if(m_sce) {
-    //     free(m_sce);
-    //     m_sce = NULL;
-    // }
     ret = 0;
     goto exit;
 
 exit:
-    // if(m_spec_data) {
-    //     free(m_spec_data);
-    //     m_spec_data = NULL;
-    // }
     return ret;
 }
 
@@ -8107,7 +8094,7 @@ exit:
 static uint8_t channel_pair_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld, uint8_t channels, uint8_t* tag) {
     memset(m_cpe, 0, 1 * sizeof(element_t));
     memset(m_spec_data1, 0, 1024 * sizeof(int16_t));
-    memset(m_spec_data1, 0, 1024 * sizeof(int16_t));
+    memset(m_spec_data2, 0, 1024 * sizeof(int16_t));
 
     ic_stream_t* ics1 = &(m_cpe->ics1);
     ic_stream_t* ics2 = &(m_cpe->ics2);
