@@ -878,9 +878,9 @@ cfft_info_t* cffti(uint16_t n) {
 #endif
     case 60: cfft->tab = (complex_t*)cfft_tab_60; break;
     case 480: cfft->tab = (complex_t*)cfft_tab_480; break;
-    #ifdef LD_DEC
+#ifdef LD_DEC
     case 240: cfft->tab = (complex_t*)cfft_tab_240; break;
-    #endif
+#endif
     case 128: cfft->tab = (complex_t*)cfft_tab_128; break;
     }
     return cfft;
@@ -961,20 +961,18 @@ int8_t can_decode_ot(const uint8_t object_type) { /* Returns 0 if an object type
 #else
         return -1;
 #endif
-#ifdef ERROR_RESILIENCE /* ER object types */
     case ER_LC: return 0;
     case ER_LTP:
-    #ifdef LTP_DEC
+#ifdef LTP_DEC
         return 0;
-    #else
+#else
         return -1;
-    #endif
+#endif
     case LD:
-    #ifdef LD_DEC
+#ifdef LD_DEC
         return 0;
-    #else
+#else
         return -1;
-    #endif
 #endif
     }
     return -1;
@@ -1372,9 +1370,7 @@ uint32_t NeAACDecGetCapabilities(void) {
 #ifdef LD_DEC
     cap += LD_DEC_CAP;
 #endif
-#ifdef ERROR_RESILIENCE
     cap += ERROR_RESILIENCE_CAP;
-#endif
     cap += FIXED_POINT_CAP;
     return cap;
 }
@@ -1393,11 +1389,9 @@ NeAACDecHandle NeAACDecOpen(void) {
     hDecoder->adts_header_t_present = 0;
     hDecoder->adif_header_t_present = 0;
     hDecoder->latm_header_t_present = 0;
-#ifdef ERROR_RESILIENCE
     hDecoder->aacSectionDataResilienceFlag = 0;
     hDecoder->aacScalefactorDataResilienceFlag = 0;
     hDecoder->aacSpectralDataResilienceFlag = 0;
-#endif
     hDecoder->frameLength = 1024;
     hDecoder->frame = 0;
     hDecoder->sample_buffer = NULL;
@@ -1564,11 +1558,9 @@ int8_t NeAACDecInit2(NeAACDecHandle hpDecoder, uint8_t* pBuffer, uint32_t SizeOf
 #endif
     hDecoder->sf_index = m_mp4ASC->samplingFrequencyIndex;
     hDecoder->object_type = m_mp4ASC->objectTypeIndex;
-#ifdef ERROR_RESILIENCE
     hDecoder->aacSectionDataResilienceFlag = m_mp4ASC->aacSectionDataResilienceFlag;
     hDecoder->aacScalefactorDataResilienceFlag = m_mp4ASC->aacScalefactorDataResilienceFlag;
     hDecoder->aacSpectralDataResilienceFlag = m_mp4ASC->aacSpectralDataResilienceFlag;
-#endif
 #ifdef SBR_DEC
     hDecoder->sbr_present_flag = m_mp4ASC->sbr_present_flag;
     hDecoder->downSampledSBR = m_mp4ASC->downSampledSBR;
@@ -1582,8 +1574,7 @@ int8_t NeAACDecInit2(NeAACDecHandle hpDecoder, uint8_t* pBuffer, uint32_t SizeOf
         goto exit;
     }
     hDecoder->channelConfiguration = m_mp4ASC->channelsConfiguration;
-    if(m_mp4ASC->frameLengthFlag)
-        hDecoder->frameLength = 960;
+    if(m_mp4ASC->frameLengthFlag) hDecoder->frameLength = 960;
     /* must be done before frameLength is divided by 2 for LD */
     hDecoder->fb = filter_bank_init(hDecoder->frameLength);
 #ifdef LD_DEC
@@ -2057,10 +2048,10 @@ fb_info_t* filter_bank_init(uint16_t frame_len) {
         fb->short_window[0] = sine_short_120;
         fb->long_window[1] = kbd_long_960;
         fb->short_window[1] = kbd_short_120;
-    #ifdef LD_DEC
+#ifdef LD_DEC
         fb->ld_window[0] = sine_mid_480;
         fb->ld_window[1] = ld_mid_480;
-    #endif
+#endif
     }
     return fb;
 }
@@ -2473,7 +2464,6 @@ uint8_t huffman_spectral_data(uint8_t cb, bitfile_t* ld, int16_t* sp) {
         if(!err) err = huffman_getescape(ld, &sp[1]);
         return err;
     }
-#ifdef ERROR_RESILIENCE
     /* VCB11 uses codebook 11 */
     case 16:
     case 17:
@@ -2499,7 +2489,6 @@ uint8_t huffman_spectral_data(uint8_t cb, bitfile_t* ld, int16_t* sp) {
         vcb11_check_LAV(cb, sp);
         return err;
     }
-#endif
     default:
         /* Non existent codebook number, something went wrong */
         return 11;
@@ -4240,10 +4229,7 @@ uint8_t ps_decode(ps_info_t* ps, complex_t* X_left[64], complex_t* X_right[64]) 
 uint8_t is_ltp_ot(uint8_t object_type) { /* check if the object type is an object type that can have LTP */
     (void)object_type;
 #ifdef LTP_DEC
-    if((object_type == LTP)
-    #ifdef ERROR_RESILIENCE
-       || (object_type == ER_LTP)
-    #endif
+    if((object_type == LTP) || (object_type == ER_LTP)
     #ifdef LD_DEC
        || (object_type == LD)
     #endif
@@ -4335,9 +4321,9 @@ mdct_info_t* faad_mdct_init(uint16_t N) {
 #endif
     case 1920: mdct->sincos = (complex_t*)mdct_tab_1920; break;
     case 240: mdct->sincos = (complex_t*)mdct_tab_240; break;
-    #ifdef LD_DEC
+#ifdef LD_DEC
     case 960: mdct->sincos = (complex_t*)mdct_tab_960; break;
-    #endif
+#endif
     }
     /* initialise fft */
     mdct->cfft = cffti(N / 4);
@@ -4352,16 +4338,16 @@ void faad_mdct_end(mdct_info_t* mdct) {
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void faad_imdct(mdct_info_t* mdct, int32_t* X_in, int32_t* X_out) {
-    uint16_t  k;
-    complex_t x;
-    int32_t scale, b_scale = 0;
+    uint16_t   k;
+    complex_t  x;
+    int32_t    scale, b_scale = 0;
     complex_t* sincos = mdct->sincos;
     uint16_t   N = mdct->N;
     uint16_t   N2 = N >> 1;
     uint16_t   N4 = N >> 2;
     uint16_t   N8 = N >> 3;
 
-    if(N & (N - 1)) {    /* detect non-power of 2 */
+    if(N & (N - 1)) { /* detect non-power of 2 */
         /* adjust scale for non-power of 2 MDCT */
         /* 2048/1920 */
         b_scale = 1;
@@ -4473,40 +4459,26 @@ static uint8_t ObjectTypesTable[32] = {
     0, /* 15 General MIDI */
     0, /* 16 Algorithmic Synthesis and Audio FX */
 
-/* MPEG-4 Version 2 */
-#ifdef ERROR_RESILIENCE
+    /* MPEG-4 Version 2 */
     1, /* 17 ER AAC LC */
     0, /* 18 (Reserved) */
-    #ifdef LTP_DEC
+#ifdef LTP_DEC
     1, /* 19 ER AAC LTP */
-    #else
+#else
     0, /* 19 ER AAC LTP */
-    #endif
-    0, /* 20 ER AAC scalable */
-    0, /* 21 ER TwinVQ */
-    0, /* 22 ER BSAC */
-    #ifdef LD_DEC
-    1, /* 23 ER AAC LD */
-    #else
-    0, /* 23 ER AAC LD */
-    #endif
-    0, /* 24 ER CELP */
-    0, /* 25 ER HVXC */
-    0, /* 26 ER HILN */
-    0, /* 27 ER Parametric */
-#else  /* No ER defined */
-    0, /* 17 ER AAC LC */
-    0, /* 18 (Reserved) */
-    0, /* 19 ER AAC LTP */
-    0, /* 20 ER AAC scalable */
-    0, /* 21 ER TwinVQ */
-    0, /* 22 ER BSAC */
-    0, /* 23 ER AAC LD */
-    0, /* 24 ER CELP */
-    0, /* 25 ER HVXC */
-    0, /* 26 ER HILN */
-    0, /* 27 ER Parametric */
 #endif
+    0, /* 20 ER AAC scalable */
+    0, /* 21 ER TwinVQ */
+    0, /* 22 ER BSAC */
+#ifdef LD_DEC
+    1, /* 23 ER AAC LD */
+#else
+    0, /* 23 ER AAC LD */
+#endif
+    0, /* 24 ER CELP */
+    0, /* 25 ER HVXC */
+    0, /* 26 ER HILN */
+    0, /* 27 ER Parametric */
     0, /* 28 (Reserved) */
 #ifdef PS_DEC
     1, /* 29 AAC LC + SBR + PS */
@@ -4560,13 +4532,11 @@ int8_t AudioSpecificConfigFrombitfile_t(bitfile_t* ld, mp4AudioSpecificConfig_t*
     /* get GASpecificConfig */
     if(mp4ASC->objectTypeIndex == 1 || mp4ASC->objectTypeIndex == 2 || mp4ASC->objectTypeIndex == 3 || mp4ASC->objectTypeIndex == 4 || mp4ASC->objectTypeIndex == 6 || mp4ASC->objectTypeIndex == 7) {
         result = GASpecificConfig(ld, mp4ASC, pce);
-#ifdef ERROR_RESILIENCE
     }
     else if(mp4ASC->objectTypeIndex >= ER_OBJECT_START) { /* ER */
         result = GASpecificConfig(ld, mp4ASC, pce);
         mp4ASC->epConfig = (uint8_t)faad_getbits(ld, 2);
         if(mp4ASC->epConfig != 0) result = -5;
-#endif
     }
     else { result = -4; }
 #ifdef SBR_DEC
@@ -7350,7 +7320,6 @@ int8_t GASpecificConfig(bitfile_t* ld, mp4AudioSpecificConfig_t* mp4ASC, program
             return -3;
         */
     }
-#ifdef ERROR_RESILIENCE
     if(mp4ASC->extensionFlag == 1) {
         /* Error resilience not supported yet */
         if(mp4ASC->objectTypeIndex >= ER_OBJECT_START) {
@@ -7361,7 +7330,6 @@ int8_t GASpecificConfig(bitfile_t* ld, mp4AudioSpecificConfig_t* mp4ASC, program
         /* 1 bit: extensionFlag3 */
         faad_getbits(ld, 1);
     }
-#endif
     return 0;
 }
 
@@ -7543,9 +7511,7 @@ void raw_data_block(NeAACDecStruct_t* hDecoder, NeAACDecFrameInfo_t* hInfo, bitf
     hDecoder->fr_ch_ele = 0;
     hDecoder->first_syn_ele = 25;
     hDecoder->has_lfe = 0;
-#ifdef ERROR_RESILIENCE
     if(hDecoder->object_type < ER_OBJECT_START) {
-#endif
         /* Table 4.4.3: raw_data_block() */
         while((id_syn_ele = (uint8_t)faad_getbits(ld, LEN_SE_ID)) != ID_END) {
             switch(id_syn_ele) {
@@ -7600,7 +7566,6 @@ void raw_data_block(NeAACDecStruct_t* hDecoder, NeAACDecFrameInfo_t* hInfo, bitf
                 break;
             }
         }
-#ifdef ERROR_RESILIENCE
     }
     else {
         /* Table 262: er_raw_data_block() */
@@ -7660,7 +7625,6 @@ void raw_data_block(NeAACDecStruct_t* hDecoder, NeAACDecFrameInfo_t* hInfo, bitf
         default: hInfo->error = 7; return;
         }
     }
-#endif
     /* new in corrigendum 14496-3:2002 */
     { faad_byte_align(ld); }
     return;
@@ -7749,26 +7713,24 @@ static uint8_t channel_pair_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld, u
                 for(sfb = 0; sfb < ics1->max_sfb; sfb++) { ics1->ms_used[g][sfb] = faad_get1bit(ld); }
             }
         }
-#ifdef ERROR_RESILIENCE
         if((hDecoder->object_type >= ER_OBJECT_START) && (ics1->predictor_data_present)) {
             if((
-    #ifdef LTP_DEC
+#ifdef LTP_DEC
                    ics1->ltp.data_present =
-    #endif
+#endif
                        faad_get1bit(ld)) &
                1) {
-    #ifdef LTP_DEC
+#ifdef LTP_DEC
                 if((result = ltp_data(hDecoder, ics1, &(ics1->ltp), ld)) > 0) {
                     ret = result;
                     goto exit;
                 }
-    #else
+#else
                 ret = 26;
                 goto exit;
-    #endif
+#endif
             }
         }
-#endif
         memcpy(ics2, ics1, sizeof(ic_stream_t));
     }
     else { ics1->ms_mask_present = 0; }
@@ -7776,26 +7738,24 @@ static uint8_t channel_pair_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld, u
         ret = result;
         goto exit;
     }
-#ifdef ERROR_RESILIENCE
     if(m_cpe->common_window && (hDecoder->object_type >= ER_OBJECT_START) && (ics1->predictor_data_present)) {
         if((
-    #ifdef LTP_DEC
+#ifdef LTP_DEC
                ics1->ltp2.data_present =
-    #endif
+#endif
                    faad_get1bit(ld)) &
            1) {
-    #ifdef LTP_DEC
+#ifdef LTP_DEC
             if((result = ltp_data(hDecoder, ics1, &(ics1->ltp2), ld)) > 0) {
                 ret = result;
                 goto exit;
             }
-    #else
+#else
             ret = 26;
             goto exit;
-    #endif
+#endif
         }
     }
-#endif
     if((result = individual_channel_stream(hDecoder, m_cpe, ld, ics2, 0, m_spec_data2)) > 0) {
         ret = result;
         goto exit;
@@ -7874,13 +7834,11 @@ static uint8_t ics_info(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bitfile_t*
                         }
                     }
                 }
-    #ifdef ERROR_RESILIENCE
                 if(!common_window && (hDecoder->object_type >= ER_OBJECT_START)) {
                     if((ics->ltp.data_present = faad_get1bit(ld)) & 1) {
                         if((retval = ltp_data(hDecoder, ics, &(ics->ltp), ld)) > 0) { return retval; }
                     }
                 }
-    #endif
             }
 #endif
         }
@@ -7986,15 +7944,11 @@ static uint8_t side_info(NeAACDecStruct_t* hDecoder, element_t* ele, bitfile_t* 
         }
         /* get tns data */
         if((ics->tns_data_present = faad_get1bit(ld)) & 1) {
-#ifdef ERROR_RESILIENCE
-            if(hDecoder->object_type < ER_OBJECT_START)
-#endif
-                tns_data(ics, &(ics->tns), ld);
+            if(hDecoder->object_type < ER_OBJECT_START) { tns_data(ics, &(ics->tns), ld); }
         }
         /* get gain control data */
         if((ics->gain_control_data_present = faad_get1bit(ld)) & 1) { return 1; }
     }
-#ifdef ERROR_RESILIENCE
     if(hDecoder->aacSpectralDataResilienceFlag) {
         ics->length_of_reordered_spectral_data = (uint16_t)faad_getbits(ld, 14);
         if(hDecoder->channelConfiguration == 2) {
@@ -8010,7 +7964,6 @@ static uint8_t side_info(NeAACDecStruct_t* hDecoder, element_t* ele, bitfile_t* 
     if(hDecoder->aacScalefactorDataResilienceFlag) {
         if((result = rvlc_decode_scale_factors(ics, ld)) > 0) return result;
     }
-#endif
     return 0;
 }
 
@@ -8024,18 +7977,14 @@ static uint8_t individual_channel_stream(NeAACDecStruct_t* hDecoder, element_t* 
     if(hDecoder->object_type >= ER_OBJECT_START) {
         if(ics->tns_data_present) tns_data(ics, &(ics->tns), ld);
     }
-#ifdef ERROR_RESILIENCE
     if(hDecoder->aacSpectralDataResilienceFlag) {
         /* error resilient spectral data decoding */
         if((result = reordered_spectral_data(hDecoder, ics, ld, spec_data)) > 0) { return result; }
     }
     else {
-#endif
         /* decode the spectral data */
         if((result = spectral_data(hDecoder, ics, ld, spec_data)) > 0) { return result; }
-#ifdef ERROR_RESILIENCE
     }
-#endif
     /* pulse coding reconstruction */
     if(ics->pulse_data_present) {
         if(ics->window_sequence != EIGHT_SHORT_SEQUENCE) {
@@ -8061,33 +8010,25 @@ static uint8_t section_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bitfil
         uint8_t k = 0;
         uint8_t i = 0;
         while(k < ics->max_sfb) {
-#ifdef ERROR_RESILIENCE
             uint8_t vcb11 = 0;
-#endif
             uint8_t  sfb;
             uint8_t  sect_len_incr;
             uint16_t sect_len = 0;
             uint8_t  sect_cb_bits = 4;
             /* if "faad_getbits" detects error and returns "0", "k" is never incremented and we cannot leave the while loop */
             if(ld->error != 0) return 14;
-#ifdef ERROR_RESILIENCE
             if(hDecoder->aacSectionDataResilienceFlag) sect_cb_bits = 5;
-#endif
             ics->sect_cb[g][i] = (uint8_t)faad_getbits(ld, sect_cb_bits);
             if(ics->sect_cb[g][i] == 12) return 32;
             if(ics->sect_cb[g][i] == NOISE_HCB) ics->noise_used = 1;
             if(ics->sect_cb[g][i] == INTENSITY_HCB2 || ics->sect_cb[g][i] == INTENSITY_HCB) ics->is_used = 1;
-#ifdef ERROR_RESILIENCE
             if(hDecoder->aacSectionDataResilienceFlag) {
                 if((ics->sect_cb[g][i] == 11) || ((ics->sect_cb[g][i] >= 16) && (ics->sect_cb[g][i] <= 32))) { vcb11 = 1; }
             }
             if(vcb11) { sect_len_incr = 1; }
             else {
-#endif
                 sect_len_incr = (uint8_t)faad_getbits(ld, sect_bits);
-#ifdef ERROR_RESILIENCE
             }
-#endif
             while ((sect_len_incr == sect_esc_val) /* &&
                 (k+sect_len < ics->max_sfb)*/)
             {
@@ -8178,11 +8119,8 @@ static uint8_t scale_factor_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, b
     (void)hDecoder;
     uint8_t ret = 0;
 
-#ifdef ERROR_RESILIENCE
     if(!hDecoder->aacScalefactorDataResilienceFlag) {
-#endif
         ret = decode_scale_factors(ics, ld);
-#ifdef ERROR_RESILIENCE
     }
     else {
         /* In ER AAC the parameters for RVLC are seperated from the actual
@@ -8191,7 +8129,6 @@ static uint8_t scale_factor_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, b
         */
         ret = rvlc_scale_factor_data(ics, ld);
     }
-#endif
     return ret;
 }
 
