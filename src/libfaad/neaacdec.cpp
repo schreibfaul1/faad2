@@ -875,6 +875,12 @@ cfft_info_t* cffti(uint16_t n) {
     case 512: cfft->tab = (complex_t*)cfft_tab_512; break;
     case 60: cfft->tab = (complex_t*)cfft_tab_60; break;
     case 480: cfft->tab = (complex_t*)cfft_tab_480; break;
+<<<<<<< HEAD
+#ifdef LD_DEC
+    case 240: cfft->tab = (complex_t*)cfft_tab_240; break;
+#endif
+=======
+>>>>>>> dev
     case 128: cfft->tab = (complex_t*)cfft_tab_128; break;
     }
     return cfft;
@@ -955,6 +961,22 @@ int8_t can_decode_ot(const uint8_t object_type) { /* Returns 0 if an object type
 #else
         return -1;
 #endif
+<<<<<<< HEAD
+    case ER_LC: return 0;
+    case ER_LTP:
+    #ifdef LTP_DEC
+        return 0;
+    #else
+        return -1;
+    #endif
+    case LD:
+    #ifdef LD_DEC
+        return 0;
+    #else
+        return -1;
+    #endif
+=======
+>>>>>>> dev
     }
     return -1;
 }
@@ -1348,6 +1370,13 @@ uint32_t NeAACDecGetCapabilities(void) {
 #ifdef LTP_DEC
     cap += LTP_DEC_CAP;
 #endif
+<<<<<<< HEAD
+#ifdef LD_DEC
+    cap += LD_DEC_CAP;
+#endif
+    cap += ERROR_RESILIENCE_CAP;
+=======
+>>>>>>> dev
     cap += FIXED_POINT_CAP;
     return cap;
 }
@@ -1366,6 +1395,12 @@ NeAACDecHandle NeAACDecOpen(void) {
     hDecoder->adts_header_t_present = 0;
     hDecoder->adif_header_t_present = 0;
     hDecoder->latm_header_t_present = 0;
+<<<<<<< HEAD
+    hDecoder->aacSectionDataResilienceFlag = 0;
+    hDecoder->aacScalefactorDataResilienceFlag = 0;
+    hDecoder->aacSpectralDataResilienceFlag = 0;
+=======
+>>>>>>> dev
     hDecoder->frameLength = 1024;
     hDecoder->frame = 0;
     hDecoder->sample_buffer = NULL;
@@ -1529,6 +1564,12 @@ int8_t NeAACDecInit2(NeAACDecHandle hpDecoder, uint8_t* pBuffer, uint32_t SizeOf
 #endif
     hDecoder->sf_index = m_mp4ASC->samplingFrequencyIndex;
     hDecoder->object_type = m_mp4ASC->objectTypeIndex;
+<<<<<<< HEAD
+    hDecoder->aacSectionDataResilienceFlag = m_mp4ASC->aacSectionDataResilienceFlag;
+    hDecoder->aacScalefactorDataResilienceFlag = m_mp4ASC->aacScalefactorDataResilienceFlag;
+    hDecoder->aacSpectralDataResilienceFlag = m_mp4ASC->aacSpectralDataResilienceFlag;
+=======
+>>>>>>> dev
 #ifdef SBR_DEC
     hDecoder->sbr_present_flag = m_mp4ASC->sbr_present_flag;
     hDecoder->downSampledSBR = m_mp4ASC->downSampledSBR;
@@ -1993,6 +2034,13 @@ fb_info_t* filter_bank_init(uint16_t frame_len) {
         fb->short_window[0] = sine_short_120;
         fb->long_window[1] = kbd_long_960;
         fb->short_window[1] = kbd_short_120;
+<<<<<<< HEAD
+#ifdef LD_DEC
+        fb->ld_window[0] = sine_mid_480;
+        fb->ld_window[1] = ld_mid_480;
+#endif
+=======
+>>>>>>> dev
     }
     return fb;
 }
@@ -2367,6 +2415,34 @@ uint8_t huffman_spectral_data(uint8_t cb, bitfile_t* ld, int16_t* sp) {
         if(!err) err = huffman_getescape(ld, &sp[1]);
         return err;
     }
+<<<<<<< HEAD
+    /* VCB11 uses codebook 11 */
+    case 16:
+    case 17:
+    case 18:
+    case 19:
+    case 20:
+    case 21:
+    case 22:
+    case 23:
+    case 24:
+    case 25:
+    case 26:
+    case 27:
+    case 28:
+    case 29:
+    case 30:
+    case 31: {
+        uint8_t err = huffman_2step_pair_sign(11, ld, sp);
+        if(!err) err = huffman_getescape(ld, &sp[0]);
+        if(!err) err = huffman_getescape(ld, &sp[1]);
+
+        /* check LAV (Largest Absolute Value) this finds errors in the ESCAPE signal */
+        vcb11_check_LAV(cb, sp);
+        return err;
+    }
+=======
+>>>>>>> dev
     default:
         /* Non existent codebook number, something went wrong */
         return 11;
@@ -4107,7 +4183,18 @@ uint8_t ps_decode(ps_info_t* ps, complex_t* X_left[64], complex_t* X_right[64]) 
 uint8_t is_ltp_ot(uint8_t object_type) { /* check if the object type is an object type that can have LTP */
     (void)object_type;
 #ifdef LTP_DEC
+<<<<<<< HEAD
+    if((object_type == LTP)
+       || (object_type == ER_LTP)
+    #ifdef LD_DEC
+       || (object_type == LD)
+    #endif
+    ) {
+        return 1;
+    }
+=======
     if((object_type == LTP)) { return 1; }
+>>>>>>> dev
 #endif
     return 0;
 }
@@ -4176,6 +4263,12 @@ mdct_info_t* faad_mdct_init(uint16_t N) {
     case 256: mdct->sincos = (complex_t*)mdct_tab_256; break;
     case 1920: mdct->sincos = (complex_t*)mdct_tab_1920; break;
     case 240: mdct->sincos = (complex_t*)mdct_tab_240; break;
+<<<<<<< HEAD
+#ifdef LD_DEC
+    case 960: mdct->sincos = (complex_t*)mdct_tab_960; break;
+#endif
+=======
+>>>>>>> dev
     }
     /* initialise fft */
     mdct->cfft = cffti(N / 4);
@@ -4312,6 +4405,23 @@ static uint8_t ObjectTypesTable[32] = {
     0, /* 16 Algorithmic Synthesis and Audio FX */
 
     /* MPEG-4 Version 2 */
+<<<<<<< HEAD
+    1, /* 17 ER AAC LC */
+    0, /* 18 (Reserved) */
+#ifdef LTP_DEC
+    1, /* 19 ER AAC LTP */
+#else
+    0, /* 19 ER AAC LTP */
+#endif
+    0, /* 20 ER AAC scalable */
+    0, /* 21 ER TwinVQ */
+    0, /* 22 ER BSAC */
+#ifdef LD_DEC
+    1, /* 23 ER AAC LD */
+#else
+    0, /* 23 ER AAC LD */
+#endif
+=======
     0, /* 17 ER AAC LC */
     0, /* 18 (Reserved) */
     0, /* 19 ER AAC LTP */
@@ -4319,6 +4429,7 @@ static uint8_t ObjectTypesTable[32] = {
     0, /* 21 ER TwinVQ */
     0, /* 22 ER BSAC */
     0, /* 23 ER AAC LD */
+>>>>>>> dev
     0, /* 24 ER CELP */
     0, /* 25 ER HVXC */
     0, /* 26 ER HILN */
@@ -4376,6 +4487,14 @@ int8_t AudioSpecificConfigFrombitfile_t(bitfile_t* ld, mp4AudioSpecificConfig_t*
     /* get GASpecificConfig */
     if(mp4ASC->objectTypeIndex == 1 || mp4ASC->objectTypeIndex == 2 || mp4ASC->objectTypeIndex == 3 || mp4ASC->objectTypeIndex == 4 || mp4ASC->objectTypeIndex == 6 || mp4ASC->objectTypeIndex == 7) {
         result = GASpecificConfig(ld, mp4ASC, pce);
+<<<<<<< HEAD
+    }
+    else if(mp4ASC->objectTypeIndex >= ER_OBJECT_START) { /* ER */
+        result = GASpecificConfig(ld, mp4ASC, pce);
+        mp4ASC->epConfig = (uint8_t)faad_getbits(ld, 2);
+        if(mp4ASC->epConfig != 0) result = -5;
+=======
+>>>>>>> dev
     }
     else { result = -4; }
 #ifdef SBR_DEC
@@ -7159,6 +7278,19 @@ int8_t GASpecificConfig(bitfile_t* ld, mp4AudioSpecificConfig_t* mp4ASC, program
             return -3;
         */
     }
+<<<<<<< HEAD
+    if(mp4ASC->extensionFlag == 1) {
+        /* Error resilience not supported yet */
+        if(mp4ASC->objectTypeIndex >= ER_OBJECT_START) {
+            mp4ASC->aacSectionDataResilienceFlag = faad_get1bit(ld);
+            mp4ASC->aacScalefactorDataResilienceFlag = faad_get1bit(ld);
+            mp4ASC->aacSpectralDataResilienceFlag = faad_get1bit(ld);
+        }
+        /* 1 bit: extensionFlag3 */
+        faad_getbits(ld, 1);
+    }
+=======
+>>>>>>> dev
     return 0;
 }
 
@@ -7340,6 +7472,28 @@ void raw_data_block(NeAACDecStruct_t* hDecoder, NeAACDecFrameInfo_t* hInfo, bitf
     hDecoder->fr_ch_ele = 0;
     hDecoder->first_syn_ele = 25;
     hDecoder->has_lfe = 0;
+<<<<<<< HEAD
+    if(hDecoder->object_type < ER_OBJECT_START) {
+        /* Table 4.4.3: raw_data_block() */
+        while((id_syn_ele = (uint8_t)faad_getbits(ld, LEN_SE_ID)) != ID_END) {
+            switch(id_syn_ele) {
+            case ID_SCE:
+                ele_this_frame++;
+                if(hDecoder->first_syn_ele == 25) hDecoder->first_syn_ele = id_syn_ele;
+                decode_sce_lfe(hDecoder, hInfo, ld, id_syn_ele);
+                if(hInfo->error > 0) return;
+                break;
+            case ID_CPE:
+                ele_this_frame++;
+                if(hDecoder->first_syn_ele == 25) hDecoder->first_syn_ele = id_syn_ele;
+                decode_cpe(hDecoder, hInfo, ld, id_syn_ele);
+                if(hInfo->error > 0) return;
+                break;
+            case ID_LFE:
+                ele_this_frame++;
+                hDecoder->has_lfe++;
+                decode_sce_lfe(hDecoder, hInfo, ld, id_syn_ele);
+=======
     /* Table 4.4.3: raw_data_block() */
     while((id_syn_ele = (uint8_t)faad_getbits(ld, LEN_SE_ID)) != ID_END) {
         switch(id_syn_ele) {
@@ -7359,6 +7513,7 @@ void raw_data_block(NeAACDecStruct_t* hDecoder, NeAACDecFrameInfo_t* hInfo, bitf
             ele_this_frame++;
             hDecoder->has_lfe++;
             decode_sce_lfe(hDecoder, hInfo, ld, id_syn_ele);
+>>>>>>> dev
 
             if(hInfo->error > 0) return;
             break;
@@ -7377,6 +7532,16 @@ void raw_data_block(NeAACDecStruct_t* hDecoder, NeAACDecFrameInfo_t* hInfo, bitf
                 hInfo->error = 31;
                 return;
             }
+<<<<<<< HEAD
+        }
+    }
+    else {
+        /* Table 262: er_raw_data_block() */
+        switch(hDecoder->channelConfiguration) {
+        case 1:
+            decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            if(hInfo->error > 0) return;
+=======
             ele_this_frame++;
             /* 14496-4: 5.6.4.1.2.1.3: */
             /* program_config_turation_element()'s in access units shall be ignored */
@@ -7384,6 +7549,7 @@ void raw_data_block(NeAACDecStruct_t* hDecoder, NeAACDecFrameInfo_t* hInfo, bitf
             // if ((hInfo->error = program_config_t_element(pce, ld)) > 0)
             //     return;
             // hDecoder->pce_set = 1;
+>>>>>>> dev
             break;
         case ID_FIL:
             ele_this_frame++;
@@ -7482,6 +7648,27 @@ static uint8_t channel_pair_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld, u
                 for(sfb = 0; sfb < ics1->max_sfb; sfb++) { ics1->ms_used[g][sfb] = faad_get1bit(ld); }
             }
         }
+<<<<<<< HEAD
+        if((hDecoder->object_type >= ER_OBJECT_START) && (ics1->predictor_data_present)) {
+            if((
+#ifdef LTP_DEC
+                   ics1->ltp.data_present =
+#endif
+                       faad_get1bit(ld)) &
+               1) {
+#ifdef LTP_DEC
+                if((result = ltp_data(hDecoder, ics1, &(ics1->ltp), ld)) > 0) {
+                    ret = result;
+                    goto exit;
+                }
+#else
+                ret = 26;
+                goto exit;
+#endif
+            }
+        }
+=======
+>>>>>>> dev
         memcpy(ics2, ics1, sizeof(ic_stream_t));
     }
     else { ics1->ms_mask_present = 0; }
@@ -7489,6 +7676,27 @@ static uint8_t channel_pair_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld, u
         ret = result;
         goto exit;
     }
+<<<<<<< HEAD
+    if(m_cpe->common_window && (hDecoder->object_type >= ER_OBJECT_START) && (ics1->predictor_data_present)) {
+        if((
+#ifdef LTP_DEC
+               ics1->ltp2.data_present =
+#endif
+                   faad_get1bit(ld)) &
+           1) {
+#ifdef LTP_DEC
+            if((result = ltp_data(hDecoder, ics1, &(ics1->ltp2), ld)) > 0) {
+                ret = result;
+                goto exit;
+            }
+#else
+            ret = 26;
+            goto exit;
+#endif
+        }
+    }
+=======
+>>>>>>> dev
     if((result = individual_channel_stream(hDecoder, m_cpe, ld, ics2, 0, m_spec_data2)) > 0) {
         ret = result;
         goto exit;
@@ -7563,6 +7771,14 @@ static uint8_t ics_info(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bitfile_t*
                         }
                     }
                 }
+<<<<<<< HEAD
+                if(!common_window && (hDecoder->object_type >= ER_OBJECT_START)) {
+                    if((ics->ltp.data_present = faad_get1bit(ld)) & 1) {
+                        if((retval = ltp_data(hDecoder, ics, &(ics->ltp), ld)) > 0) { return retval; }
+                    }
+                }
+=======
+>>>>>>> dev
             }
 #endif
         }
@@ -7667,10 +7883,35 @@ static uint8_t side_info(NeAACDecStruct_t* hDecoder, element_t* ele, bitfile_t* 
             if((result = pulse_data(ics, &(ics->pul), ld)) > 0) return result;
         }
         /* get tns data */
+<<<<<<< HEAD
+        if((ics->tns_data_present = faad_get1bit(ld)) & 1) {
+            if(hDecoder->object_type < ER_OBJECT_START)
+                tns_data(ics, &(ics->tns), ld);
+        }
+        /* get gain control data */
+        if((ics->gain_control_data_present = faad_get1bit(ld)) & 1) { return 1; }
+    }
+    if(hDecoder->aacSpectralDataResilienceFlag) {
+        ics->length_of_reordered_spectral_data = (uint16_t)faad_getbits(ld, 14);
+        if(hDecoder->channelConfiguration == 2) {
+            if(ics->length_of_reordered_spectral_data > 6144) ics->length_of_reordered_spectral_data = 6144;
+        }
+        else {
+            if(ics->length_of_reordered_spectral_data > 12288) ics->length_of_reordered_spectral_data = 12288;
+        }
+        ics->length_of_longest_codeword = (uint8_t)faad_getbits(ld, 6);
+        if(ics->length_of_longest_codeword >= 49) ics->length_of_longest_codeword = 49;
+    }
+    /* RVLC spectral data is put here */
+    if(hDecoder->aacScalefactorDataResilienceFlag) {
+        if((result = rvlc_decode_scale_factors(ics, ld)) > 0) return result;
+    }
+=======
         if((ics->tns_data_present = faad_get1bit(ld)) & 1) { tns_data(ics, &(ics->tns), ld); }
         /* get gain control data */
         if((ics->gain_control_data_present = faad_get1bit(ld)) & 1) { return 1; }
     }
+>>>>>>> dev
     return 0;
 }
 
@@ -7684,8 +7925,19 @@ static uint8_t individual_channel_stream(NeAACDecStruct_t* hDecoder, element_t* 
     if(hDecoder->object_type >= ER_OBJECT_START) {
         if(ics->tns_data_present) tns_data(ics, &(ics->tns), ld);
     }
+<<<<<<< HEAD
+    if(hDecoder->aacSpectralDataResilienceFlag) {
+        /* error resilient spectral data decoding */
+        if((result = reordered_spectral_data(hDecoder, ics, ld, spec_data)) > 0) { return result; }
+    }
+    else {
+        /* decode the spectral data */
+        if((result = spectral_data(hDecoder, ics, ld, spec_data)) > 0) { return result; }
+    }
+=======
     /* decode the spectral data */
     if((result = spectral_data(hDecoder, ics, ld, spec_data)) > 0) { return result; }
+>>>>>>> dev
     /* pulse coding reconstruction */
     if(ics->pulse_data_present) {
         if(ics->window_sequence != EIGHT_SHORT_SEQUENCE) {
@@ -7711,17 +7963,35 @@ static uint8_t section_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bitfil
         uint8_t k = 0;
         uint8_t i = 0;
         while(k < ics->max_sfb) {
+<<<<<<< HEAD
+            uint8_t vcb11 = 0;
+=======
+>>>>>>> dev
             uint8_t  sfb;
             uint8_t  sect_len_incr;
             uint16_t sect_len = 0;
             uint8_t  sect_cb_bits = 4;
             /* if "faad_getbits" detects error and returns "0", "k" is never incremented and we cannot leave the while loop */
             if(ld->error != 0) return 14;
+<<<<<<< HEAD
+            if(hDecoder->aacSectionDataResilienceFlag) sect_cb_bits = 5;
+=======
+>>>>>>> dev
             ics->sect_cb[g][i] = (uint8_t)faad_getbits(ld, sect_cb_bits);
             if(ics->sect_cb[g][i] == 12) return 32;
             if(ics->sect_cb[g][i] == NOISE_HCB) ics->noise_used = 1;
             if(ics->sect_cb[g][i] == INTENSITY_HCB2 || ics->sect_cb[g][i] == INTENSITY_HCB) ics->is_used = 1;
+<<<<<<< HEAD
+            if(hDecoder->aacSectionDataResilienceFlag) {
+                if((ics->sect_cb[g][i] == 11) || ((ics->sect_cb[g][i] >= 16) && (ics->sect_cb[g][i] <= 32))) { vcb11 = 1; }
+            }
+            if(vcb11) { sect_len_incr = 1; }
+            else {
+                sect_len_incr = (uint8_t)faad_getbits(ld, sect_bits);
+            }
+=======
             sect_len_incr = (uint8_t)faad_getbits(ld, sect_bits);
+>>>>>>> dev
             while ((sect_len_incr == sect_esc_val) /* &&
                 (k+sect_len < ics->max_sfb)*/)
             {
@@ -7810,7 +8080,21 @@ static uint8_t decode_scale_factors(ic_stream_t* ics, bitfile_t* ld) {
 static uint8_t scale_factor_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bitfile_t* ld) {
     (void)hDecoder;
     uint8_t ret = 0;
+<<<<<<< HEAD
+
+    if(!hDecoder->aacScalefactorDataResilienceFlag) {
+        ret = decode_scale_factors(ics, ld);
+    }
+    else {
+        /* In ER AAC the parameters for RVLC are seperated from the actual
+           data that holds the scale_factors.
+           Strangely enough, 2 parameters for HCR are put inbetween them.
+        */
+        ret = rvlc_scale_factor_data(ics, ld);
+    }
+=======
     ret = decode_scale_factors(ics, ld);
+>>>>>>> dev
     return ret;
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
