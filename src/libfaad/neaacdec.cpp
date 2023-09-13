@@ -873,8 +873,14 @@ cfft_info_t* cffti(uint16_t n) {
     switch(n) {
     case 64: cfft->tab = (complex_t*)cfft_tab_64; break;
     case 512: cfft->tab = (complex_t*)cfft_tab_512; break;
+#ifdef LD_DEC
+    case 256: cfft->tab = (complex_t*)cfft_tab_256; break;
+#endif
     case 60: cfft->tab = (complex_t*)cfft_tab_60; break;
     case 480: cfft->tab = (complex_t*)cfft_tab_480; break;
+    #ifdef LD_DEC
+    case 240: cfft->tab = (complex_t*)cfft_tab_240; break;
+    #endif
     case 128: cfft->tab = (complex_t*)cfft_tab_128; break;
     }
     return cfft;
@@ -954,6 +960,21 @@ int8_t can_decode_ot(const uint8_t object_type) { /* Returns 0 if an object type
         return 0;
 #else
         return -1;
+#endif
+#ifdef ERROR_RESILIENCE /* ER object types */
+    case ER_LC: return 0;
+    case ER_LTP:
+    #ifdef LTP_DEC
+        return 0;
+    #else
+        return -1;
+    #endif
+    case LD:
+    #ifdef LD_DEC
+        return 0;
+    #else
+        return -1;
+    #endif
 #endif
     }
     return -1;
@@ -1348,6 +1369,12 @@ uint32_t NeAACDecGetCapabilities(void) {
 #ifdef LTP_DEC
     cap += LTP_DEC_CAP;
 #endif
+#ifdef LD_DEC
+    cap += LD_DEC_CAP;
+#endif
+#ifdef ERROR_RESILIENCE
+    cap += ERROR_RESILIENCE_CAP;
+#endif
     cap += FIXED_POINT_CAP;
     return cap;
 }
@@ -1366,6 +1393,11 @@ NeAACDecHandle NeAACDecOpen(void) {
     hDecoder->adts_header_t_present = 0;
     hDecoder->adif_header_t_present = 0;
     hDecoder->latm_header_t_present = 0;
+#ifdef ERROR_RESILIENCE
+    hDecoder->aacSectionDataResilienceFlag = 0;
+    hDecoder->aacScalefactorDataResilienceFlag = 0;
+    hDecoder->aacSpectralDataResilienceFlag = 0;
+#endif
     hDecoder->frameLength = 1024;
     hDecoder->frame = 0;
     hDecoder->sample_buffer = NULL;
@@ -1479,6 +1511,9 @@ long NeAACDecInit(NeAACDecHandle hpDecoder, uint8_t* buffer, uint32_t buffer_siz
     else if(*samplerate > 24000 && (hDecoder->config.dontUpSampleImplicitSBR == 0)) { hDecoder->downSampledSBR = 1; }
 #endif
     hDecoder->fb = filter_bank_init(hDecoder->frameLength); /* must be done before frameLength is divided by 2 for LD */
+#ifdef LD_DEC
+    if(hDecoder->object_type == LD) hDecoder->frameLength >>= 1;
+#endif
     if(can_decode_ot(hDecoder->object_type) < 0) {
         ret = -1;
         goto exit;
@@ -1529,6 +1564,11 @@ int8_t NeAACDecInit2(NeAACDecHandle hpDecoder, uint8_t* pBuffer, uint32_t SizeOf
 #endif
     hDecoder->sf_index = m_mp4ASC->samplingFrequencyIndex;
     hDecoder->object_type = m_mp4ASC->objectTypeIndex;
+#ifdef ERROR_RESILIENCE
+    hDecoder->aacSectionDataResilienceFlag = m_mp4ASC->aacSectionDataResilienceFlag;
+    hDecoder->aacScalefactorDataResilienceFlag = m_mp4ASC->aacScalefactorDataResilienceFlag;
+    hDecoder->aacSpectralDataResilienceFlag = m_mp4ASC->aacSpectralDataResilienceFlag;
+#endif
 #ifdef SBR_DEC
     hDecoder->sbr_present_flag = m_mp4ASC->sbr_present_flag;
     hDecoder->downSampledSBR = m_mp4ASC->downSampledSBR;
@@ -1542,9 +1582,13 @@ int8_t NeAACDecInit2(NeAACDecHandle hpDecoder, uint8_t* pBuffer, uint32_t SizeOf
         goto exit;
     }
     hDecoder->channelConfiguration = m_mp4ASC->channelsConfiguration;
-    if(m_mp4ASC->frameLengthFlag) hDecoder->frameLength = 960;
+    if(m_mp4ASC->frameLengthFlag)
+        hDecoder->frameLength = 960;
     /* must be done before frameLength is divided by 2 for LD */
     hDecoder->fb = filter_bank_init(hDecoder->frameLength);
+#ifdef LD_DEC
+    if(hDecoder->object_type == LD) hDecoder->frameLength >>= 1;
+#endif
     ret = 0;
     goto exit;
 
@@ -1909,7 +1953,16 @@ static void* aac_frame_decode(NeAACDecStruct_t* hDecoder, NeAACDecFrameInfo_t* h
     sample_buffer = output_to_PCM(hDecoder, hDecoder->time_out, sample_buffer, output_channels, frame_len, hDecoder->config.outputFormat);
     hDecoder->postSeekResetFlag = 0;
     hDecoder->frame++;
-    if(hDecoder->frame <= 1) hInfo->samples = 0;
+#ifdef LD_DEC
+    if(hDecoder->object_type != LD) {
+#endif
+        if(hDecoder->frame <= 1) hInfo->samples = 0;
+#ifdef LD_DEC
+    }
+    else {
+        if(hDecoder->frame <= 0) hInfo->samples = 0; /* LD encoders will give lower delay */
+    }
+#endif
     return sample_buffer;
 error:
     for(i = 0; i < MAX_CHANNELS; i++) { /* reset filterbank state */
@@ -1975,24 +2028,39 @@ void drc_decode(drc_info_t* drc, int32_t* spec) {
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 fb_info_t* filter_bank_init(uint16_t frame_len) {
-    uint16_t   nshort = frame_len / 8;
+    uint16_t nshort = frame_len / 8;
+#ifdef LD_DEC
+    uint16_t frame_len_ld = frame_len / 2;
+#endif
     fb_info_t* fb = (fb_info_t*)faad_malloc(sizeof(fb_info_t));
     memset(fb, 0, sizeof(fb_info_t));
 
     /* normal */
     fb->mdct256 = faad_mdct_init(2 * nshort);
     fb->mdct2048 = faad_mdct_init(2 * frame_len);
+#ifdef LD_DEC
+    /* LD */
+    fb->mdct1024 = faad_mdct_init(2 * frame_len_ld);
+#endif
     if(frame_len == 1024) {
         fb->long_window[0] = sine_long_1024;
         fb->short_window[0] = sine_short_128;
         fb->long_window[1] = kbd_long_1024;
         fb->short_window[1] = kbd_short_128;
+#ifdef LD_DEC
+        fb->ld_window[0] = sine_mid_512;
+        fb->ld_window[1] = ld_mid_512;
+#endif
     }
     else /* (frame_len == 960) */ {
         fb->long_window[0] = sine_long_960;
         fb->short_window[0] = sine_short_120;
         fb->long_window[1] = kbd_long_960;
         fb->short_window[1] = kbd_short_120;
+    #ifdef LD_DEC
+        fb->ld_window[0] = sine_mid_480;
+        fb->ld_window[1] = ld_mid_480;
+    #endif
     }
     return fb;
 }
@@ -2001,13 +2069,28 @@ void filter_bank_end(fb_info_t* fb) {
     if(fb != NULL) {
         faad_mdct_end(fb->mdct256);
         faad_mdct_end(fb->mdct2048);
+#ifdef LD_DEC
+        faad_mdct_end(fb->mdct1024);
+#endif
         faad_free(fb);
     }
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static inline void imdct_long(fb_info_t* fb, int32_t* in_data, int32_t* out_data, uint16_t len) {
     (void)len;
+#ifdef LD_DEC
+    mdct_info_t* mdct = NULL;
+
+    switch(len) {
+    case 2048:
+    case 1920: mdct = fb->mdct2048; break;
+    case 1024:
+    case 960: mdct = fb->mdct1024; break;
+    }
+    faad_imdct(mdct, in_data, out_data);
+#else
     faad_imdct(fb->mdct2048, in_data, out_data);
+#endif
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static inline void mdct(fb_info_t* fb, int32_t* in_data, int32_t* out_data, uint16_t len) {
@@ -2018,6 +2101,10 @@ static inline void mdct(fb_info_t* fb, int32_t* in_data, int32_t* out_data, uint
     case 1920: mdct = fb->mdct2048; break;
     case 256:
     case 240: mdct = fb->mdct256; break;
+#ifdef LD_DEC
+    case 1024:
+    case 960: mdct = fb->mdct1024; break;
+#endif
     }
     faad_mdct(mdct, in_data, out_data);
 }
@@ -2036,10 +2123,20 @@ void ifilter_bank(fb_info_t* fb, uint8_t window_sequence, uint8_t window_shape, 
     uint16_t       nflat_ls = (nlong - nshort) / 2;
 
     memset(m_transf_buf, 0, 2 * 1024 * sizeof(int32_t));
-    window_long = fb->long_window[window_shape];
-    window_long_prev = fb->long_window[window_shape_prev];
-    window_short = fb->short_window[window_shape];
-    window_short_prev = fb->short_window[window_shape_prev];
+#ifdef LD_DEC /* select windows of current frame and previous frame (Sine or KBD) */
+    if(object_type == LD) {
+        window_long = fb->ld_window[window_shape];
+        window_long_prev = fb->ld_window[window_shape_prev];
+    }
+    else {
+#endif
+        window_long = fb->long_window[window_shape];
+        window_long_prev = fb->long_window[window_shape_prev];
+        window_short = fb->short_window[window_shape];
+        window_short_prev = fb->short_window[window_shape_prev];
+#ifdef LD_DEC
+    }
+#endif
     switch(window_sequence) {
     case ONLY_LONG_SEQUENCE:
         /* perform iMDCT */
@@ -2138,11 +2235,20 @@ void filter_bank_ltp(fb_info_t* fb, uint8_t window_sequence, uint8_t window_shap
     uint16_t       nflat_ls = (nlong - nshort) / 2;
     assert(window_sequence != EIGHT_SHORT_SEQUENCE);
 
-    window_long = fb->long_window[window_shape];
-    window_long_prev = fb->long_window[window_shape_prev];
-    window_short = fb->short_window[window_shape];
-    window_short_prev = fb->short_window[window_shape_prev];
-
+#ifdef LD_DEC
+    if(object_type == LD) {
+        window_long = fb->ld_window[window_shape];
+        window_long_prev = fb->ld_window[window_shape_prev];
+    }
+    else {
+#endif
+        window_long = fb->long_window[window_shape];
+        window_long_prev = fb->long_window[window_shape_prev];
+        window_short = fb->short_window[window_shape];
+        window_short_prev = fb->short_window[window_shape_prev];
+#ifdef LD_DEC
+    }
+#endif
     switch(window_sequence) {
     case ONLY_LONG_SEQUENCE:
         for(i = nlong - 1; i >= 0; i--) {
@@ -2367,6 +2473,33 @@ uint8_t huffman_spectral_data(uint8_t cb, bitfile_t* ld, int16_t* sp) {
         if(!err) err = huffman_getescape(ld, &sp[1]);
         return err;
     }
+#ifdef ERROR_RESILIENCE
+    /* VCB11 uses codebook 11 */
+    case 16:
+    case 17:
+    case 18:
+    case 19:
+    case 20:
+    case 21:
+    case 22:
+    case 23:
+    case 24:
+    case 25:
+    case 26:
+    case 27:
+    case 28:
+    case 29:
+    case 30:
+    case 31: {
+        uint8_t err = huffman_2step_pair_sign(11, ld, sp);
+        if(!err) err = huffman_getescape(ld, &sp[0]);
+        if(!err) err = huffman_getescape(ld, &sp[1]);
+
+        /* check LAV (Largest Absolute Value) this finds errors in the ESCAPE signal */
+        vcb11_check_LAV(cb, sp);
+        return err;
+    }
+#endif
     default:
         /* Non existent codebook number, something went wrong */
         return 11;
@@ -4107,7 +4240,16 @@ uint8_t ps_decode(ps_info_t* ps, complex_t* X_left[64], complex_t* X_right[64]) 
 uint8_t is_ltp_ot(uint8_t object_type) { /* check if the object type is an object type that can have LTP */
     (void)object_type;
 #ifdef LTP_DEC
-    if((object_type == LTP)) { return 1; }
+    if((object_type == LTP)
+    #ifdef ERROR_RESILIENCE
+       || (object_type == ER_LTP)
+    #endif
+    #ifdef LD_DEC
+       || (object_type == LD)
+    #endif
+    ) {
+        return 1;
+    }
 #endif
     return 0;
 }
@@ -4153,14 +4295,28 @@ static inline int16_t real_to_int16(int32_t sig_in) {
 void lt_update_state(int16_t* lt_pred_stat, int32_t* time, int32_t* overlap, uint16_t frame_len, uint8_t object_type) {
     (void)object_type;
     uint16_t i;
-    /* The reference point for index i and the content of the buffer lt_pred_stat are arranged so that lt_pred_stat(0 ... N/2 - 1) contains the last aliased half window from the IMDCT, and
-       lt_pred_stat(N/2 ... N-1) is always all zeros. The rest of lt_pred_stat (i<0) contains the previous fully reconstructed time domain samples, i.e., output of the decoder. These values are
-       shifted up by N*2 to avoid (i<0). For the LD object type an extra 512 samples lookback is accomodated here. */
-    for(i = 0; i < frame_len; i++) {
-        lt_pred_stat[i] = lt_pred_stat[i + frame_len];
-        lt_pred_stat[frame_len + i] = real_to_int16(time[i]);
-        lt_pred_stat[(frame_len * 2) + i] = real_to_int16(overlap[i]);
+/* The reference point for index i and the content of the buffer lt_pred_stat are arranged so that lt_pred_stat(0 ... N/2 - 1) contains the last aliased half window from the IMDCT, and
+   lt_pred_stat(N/2 ... N-1) is always all zeros. The rest of lt_pred_stat (i<0) contains the previous fully reconstructed time domain samples, i.e., output of the decoder. These values are
+   shifted up by N*2 to avoid (i<0). For the LD object type an extra 512 samples lookback is accomodated here. */
+#ifdef LD_DEC
+    if(object_type == LD) {
+        for(i = 0; i < frame_len; i++) {
+            lt_pred_stat[i] /* extra 512 */ = lt_pred_stat[i + frame_len];
+            lt_pred_stat[frame_len + i] = lt_pred_stat[i + (frame_len * 2)];
+            lt_pred_stat[(frame_len * 2) + i] = real_to_int16(time[i]);
+            lt_pred_stat[(frame_len * 3) + i] = real_to_int16(overlap[i]);
+        }
     }
+    else {
+#endif
+        for(i = 0; i < frame_len; i++) {
+            lt_pred_stat[i] = lt_pred_stat[i + frame_len];
+            lt_pred_stat[frame_len + i] = real_to_int16(time[i]);
+            lt_pred_stat[(frame_len * 2) + i] = real_to_int16(overlap[i]);
+        }
+#ifdef LD_DEC
+    }
+#endif
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 mdct_info_t* faad_mdct_init(uint16_t N) {
@@ -4174,8 +4330,14 @@ mdct_info_t* faad_mdct_init(uint16_t N) {
     switch(N) {
     case 2048: mdct->sincos = (complex_t*)mdct_tab_2048; break;
     case 256: mdct->sincos = (complex_t*)mdct_tab_256; break;
+#ifdef LD_DEC
+    case 1024: mdct->sincos = (complex_t*)mdct_tab_1024; break;
+#endif
     case 1920: mdct->sincos = (complex_t*)mdct_tab_1920; break;
     case 240: mdct->sincos = (complex_t*)mdct_tab_240; break;
+    #ifdef LD_DEC
+    case 960: mdct->sincos = (complex_t*)mdct_tab_960; break;
+    #endif
     }
     /* initialise fft */
     mdct->cfft = cffti(N / 4);
@@ -4190,16 +4352,16 @@ void faad_mdct_end(mdct_info_t* mdct) {
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void faad_imdct(mdct_info_t* mdct, int32_t* X_in, int32_t* X_out) {
-    uint16_t   k;
-    complex_t  x;
-    int32_t    scale, b_scale = 0;
+    uint16_t  k;
+    complex_t x;
+    int32_t scale, b_scale = 0;
     complex_t* sincos = mdct->sincos;
     uint16_t   N = mdct->N;
     uint16_t   N2 = N >> 1;
     uint16_t   N4 = N >> 2;
     uint16_t   N8 = N >> 3;
 
-    if(N & (N - 1)) { /* detect non-power of 2 */
+    if(N & (N - 1)) {    /* detect non-power of 2 */
         /* adjust scale for non-power of 2 MDCT */
         /* 2048/1920 */
         b_scale = 1;
@@ -4311,7 +4473,28 @@ static uint8_t ObjectTypesTable[32] = {
     0, /* 15 General MIDI */
     0, /* 16 Algorithmic Synthesis and Audio FX */
 
-    /* MPEG-4 Version 2 */
+/* MPEG-4 Version 2 */
+#ifdef ERROR_RESILIENCE
+    1, /* 17 ER AAC LC */
+    0, /* 18 (Reserved) */
+    #ifdef LTP_DEC
+    1, /* 19 ER AAC LTP */
+    #else
+    0, /* 19 ER AAC LTP */
+    #endif
+    0, /* 20 ER AAC scalable */
+    0, /* 21 ER TwinVQ */
+    0, /* 22 ER BSAC */
+    #ifdef LD_DEC
+    1, /* 23 ER AAC LD */
+    #else
+    0, /* 23 ER AAC LD */
+    #endif
+    0, /* 24 ER CELP */
+    0, /* 25 ER HVXC */
+    0, /* 26 ER HILN */
+    0, /* 27 ER Parametric */
+#else  /* No ER defined */
     0, /* 17 ER AAC LC */
     0, /* 18 (Reserved) */
     0, /* 19 ER AAC LTP */
@@ -4323,6 +4506,7 @@ static uint8_t ObjectTypesTable[32] = {
     0, /* 25 ER HVXC */
     0, /* 26 ER HILN */
     0, /* 27 ER Parametric */
+#endif
     0, /* 28 (Reserved) */
 #ifdef PS_DEC
     1, /* 29 AAC LC + SBR + PS */
@@ -4376,6 +4560,13 @@ int8_t AudioSpecificConfigFrombitfile_t(bitfile_t* ld, mp4AudioSpecificConfig_t*
     /* get GASpecificConfig */
     if(mp4ASC->objectTypeIndex == 1 || mp4ASC->objectTypeIndex == 2 || mp4ASC->objectTypeIndex == 3 || mp4ASC->objectTypeIndex == 4 || mp4ASC->objectTypeIndex == 6 || mp4ASC->objectTypeIndex == 7) {
         result = GASpecificConfig(ld, mp4ASC, pce);
+#ifdef ERROR_RESILIENCE
+    }
+    else if(mp4ASC->objectTypeIndex >= ER_OBJECT_START) { /* ER */
+        result = GASpecificConfig(ld, mp4ASC, pce);
+        mp4ASC->epConfig = (uint8_t)faad_getbits(ld, 2);
+        if(mp4ASC->epConfig != 0) result = -5;
+#endif
     }
     else { result = -4; }
 #ifdef SBR_DEC
@@ -7159,6 +7350,18 @@ int8_t GASpecificConfig(bitfile_t* ld, mp4AudioSpecificConfig_t* mp4ASC, program
             return -3;
         */
     }
+#ifdef ERROR_RESILIENCE
+    if(mp4ASC->extensionFlag == 1) {
+        /* Error resilience not supported yet */
+        if(mp4ASC->objectTypeIndex >= ER_OBJECT_START) {
+            mp4ASC->aacSectionDataResilienceFlag = faad_get1bit(ld);
+            mp4ASC->aacScalefactorDataResilienceFlag = faad_get1bit(ld);
+            mp4ASC->aacSpectralDataResilienceFlag = faad_get1bit(ld);
+        }
+        /* 1 bit: extensionFlag3 */
+        faad_getbits(ld, 1);
+    }
+#endif
     return 0;
 }
 
@@ -7340,60 +7543,124 @@ void raw_data_block(NeAACDecStruct_t* hDecoder, NeAACDecFrameInfo_t* hInfo, bitf
     hDecoder->fr_ch_ele = 0;
     hDecoder->first_syn_ele = 25;
     hDecoder->has_lfe = 0;
-    /* Table 4.4.3: raw_data_block() */
-    while((id_syn_ele = (uint8_t)faad_getbits(ld, LEN_SE_ID)) != ID_END) {
-        switch(id_syn_ele) {
-        case ID_SCE:
-            ele_this_frame++;
-            if(hDecoder->first_syn_ele == 25) hDecoder->first_syn_ele = id_syn_ele;
-            decode_sce_lfe(hDecoder, hInfo, ld, id_syn_ele);
-            if(hInfo->error > 0) return;
-            break;
-        case ID_CPE:
-            ele_this_frame++;
-            if(hDecoder->first_syn_ele == 25) hDecoder->first_syn_ele = id_syn_ele;
-            decode_cpe(hDecoder, hInfo, ld, id_syn_ele);
-            if(hInfo->error > 0) return;
-            break;
-        case ID_LFE:
-            ele_this_frame++;
-            hDecoder->has_lfe++;
-            decode_sce_lfe(hDecoder, hInfo, ld, id_syn_ele);
+#ifdef ERROR_RESILIENCE
+    if(hDecoder->object_type < ER_OBJECT_START) {
+#endif
+        /* Table 4.4.3: raw_data_block() */
+        while((id_syn_ele = (uint8_t)faad_getbits(ld, LEN_SE_ID)) != ID_END) {
+            switch(id_syn_ele) {
+            case ID_SCE:
+                ele_this_frame++;
+                if(hDecoder->first_syn_ele == 25) hDecoder->first_syn_ele = id_syn_ele;
+                decode_sce_lfe(hDecoder, hInfo, ld, id_syn_ele);
+                if(hInfo->error > 0) return;
+                break;
+            case ID_CPE:
+                ele_this_frame++;
+                if(hDecoder->first_syn_ele == 25) hDecoder->first_syn_ele = id_syn_ele;
+                decode_cpe(hDecoder, hInfo, ld, id_syn_ele);
+                if(hInfo->error > 0) return;
+                break;
+            case ID_LFE:
+                ele_this_frame++;
+                hDecoder->has_lfe++;
+                decode_sce_lfe(hDecoder, hInfo, ld, id_syn_ele);
 
-            if(hInfo->error > 0) return;
-            break;
-        case ID_CCE: /* not implemented yet, but skip the bits */
-            ele_this_frame++;
-            hInfo->error = 6;
+                if(hInfo->error > 0) return;
+                break;
+            case ID_CCE: /* not implemented yet, but skip the bits */
+                ele_this_frame++;
+                hInfo->error = 6;
 
-            if(hInfo->error > 0) return;
-            break;
-        case ID_DSE:
-            ele_this_frame++;
-            data_stream_element(hDecoder, ld);
-            break;
-        case ID_PCE:
-            if(ele_this_frame != 0) {
-                hInfo->error = 31;
-                return;
+                if(hInfo->error > 0) return;
+                break;
+            case ID_DSE:
+                ele_this_frame++;
+                data_stream_element(hDecoder, ld);
+                break;
+            case ID_PCE:
+                if(ele_this_frame != 0) {
+                    hInfo->error = 31;
+                    return;
+                }
+                ele_this_frame++;
+                /* 14496-4: 5.6.4.1.2.1.3: */
+                /* program_config_turation_element()'s in access units shall be ignored */
+                program_config_t_element(pce, ld);
+                // if ((hInfo->error = program_config_t_element(pce, ld)) > 0)
+                //     return;
+                // hDecoder->pce_set = 1;
+                break;
+            case ID_FIL:
+                ele_this_frame++;
+                /* one sbr_info_t*_t describes a channel_element not a channel! */
+                /* if we encounter SBR data here: error */
+                /* SBR data will be read directly in the SCE/LFE/CPE element */
+                if((hInfo->error = fill_element(hDecoder, ld, drc, INVALID_SBR_ELEMENT)) > 0) return;
+                break;
             }
-            ele_this_frame++;
-            /* 14496-4: 5.6.4.1.2.1.3: */
-            /* program_config_turation_element()'s in access units shall be ignored */
-            program_config_t_element(pce, ld);
-            // if ((hInfo->error = program_config_t_element(pce, ld)) > 0)
-            //     return;
-            // hDecoder->pce_set = 1;
+        }
+#ifdef ERROR_RESILIENCE
+    }
+    else {
+        /* Table 262: er_raw_data_block() */
+        switch(hDecoder->channelConfiguration) {
+        case 1:
+            decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            if(hInfo->error > 0) return;
             break;
-        case ID_FIL:
-            ele_this_frame++;
-            /* one sbr_info_t*_t describes a channel_element not a channel! */
-            /* if we encounter SBR data here: error */
-            /* SBR data will be read directly in the SCE/LFE/CPE element */
-            if((hInfo->error = fill_element(hDecoder, ld, drc, INVALID_SBR_ELEMENT)) > 0) return;
+        case 2:
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            if(hInfo->error > 0) return;
             break;
+        case 3:
+            decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            if(hInfo->error > 0) return;
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            if(hInfo->error > 0) return;
+            break;
+        case 4:
+            decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            if(hInfo->error > 0) return;
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            if(hInfo->error > 0) return;
+            decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            if(hInfo->error > 0) return;
+            break;
+        case 5:
+            decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            if(hInfo->error > 0) return;
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            if(hInfo->error > 0) return;
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            if(hInfo->error > 0) return;
+            break;
+        case 6:
+            decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            if(hInfo->error > 0) return;
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            if(hInfo->error > 0) return;
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            if(hInfo->error > 0) return;
+            decode_sce_lfe(hDecoder, hInfo, ld, ID_LFE);
+            if(hInfo->error > 0) return;
+            break;
+        case 7: /* 8 channels */
+            decode_sce_lfe(hDecoder, hInfo, ld, ID_SCE);
+            if(hInfo->error > 0) return;
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            if(hInfo->error > 0) return;
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            if(hInfo->error > 0) return;
+            decode_cpe(hDecoder, hInfo, ld, ID_CPE);
+            if(hInfo->error > 0) return;
+            decode_sce_lfe(hDecoder, hInfo, ld, ID_LFE);
+            if(hInfo->error > 0) return;
+            break;
+        default: hInfo->error = 7; return;
         }
     }
+#endif
     /* new in corrigendum 14496-3:2002 */
     { faad_byte_align(ld); }
     return;
@@ -7482,6 +7749,26 @@ static uint8_t channel_pair_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld, u
                 for(sfb = 0; sfb < ics1->max_sfb; sfb++) { ics1->ms_used[g][sfb] = faad_get1bit(ld); }
             }
         }
+#ifdef ERROR_RESILIENCE
+        if((hDecoder->object_type >= ER_OBJECT_START) && (ics1->predictor_data_present)) {
+            if((
+    #ifdef LTP_DEC
+                   ics1->ltp.data_present =
+    #endif
+                       faad_get1bit(ld)) &
+               1) {
+    #ifdef LTP_DEC
+                if((result = ltp_data(hDecoder, ics1, &(ics1->ltp), ld)) > 0) {
+                    ret = result;
+                    goto exit;
+                }
+    #else
+                ret = 26;
+                goto exit;
+    #endif
+            }
+        }
+#endif
         memcpy(ics2, ics1, sizeof(ic_stream_t));
     }
     else { ics1->ms_mask_present = 0; }
@@ -7489,6 +7776,26 @@ static uint8_t channel_pair_element(NeAACDecStruct_t* hDecoder, bitfile_t* ld, u
         ret = result;
         goto exit;
     }
+#ifdef ERROR_RESILIENCE
+    if(m_cpe->common_window && (hDecoder->object_type >= ER_OBJECT_START) && (ics1->predictor_data_present)) {
+        if((
+    #ifdef LTP_DEC
+               ics1->ltp2.data_present =
+    #endif
+                   faad_get1bit(ld)) &
+           1) {
+    #ifdef LTP_DEC
+            if((result = ltp_data(hDecoder, ics1, &(ics1->ltp2), ld)) > 0) {
+                ret = result;
+                goto exit;
+            }
+    #else
+            ret = 26;
+            goto exit;
+    #endif
+        }
+    }
+#endif
     if((result = individual_channel_stream(hDecoder, m_cpe, ld, ics2, 0, m_spec_data2)) > 0) {
         ret = result;
         goto exit;
@@ -7526,6 +7833,10 @@ static uint8_t ics_info(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bitfile_t*
     if(ics_reserved_bit != 0) return 32;
     ics->window_sequence = (uint8_t)faad_getbits(ld, 2);
     ics->window_shape = faad_get1bit(ld);
+#ifdef LD_DEC
+    /* No block switching in LD */
+    if((hDecoder->object_type == LD) && (ics->window_sequence != ONLY_LONG_SEQUENCE)) return 32;
+#endif
     if(ics->window_sequence == EIGHT_SHORT_SEQUENCE) {
         ics->max_sfb = (uint8_t)faad_getbits(ld, 4);
         ics->scale_factor_grouping = (uint8_t)faad_getbits(ld, 7);
@@ -7563,6 +7874,13 @@ static uint8_t ics_info(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bitfile_t*
                         }
                     }
                 }
+    #ifdef ERROR_RESILIENCE
+                if(!common_window && (hDecoder->object_type >= ER_OBJECT_START)) {
+                    if((ics->ltp.data_present = faad_get1bit(ld)) & 1) {
+                        if((retval = ltp_data(hDecoder, ics, &(ics->ltp), ld)) > 0) { return retval; }
+                    }
+                }
+    #endif
             }
 #endif
         }
@@ -7667,10 +7985,32 @@ static uint8_t side_info(NeAACDecStruct_t* hDecoder, element_t* ele, bitfile_t* 
             if((result = pulse_data(ics, &(ics->pul), ld)) > 0) return result;
         }
         /* get tns data */
-        if((ics->tns_data_present = faad_get1bit(ld)) & 1) { tns_data(ics, &(ics->tns), ld); }
+        if((ics->tns_data_present = faad_get1bit(ld)) & 1) {
+#ifdef ERROR_RESILIENCE
+            if(hDecoder->object_type < ER_OBJECT_START)
+#endif
+                tns_data(ics, &(ics->tns), ld);
+        }
         /* get gain control data */
         if((ics->gain_control_data_present = faad_get1bit(ld)) & 1) { return 1; }
     }
+#ifdef ERROR_RESILIENCE
+    if(hDecoder->aacSpectralDataResilienceFlag) {
+        ics->length_of_reordered_spectral_data = (uint16_t)faad_getbits(ld, 14);
+        if(hDecoder->channelConfiguration == 2) {
+            if(ics->length_of_reordered_spectral_data > 6144) ics->length_of_reordered_spectral_data = 6144;
+        }
+        else {
+            if(ics->length_of_reordered_spectral_data > 12288) ics->length_of_reordered_spectral_data = 12288;
+        }
+        ics->length_of_longest_codeword = (uint8_t)faad_getbits(ld, 6);
+        if(ics->length_of_longest_codeword >= 49) ics->length_of_longest_codeword = 49;
+    }
+    /* RVLC spectral data is put here */
+    if(hDecoder->aacScalefactorDataResilienceFlag) {
+        if((result = rvlc_decode_scale_factors(ics, ld)) > 0) return result;
+    }
+#endif
     return 0;
 }
 
@@ -7684,8 +8024,18 @@ static uint8_t individual_channel_stream(NeAACDecStruct_t* hDecoder, element_t* 
     if(hDecoder->object_type >= ER_OBJECT_START) {
         if(ics->tns_data_present) tns_data(ics, &(ics->tns), ld);
     }
-    /* decode the spectral data */
-    if((result = spectral_data(hDecoder, ics, ld, spec_data)) > 0) { return result; }
+#ifdef ERROR_RESILIENCE
+    if(hDecoder->aacSpectralDataResilienceFlag) {
+        /* error resilient spectral data decoding */
+        if((result = reordered_spectral_data(hDecoder, ics, ld, spec_data)) > 0) { return result; }
+    }
+    else {
+#endif
+        /* decode the spectral data */
+        if((result = spectral_data(hDecoder, ics, ld, spec_data)) > 0) { return result; }
+#ifdef ERROR_RESILIENCE
+    }
+#endif
     /* pulse coding reconstruction */
     if(ics->pulse_data_present) {
         if(ics->window_sequence != EIGHT_SHORT_SEQUENCE) {
@@ -7711,17 +8061,33 @@ static uint8_t section_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bitfil
         uint8_t k = 0;
         uint8_t i = 0;
         while(k < ics->max_sfb) {
+#ifdef ERROR_RESILIENCE
+            uint8_t vcb11 = 0;
+#endif
             uint8_t  sfb;
             uint8_t  sect_len_incr;
             uint16_t sect_len = 0;
             uint8_t  sect_cb_bits = 4;
             /* if "faad_getbits" detects error and returns "0", "k" is never incremented and we cannot leave the while loop */
             if(ld->error != 0) return 14;
+#ifdef ERROR_RESILIENCE
+            if(hDecoder->aacSectionDataResilienceFlag) sect_cb_bits = 5;
+#endif
             ics->sect_cb[g][i] = (uint8_t)faad_getbits(ld, sect_cb_bits);
             if(ics->sect_cb[g][i] == 12) return 32;
             if(ics->sect_cb[g][i] == NOISE_HCB) ics->noise_used = 1;
             if(ics->sect_cb[g][i] == INTENSITY_HCB2 || ics->sect_cb[g][i] == INTENSITY_HCB) ics->is_used = 1;
-            sect_len_incr = (uint8_t)faad_getbits(ld, sect_bits);
+#ifdef ERROR_RESILIENCE
+            if(hDecoder->aacSectionDataResilienceFlag) {
+                if((ics->sect_cb[g][i] == 11) || ((ics->sect_cb[g][i] >= 16) && (ics->sect_cb[g][i] <= 32))) { vcb11 = 1; }
+            }
+            if(vcb11) { sect_len_incr = 1; }
+            else {
+#endif
+                sect_len_incr = (uint8_t)faad_getbits(ld, sect_bits);
+#ifdef ERROR_RESILIENCE
+            }
+#endif
             while ((sect_len_incr == sect_esc_val) /* &&
                 (k+sect_len < ics->max_sfb)*/)
             {
@@ -7805,14 +8171,30 @@ static uint8_t decode_scale_factors(ic_stream_t* ics, bitfile_t* ld) {
     }
     return 0;
 }
+
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* Table 4.4.26 */
 static uint8_t scale_factor_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, bitfile_t* ld) {
     (void)hDecoder;
     uint8_t ret = 0;
-    ret = decode_scale_factors(ics, ld);
+
+#ifdef ERROR_RESILIENCE
+    if(!hDecoder->aacScalefactorDataResilienceFlag) {
+#endif
+        ret = decode_scale_factors(ics, ld);
+#ifdef ERROR_RESILIENCE
+    }
+    else {
+        /* In ER AAC the parameters for RVLC are seperated from the actual
+           data that holds the scale_factors.
+           Strangely enough, 2 parameters for HCR are put inbetween them.
+        */
+        ret = rvlc_scale_factor_data(ics, ld);
+    }
+#endif
     return ret;
 }
+
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* Table 4.4.27 */
 static void tns_data(ic_stream_t* ics, tns_info_t* tns, bitfile_t* ld) {
@@ -7852,7 +8234,17 @@ static uint8_t ltp_data(NeAACDecStruct_t* hDecoder, ic_stream_t* ics, ltp_info_t
     uint8_t sfb, w;
 
     ltp->lag = 0;
-    ltp->lag = (uint16_t)faad_getbits(ld, 11);
+#ifdef LD_DEC
+    if(hDecoder->object_type == LD) {
+        ltp->lag_update = (uint8_t)faad_getbits(ld, 1);
+        if(ltp->lag_update) { ltp->lag = (uint16_t)faad_getbits(ld, 10); }
+    }
+    else {
+#endif
+        ltp->lag = (uint16_t)faad_getbits(ld, 11);
+#ifdef LD_DEC
+    }
+#endif
     /* Check length of lag */
     if(ltp->lag > (hDecoder->frameLength << 1)) return 18;
     ltp->coef = (uint8_t)faad_getbits(ld, 3);
@@ -8283,17 +8675,52 @@ uint8_t window_grouping_info(NeAACDecStruct_t* hDecoder, ic_stream_t* ics) {
         ics->num_windows = 1;
         ics->num_window_groups = 1;
         ics->window_group_length[ics->num_window_groups - 1] = 1;
-        if(hDecoder->frameLength == 1024) ics->num_swb = num_swb_1024_window[sf_index];
-        else { ics->num_swb = num_swb_960_window[sf_index]; } /* if (hDecoder->frameLength == 960) */
+#ifdef LD_DEC
+        if(hDecoder->object_type == LD) {
+            if(hDecoder->frameLength == 512) ics->num_swb = num_swb_512_window[sf_index];
+            else /* if (hDecoder->frameLength == 480) */
+                ics->num_swb = num_swb_480_window[sf_index];
+        }
+        else {
+#endif
+            if(hDecoder->frameLength == 1024) ics->num_swb = num_swb_1024_window[sf_index];
+            else /* if (hDecoder->frameLength == 960) */
+                ics->num_swb = num_swb_960_window[sf_index];
+#ifdef LD_DEC
+        }
+#endif
         if(ics->max_sfb > ics->num_swb) { return 32; }
         /* preparation of sect_sfb_offset for long blocks also copy the last value! */
-        for(i = 0; i < ics->num_swb; i++) {
-            ics->sect_sfb_offset[0][i] = swb_offset_1024_window[sf_index][i];
-            ics->swb_offset[i] = swb_offset_1024_window[sf_index][i];
+#ifdef LD_DEC
+        if(hDecoder->object_type == LD) {
+            if(hDecoder->frameLength == 512) {
+                for(i = 0; i < ics->num_swb; i++) {
+                    ics->sect_sfb_offset[0][i] = swb_offset_512_window[sf_index][i];
+                    ics->swb_offset[i] = swb_offset_512_window[sf_index][i];
+                }
+            }
+            else /* if (hDecoder->frameLength == 480) */ {
+                for(i = 0; i < ics->num_swb; i++) {
+                    ics->sect_sfb_offset[0][i] = swb_offset_480_window[sf_index][i];
+                    ics->swb_offset[i] = swb_offset_480_window[sf_index][i];
+                }
+            }
+            ics->sect_sfb_offset[0][ics->num_swb] = hDecoder->frameLength;
+            ics->swb_offset[ics->num_swb] = hDecoder->frameLength;
+            ics->swb_offset_max = hDecoder->frameLength;
         }
-        ics->sect_sfb_offset[0][ics->num_swb] = hDecoder->frameLength;
-        ics->swb_offset[ics->num_swb] = hDecoder->frameLength;
-        ics->swb_offset_max = hDecoder->frameLength;
+        else {
+#endif
+            for(i = 0; i < ics->num_swb; i++) {
+                ics->sect_sfb_offset[0][i] = swb_offset_1024_window[sf_index][i];
+                ics->swb_offset[i] = swb_offset_1024_window[sf_index][i];
+            }
+            ics->sect_sfb_offset[0][ics->num_swb] = hDecoder->frameLength;
+            ics->swb_offset[ics->num_swb] = hDecoder->frameLength;
+            ics->swb_offset_max = hDecoder->frameLength;
+#ifdef LD_DEC
+        }
+#endif
         return 0;
     case EIGHT_SHORT_SEQUENCE:
         ics->num_windows = 8;
@@ -8593,6 +9020,14 @@ uint8_t reconstruct_single_channel(NeAACDecStruct_t* hDecoder, ic_stream_t* ics,
     pns_decode(ics, NULL, m_spec_coef, NULL, hDecoder->frameLength, 0, hDecoder->object_type, &(hDecoder->__r1), &(hDecoder->__r2));
 #ifdef LTP_DEC
     if(is_ltp_ot(hDecoder->object_type)) {
+    #ifdef LD_DEC
+        if(hDecoder->object_type == LD) {
+            if(ics->ltp.data_present) {
+                if(ics->ltp.lag_update) hDecoder->ltp_lag[sce->channel] = ics->ltp.lag;
+            }
+            ics->ltp.lag = hDecoder->ltp_lag[sce->channel];
+        }
+    #endif
         /* long term prediction */
         lt_prediction(ics, &(ics->ltp), m_spec_coef, hDecoder->lt_pred_stat[sce->channel], hDecoder->fb, ics->window_shape, hDecoder->window_shape_prev[sce->channel], hDecoder->sf_index,
                       hDecoder->object_type, hDecoder->frameLength);
@@ -8679,6 +9114,18 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct_t* hDecoder, ic_stream_t* ics1, 
     if(is_ltp_ot(hDecoder->object_type)) {
         ltp_info_t* ltp1 = &(ics1->ltp);
         ltp_info_t* ltp2 = (cpe->common_window) ? &(ics2->ltp2) : &(ics2->ltp);
+    #ifdef LD_DEC
+        if(hDecoder->object_type == LD) {
+            if(ltp1->data_present) {
+                if(ltp1->lag_update) hDecoder->ltp_lag[cpe->channel] = ltp1->lag;
+            }
+            ltp1->lag = hDecoder->ltp_lag[cpe->channel];
+            if(ltp2->data_present) {
+                if(ltp2->lag_update) hDecoder->ltp_lag[cpe->paired_channel] = ltp2->lag;
+            }
+            ltp2->lag = hDecoder->ltp_lag[cpe->paired_channel];
+        }
+    #endif
         /* long term prediction */
         lt_prediction(ics1, ltp1, m_spec_coef1, hDecoder->lt_pred_stat[cpe->channel], hDecoder->fb, ics1->window_shape, hDecoder->window_shape_prev[cpe->channel], hDecoder->sf_index,
                       hDecoder->object_type, hDecoder->frameLength);
