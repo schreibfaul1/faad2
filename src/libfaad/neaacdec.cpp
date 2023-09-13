@@ -876,13 +876,11 @@ cfft_info_t* cffti(uint16_t n) {
 #ifdef LD_DEC
     case 256: cfft->tab = (complex_t*)cfft_tab_256; break;
 #endif
-#ifdef ALLOW_SMALL_FRAMELENGTH
     case 60: cfft->tab = (complex_t*)cfft_tab_60; break;
     case 480: cfft->tab = (complex_t*)cfft_tab_480; break;
     #ifdef LD_DEC
     case 240: cfft->tab = (complex_t*)cfft_tab_240; break;
     #endif
-#endif
     case 128: cfft->tab = (complex_t*)cfft_tab_128; break;
     }
     return cfft;
@@ -1585,12 +1583,7 @@ int8_t NeAACDecInit2(NeAACDecHandle hpDecoder, uint8_t* pBuffer, uint32_t SizeOf
     }
     hDecoder->channelConfiguration = m_mp4ASC->channelsConfiguration;
     if(m_mp4ASC->frameLengthFlag)
-#ifdef ALLOW_SMALL_FRAMELENGTH
         hDecoder->frameLength = 960;
-#else
-        ret = -1;
-    goto exit;
-#endif
     /* must be done before frameLength is divided by 2 for LD */
     hDecoder->fb = filter_bank_init(hDecoder->frameLength);
 #ifdef LD_DEC
@@ -2049,9 +2042,7 @@ fb_info_t* filter_bank_init(uint16_t frame_len) {
     /* LD */
     fb->mdct1024 = faad_mdct_init(2 * frame_len_ld);
 #endif
-#ifdef ALLOW_SMALL_FRAMELENGTH
     if(frame_len == 1024) {
-#endif
         fb->long_window[0] = sine_long_1024;
         fb->short_window[0] = sine_short_128;
         fb->long_window[1] = kbd_long_1024;
@@ -2060,7 +2051,6 @@ fb_info_t* filter_bank_init(uint16_t frame_len) {
         fb->ld_window[0] = sine_mid_512;
         fb->ld_window[1] = ld_mid_512;
 #endif
-#ifdef ALLOW_SMALL_FRAMELENGTH
     }
     else /* (frame_len == 960) */ {
         fb->long_window[0] = sine_long_960;
@@ -2072,7 +2062,6 @@ fb_info_t* filter_bank_init(uint16_t frame_len) {
         fb->ld_window[1] = ld_mid_480;
     #endif
     }
-#endif
     return fb;
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -4344,13 +4333,11 @@ mdct_info_t* faad_mdct_init(uint16_t N) {
 #ifdef LD_DEC
     case 1024: mdct->sincos = (complex_t*)mdct_tab_1024; break;
 #endif
-#ifdef ALLOW_SMALL_FRAMELENGTH
     case 1920: mdct->sincos = (complex_t*)mdct_tab_1920; break;
     case 240: mdct->sincos = (complex_t*)mdct_tab_240; break;
     #ifdef LD_DEC
     case 960: mdct->sincos = (complex_t*)mdct_tab_960; break;
     #endif
-#endif
     }
     /* initialise fft */
     mdct->cfft = cffti(N / 4);
@@ -4367,23 +4354,19 @@ void faad_mdct_end(mdct_info_t* mdct) {
 void faad_imdct(mdct_info_t* mdct, int32_t* X_in, int32_t* X_out) {
     uint16_t  k;
     complex_t x;
-#ifdef ALLOW_SMALL_FRAMELENGTH
     int32_t scale, b_scale = 0;
-#endif
     complex_t* sincos = mdct->sincos;
     uint16_t   N = mdct->N;
     uint16_t   N2 = N >> 1;
     uint16_t   N4 = N >> 2;
     uint16_t   N8 = N >> 3;
-#ifdef ALLOW_SMALL_FRAMELENGTH
-    /* detect non-power of 2 */
-    if(N & (N - 1)) {
+
+    if(N & (N - 1)) {    /* detect non-power of 2 */
         /* adjust scale for non-power of 2 MDCT */
         /* 2048/1920 */
         b_scale = 1;
         scale = COEF_CONST(1.0666666666666667);
     }
-#endif
     /* pre-IFFT complex multiplication */
     for(k = 0; k < N4; k++) { ComplexMult(&IM(m_Z1_imdct[k]), &RE(m_Z1_imdct[k]), X_in[2 * k], X_in[N2 - 1 - 2 * k], RE(sincos[k]), IM(sincos[k])); }
     /* complex IFFT, any non-scaling FFT can be used here */
@@ -4393,13 +4376,11 @@ void faad_imdct(mdct_info_t* mdct, int32_t* X_in, int32_t* X_out) {
         RE(x) = RE(m_Z1_imdct[k]);
         IM(x) = IM(m_Z1_imdct[k]);
         ComplexMult(&IM(m_Z1_imdct[k]), &RE(m_Z1_imdct[k]), IM(x), RE(x), RE(sincos[k]), IM(sincos[k]));
-#ifdef ALLOW_SMALL_FRAMELENGTH
         /* non-power of 2 MDCT scaling */
         if(b_scale) {
             RE(m_Z1_imdct[k]) = MUL_C(RE(m_Z1_imdct[k]), scale);
             IM(m_Z1_imdct[k]) = MUL_C(IM(m_Z1_imdct[k]), scale);
         }
-#endif
     }
     /* reordering */
     for(k = 0; k < N8; k += 2) {
@@ -4432,13 +4413,11 @@ void faad_mdct(mdct_info_t* mdct, int32_t* X_in, int32_t* X_out) {
     uint16_t   N8 = N >> 3;
     int32_t    scale = REAL_CONST(4.0 / N);
 
-#ifdef ALLOW_SMALL_FRAMELENGTH
     /* detect non-power of 2 */
     if(N & (N - 1)) {
         /* adjust scale for non-power of 2 MDCT = sqrt(2048/1920) */
         scale = MUL_C(scale, COEF_CONST(1.0327955589886444));
     }
-#endif
     for(k = 0; k < N8; k++) { /* pre-FFT complex multiplication */
         uint16_t n = k << 1;
         RE(x) = X_in[N - N4 - 1 - n] + X_in[N - N4 + n];
@@ -7359,9 +7338,6 @@ int8_t GASpecificConfig(bitfile_t* ld, mp4AudioSpecificConfig_t* mp4ASC, program
     program_config_t pce;
     /* 1024 or 960 */
     mp4ASC->frameLengthFlag = faad_get1bit(ld);
-#ifndef ALLOW_SMALL_FRAMELENGTH
-    if(mp4ASC->frameLengthFlag == 1) return -3;
-#endif
     mp4ASC->dependsOnCoreCoder = faad_get1bit(ld);
     if(mp4ASC->dependsOnCoreCoder == 1) { mp4ASC->coreCoderDelay = (uint16_t)faad_getbits(ld, 14); }
     mp4ASC->extensionFlag = faad_get1bit(ld);

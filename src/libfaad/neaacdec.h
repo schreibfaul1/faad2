@@ -59,10 +59,9 @@
 //------------------------------------------------------
 
 /* COMPILE TIME DEFINITIONS */
-#define ERROR_RESILIENCE
+//#define ERROR_RESILIENCE
 #define LTP_DEC /* Allow decoding of LTP (long term prediction) profile AAC */
-#define LD_DEC  /* Allow decoding of LD (low delay) profile AAC */
-#define ALLOW_SMALL_FRAMELENGTH
+//#define LD_DEC  /* Allow decoding of LD (low delay) profile AAC */
 #define SBR_DEC /* Allow decoding of SBR (spectral band replication) */
 #define PS_DEC /* Allow decoding of PS (parametric stereo) */
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
