@@ -59,7 +59,6 @@
 //------------------------------------------------------
 
 /* COMPILE TIME DEFINITIONS */
-#define PREFER_POINTERS
 #define ERROR_RESILIENCE
 #define LTP_DEC /* Allow decoding of LTP (long term prediction) profile AAC */
 #define LD_DEC  /* Allow decoding of LD (low delay) profile AAC */

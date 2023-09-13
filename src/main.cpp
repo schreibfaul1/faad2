@@ -7,7 +7,7 @@
 
 // Declaration of the required global variables
 uint8_t inBuffer[4096];
-int16_t outBuffer[2048 * 2 * sizeof(int16_t)];
+int16_t outBuffer[2048 * sizeof(int16_t)];
 uint16_t bytesRead, pcmSize;
 uint16_t samplerate = 0;
 uint32_t  byterate = 0;
@@ -50,7 +50,6 @@ int main() {
     channels = AACGetChannels();
     printf("samplerate = %d\n", samplerate);
     printf("channels = %i\n", channels);
-
     byterate = samplerate * channels * 16  / 8;
 
     // Write the WAV header
@@ -86,7 +85,7 @@ int main() {
     //    printf("bytesconsumed %i \n", bytesconsumed);
         pos += bytesconsumed;
         if(bytesconsumed == 0) break;
-        validSamples = AACGetOutputSamps();
+        validSamples = AACGetOutputSamps() ;
         if(loopidx == 1){
             aacSBR = AACGetParametricStereo();
             aacPS = AACGetParametricStereo();
@@ -95,7 +94,7 @@ int main() {
             printf("Spectral Band Replication %d (0 no SBR, 1 upsampled SBR, 2 downsampled SBR, 3 no SBR but upsampled)\n",AACGetSBR());
         }
         uint8_t fac = 1;
-        if(aacSBR){if(aacPS) fac = 1; else fac = 2;}
+        if(aacSBR){if(aacPS) fac = 1; else fac = 1;}
         fwrite(outBuffer, 1, validSamples * channels * fac, wavFile);
 
         if(err) printf("error: %s", AACGetErrorMessage(err));

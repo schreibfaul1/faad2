@@ -65,20 +65,20 @@ void alloc_mem() {
     m_spec_coef1 = (int32_t*)faad_malloc(1024 * sizeof(int32_t));                                                            sum += 1024 * sizeof(int32_t);
     m_spec_coef2 = (int32_t*)faad_malloc(1024 * sizeof(int32_t));                                                            sum += 1024 * sizeof(int32_t);
 #ifdef SBR_DEC
-    m_P_dec = (int32_t**)faad_malloc(32 * sizeof(m_P_dec));                                                                  sum += 32 * sizeof(int32_t*);
-    for(uint8_t i = 0; i < 32; i++){m_P_dec[i] = (int32_t*)faad_malloc(34 * sizeof(*(m_P_dec[i])));}                         sum += 32 * 34 * sizeof(int32_t);
-    m_G_TransientRatio = (int32_t**)faad_malloc(32 * sizeof(m_G_TransientRatio));                                            sum += 32 * sizeof(int32_t*);
-    for(uint8_t i = 0; i < 32; i++){m_G_TransientRatio[i] = (int32_t*)faad_malloc(34 * sizeof(*(m_G_TransientRatio[i])));}   sum += 32 * 34 * sizeof(int32_t);
-    m_X_hybrid_left = (complex_t**)faad_malloc(32 * sizeof(m_X_hybrid_left));                                                sum += 32 * sizeof(complex_t*);
-    for(uint8_t i = 0; i < 32; i++){m_X_hybrid_left[i] = (complex_t*)faad_malloc(34 * sizeof(*(m_X_hybrid_left[i])));}       sum += 32 * 34 * sizeof(complex_t);
-    m_X_hybrid_right = (complex_t**)faad_malloc(32 * sizeof(m_X_hybrid_right));                                              sum += 32 * sizeof(complex_t*);
-    for(uint8_t i = 0; i < 32; i++){m_X_hybrid_right[i] = (complex_t*)faad_malloc(34 * sizeof(*(m_X_hybrid_right[i])));}     sum += 32 * 34 * sizeof(complex_t);
-    m_X_dsf = (complex_t**)faad_malloc(MAX_NTSR * sizeof(m_X_dsf));                                                          sum += MAX_NTSR * sizeof(complex_t*);
-    for(uint8_t i = 0; i < MAX_NTSR; i++){m_X_dsf[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_dsf[i])));}                 sum += MAX_NTSR * 64 * sizeof(complex_t);
-    m_X_left = (complex_t**)faad_malloc(38 * sizeof(m_X_left));                                                              sum += 38 * sizeof(complex_t*);
-    for(uint8_t i = 0; i < 38; i++){ m_X_left[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_left[i])));}                    sum += 38 * 64 * sizeof(int32_t);
-    m_X_right = (complex_t**)faad_malloc(38 * sizeof(m_X_right));                                                            sum += 38 * sizeof(complex_t*);
-    for(uint8_t i = 0; i < 38; i++){m_X_right[i] = (complex_t*)faad_malloc(64 * sizeof(*(m_X_right[i])));}                   sum += 38 * 64 * sizeof(int32_t);
+    m_P_dec = (int32_t**)faad_malloc(32 * sizeof(int32_t*));                                                                 sum += 32 * sizeof(int32_t*);
+    for(uint8_t i = 0; i < 32; i++){m_P_dec[i] = (int32_t*)faad_malloc(34 * sizeof(int32_t));}                               sum += 32 * 34 * sizeof(int32_t);
+    m_G_TransientRatio = (int32_t**)faad_malloc(32 * sizeof(int32_t*));                                                      sum += 32 * sizeof(int32_t*);
+    for(uint8_t i = 0; i < 32; i++){m_G_TransientRatio[i] = (int32_t*)faad_malloc(34 * sizeof(int32_t));}                    sum += 32 * 34 * sizeof(int32_t);
+    m_X_hybrid_left = (complex_t**)faad_malloc(32 * sizeof(complex_t*));                                                     sum += 32 * sizeof(complex_t*);
+    for(uint8_t i = 0; i < 32; i++){m_X_hybrid_left[i] = (complex_t*)faad_malloc(34 * sizeof(complex_t));}                   sum += 32 * 34 * sizeof(complex_t);
+    m_X_hybrid_right = (complex_t**)faad_malloc(32 * sizeof(complex_t*));                                                    sum += 32 * sizeof(complex_t*);
+    for(uint8_t i = 0; i < 32; i++){m_X_hybrid_right[i] = (complex_t*)faad_malloc(34 * sizeof(complex_t));}                  sum += 32 * 34 * sizeof(complex_t);
+    m_X_dsf = (complex_t**)faad_malloc(MAX_NTSR * sizeof(complex_t*));                                                       sum += MAX_NTSR * sizeof(complex_t*);
+    for(uint8_t i = 0; i < MAX_NTSR; i++){m_X_dsf[i] = (complex_t*)faad_malloc(64 * sizeof(complex_t));}                     sum += MAX_NTSR * 64 * sizeof(complex_t);
+    m_X_left = (complex_t**)faad_malloc(38 * sizeof(complex_t*));                                                            sum += 38 * sizeof(complex_t*);
+    for(uint8_t i = 0; i < 38; i++){ m_X_left[i] = (complex_t*)faad_malloc(64 * sizeof(complex_t));}                         sum += 38 * 64 * sizeof(int32_t);
+    m_X_right = (complex_t**)faad_malloc(38 * sizeof(complex_t*));                                                           sum += 38 * sizeof(complex_t*);
+    for(uint8_t i = 0; i < 38; i++){m_X_right[i] = (complex_t*)faad_malloc(64 * sizeof(complex_t));}                         sum += 38 * 64 * sizeof(int32_t);
     m_vDk0 = (int32_t*)faad_malloc(64 * sizeof(int32_t));                                                                    sum += 64 * sizeof(int32_t);
     m_vDk1 = (int32_t*)faad_malloc(64 * sizeof(int32_t));                                                                    sum += 64 * sizeof(int32_t);
     m_vk0 = (int32_t*)faad_malloc(64 * sizeof(int32_t));                                                                     sum += 64 * sizeof(int32_t);
@@ -6061,9 +6061,9 @@ static void calculate_gain(sbr_info_t* sbr, sbr_hfadj_info_t* adj, uint8_t ch) {
 
     static int32_t limGain[] = {REAL_CONST(-1.0), REAL_CONST(0.0), REAL_CONST(1.0), REAL_CONST(33.219)}; /* log2 values of limiter gains */
     uint8_t        m, l, k;
-    uint8_t current_t_noise_band = 0;
-    uint8_t S_mapped;
-    int32_t G_boost;
+    uint8_t        current_t_noise_band = 0;
+    uint8_t        S_mapped;
+    int32_t        G_boost;
 
     for(l = 0; l < sbr->L_E[ch]; l++) {
         uint8_t current_f_noise_band = 0;
@@ -6755,19 +6755,8 @@ void sbr_qmf_synthesis_64(sbr_info_t* sbr, qmfs_info_t* qmfs, complex_t* X[64], 
 
     complex_t* pX;
     int32_t *  pring_buffer_1, *pring_buffer_3;
-//    int32_t * ptemp_1, * ptemp_2;
-#ifdef PREFER_POINTERS
-    // These pointers are used if target platform has autoinc address generators
-    int32_t *      pring_buffer_2, *pring_buffer_4;
-    int32_t *      pring_buffer_5, *pring_buffer_6;
-    int32_t *      pring_buffer_7, *pring_buffer_8;
-    int32_t *      pring_buffer_9, *pring_buffer_10;
-    const int32_t *pqmf_c_1, *pqmf_c_2, *pqmf_c_3, *pqmf_c_4;
-    const int32_t *pqmf_c_5, *pqmf_c_6, *pqmf_c_7, *pqmf_c_8;
-    const int32_t *pqmf_c_9, *pqmf_c_10;
-#endif // #ifdef PREFER_POINTERS
-    int32_t n, k, out = 0;
-    uint8_t l;
+    int32_t    n, k, out = 0;
+    uint8_t    l;
     /* qmf subsample l */
     for(l = 0; l < sbr->numTimeSlotsRate; l++) {
         /* shift buffer v buffer is not shifted, we use double ringbuffer */
@@ -6793,25 +6782,6 @@ void sbr_qmf_synthesis_64(sbr_info_t* sbr, qmfs_info_t* qmfs, complex_t* X[64], 
         dct4_kernel(in_real2, in_imag2, out_real2, out_imag2);
         pring_buffer_1 = qmfs->v + qmfs->v_index;
         pring_buffer_3 = pring_buffer_1 + 1280;
-#ifdef PREFER_POINTERS
-        pring_buffer_2 = pring_buffer_1 + 127;
-        pring_buffer_4 = pring_buffer_1 + (1280 + 127);
-#endif // #ifdef PREFER_POINTERS
-//        ptemp_1 = x1;
-//        ptemp_2 = x2;
-#ifdef PREFER_POINTERS
-        for(n = 0; n < 32; n++) {
-            // int32_t x1 = *ptemp_1++;
-            // int32_t x2 = *ptemp_2++;
-            //  pring_buffer_3 and pring_buffer_4 are needed only for double ring buffer
-            *pring_buffer_1++ = *pring_buffer_3++ = out_real2[n] - out_real1[n];
-            *pring_buffer_2-- = *pring_buffer_4-- = out_real2[n] + out_real1[n];
-            // x1 = *ptemp_1++;
-            // x2 = *ptemp_2++;
-            *pring_buffer_1++ = *pring_buffer_3++ = out_imag2[31 - n] + out_imag1[31 - n];
-            *pring_buffer_2-- = *pring_buffer_4-- = out_imag2[31 - n] - out_imag1[31 - n];
-        }
-#else  // #ifdef PREFER_POINTERS
         for(n = 0; n < 32; n++) {
             // pring_buffer_3 and pring_buffer_4 are needed only for double ring buffer
             pring_buffer_1[2 * n] = pring_buffer_3[2 * n] = out_real2[n] - out_real1[n];
@@ -6819,44 +6789,14 @@ void sbr_qmf_synthesis_64(sbr_info_t* sbr, qmfs_info_t* qmfs, complex_t* X[64], 
             pring_buffer_1[2 * n + 1] = pring_buffer_3[2 * n + 1] = out_imag2[31 - n] + out_imag1[31 - n];
             pring_buffer_1[127 - (2 * n + 1)] = pring_buffer_3[127 - (2 * n + 1)] = out_imag2[31 - n] - out_imag1[31 - n];
         }
-#endif // #ifdef PREFER_POINTERS
         pring_buffer_1 = qmfs->v + qmfs->v_index;
-#ifdef PREFER_POINTERS
-        pring_buffer_2 = pring_buffer_1 + 192;
-        pring_buffer_3 = pring_buffer_1 + 256;
-        pring_buffer_4 = pring_buffer_1 + (256 + 192);
-        pring_buffer_5 = pring_buffer_1 + 512;
-        pring_buffer_6 = pring_buffer_1 + (512 + 192);
-        pring_buffer_7 = pring_buffer_1 + 768;
-        pring_buffer_8 = pring_buffer_1 + (768 + 192);
-        pring_buffer_9 = pring_buffer_1 + 1024;
-        pring_buffer_10 = pring_buffer_1 + (1024 + 192);
-        pqmf_c_1 = qmf_c;
-        pqmf_c_2 = qmf_c + 64;
-        pqmf_c_3 = qmf_c + 128;
-        pqmf_c_4 = qmf_c + 192;
-        pqmf_c_5 = qmf_c + 256;
-        pqmf_c_6 = qmf_c + 320;
-        pqmf_c_7 = qmf_c + 384;
-        pqmf_c_8 = qmf_c + 448;
-        pqmf_c_9 = qmf_c + 512;
-        pqmf_c_10 = qmf_c + 576;
-#endif // #ifdef PREFER_POINTERS
-        /* calculate 64 output samples and window */
-        for(k = 0; k < 64; k++) {
-#ifdef PREFER_POINTERS
-            output[out++] = MUL_F(*pring_buffer_1++, *pqmf_c_1++) + MUL_F(*pring_buffer_2++, *pqmf_c_2++) + MUL_F(*pring_buffer_3++, *pqmf_c_3++) + MUL_F(*pring_buffer_4++, *pqmf_c_4++) +
-                            MUL_F(*pring_buffer_5++, *pqmf_c_5++) + MUL_F(*pring_buffer_6++, *pqmf_c_6++) + MUL_F(*pring_buffer_7++, *pqmf_c_7++) + MUL_F(*pring_buffer_8++, *pqmf_c_8++) +
-                            MUL_F(*pring_buffer_9++, *pqmf_c_9++) + MUL_F(*pring_buffer_10++, *pqmf_c_10++);
-#else  // #ifdef PREFER_POINTERS
+        for(k = 0; k < 64; k++) { /* calculate 64 output samples and window */
             output[out++] = MUL_F(pring_buffer_1[k + 0], qmf_c[k + 0]) + MUL_F(pring_buffer_1[k + 192], qmf_c[k + 64]) + MUL_F(pring_buffer_1[k + 256], qmf_c[k + 128]) +
                             MUL_F(pring_buffer_1[k + (256 + 192)], qmf_c[k + 192]) + MUL_F(pring_buffer_1[k + 512], qmf_c[k + 256]) + MUL_F(pring_buffer_1[k + (512 + 192)], qmf_c[k + 320]) +
                             MUL_F(pring_buffer_1[k + 768], qmf_c[k + 384]) + MUL_F(pring_buffer_1[k + (768 + 192)], qmf_c[k + 448]) + MUL_F(pring_buffer_1[k + 1024], qmf_c[k + 512]) +
                             MUL_F(pring_buffer_1[k + (1024 + 192)], qmf_c[k + 576]);
-#endif // #ifdef PREFER_POINTERS
         }
-        /* update ringbuffer index */
-        qmfs->v_index -= 128;
+        qmfs->v_index -= 128; /* update ringbuffer index */
         if(qmfs->v_index < 0) qmfs->v_index = (1280 - 128);
     }
 }
@@ -9317,7 +9257,6 @@ static uint32_t showbits_hcr(bits_t_t* ld, uint8_t bits) {
         else { return ((ld->bufb >> (ld->len - bits - 32)) & (0xFFFFFFFF >> (32 - bits))); }
     }
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /* return next n bits (right adjusted) */
 static uint32_t faad_getbits(bitfile_t* ld, uint32_t n) {
@@ -9357,7 +9296,6 @@ static uint32_t faad_getbits_rev(bitfile_t* ld, uint32_t n) {
     faad_flushbits_rev(ld, n);
     return ret;
 }
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 static void DST4_32(int32_t* y, int32_t* x) {
     printf(ANSI_ESC_YELLOW "DST4_32\n" ANSI_ESC_WHITE);
